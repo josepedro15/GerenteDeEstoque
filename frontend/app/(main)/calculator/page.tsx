@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Calculator as CalcIcon, TrendingUp } from "lucide-react";
 
