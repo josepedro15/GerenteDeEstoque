@@ -1,0 +1,145 @@
+{
+    "name": "ERP Data Ingestion Pipeline (14 Tables)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 2 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "trigger-daily-ingest",
+            "name": "Daily Trigger (2AM)",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                220,
+                240
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "return [\n  { json: { table: 'v_produtos' } },\n  { json: { table: 'v_clientes' } },\n  { json: { table: 'v_fornecedores' } },\n  { json: { table: 'v_lojas' } },\n  { json: { table: 'v_vendedores' } },\n  { json: { table: 'v_plano_contas' } },\n  { json: { table: 'v_formas_pagamentos' } },\n  { json: { table: 'v_contas_pagar' } },\n  { json: { table: 'v_contas_receber' } },\n  { json: { table: 'v_estoque' } },\n  { json: { table: 'v_vendas' } },\n  { json: { table: 'v_vendas_itens' } },\n  { json: { table: 'v_compras' } },\n  { json: { table: 'v_compras_itens' } }\n];"
+            },
+            "id": "define-tables",
+            "name": "Define Tables List",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 1,
+            "position": [
+                440,
+                240
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{{ $json.table }}' ORDER BY ordinal_position"
+            },
+            "id": "get-schema",
+            "name": "Get Table Schema",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                660,
+                240
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "eA7sex2iOmhrdH7f",
+                    "name": "ferragem"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT * FROM {{ $json.table }} LIMIT 1000"
+            },
+            "id": "fetch-data",
+            "name": "Fetch Data from ERP",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                880,
+                240
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "eA7sex2iOmhrdH7f",
+                    "name": "ferragem"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "upsert",
+                "table": "raw_{{ $node[\"Define Tables List\"].json[\"table\"].replace('v_', '') }}",
+                "columns": "={{ Object.keys($json).join(',') }}"
+            },
+            "id": "upsert-local",
+            "name": "Upsert to Local DB",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                1100,
+                240
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "your-local-postgres-id",
+                    "name": "Local Database"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Daily Trigger (2AM)": {
+            "main": [
+                [
+                    {
+                        "node": "Define Tables List",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Define Tables List": {
+            "main": [
+                [
+                    {
+                        "node": "Get Schema",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Schema": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Data from ERP",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Data from ERP": {
+            "main": [
+                [
+                    {
+                        "node": "Upsert to Local DB",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

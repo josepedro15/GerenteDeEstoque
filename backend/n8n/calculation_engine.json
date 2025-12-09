@@ -1,0 +1,194 @@
+{
+    "name": "Calculation Engine (JS Logic)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 4 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "trigger-calc-js",
+            "name": "Daily Calc (4AM)",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                220,
+                240
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT * FROM raw_estoque;"
+            },
+            "id": "fetch-stock",
+            "name": "Fetch Stock",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                440,
+                140
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "your-local-postgres-id",
+                    "name": "Local Database"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT sku, quantidade, valor_unitario, updated_at FROM raw_vendas_itens WHERE updated_at >= NOW() - INTERVAL '60 DAYS';"
+            },
+            "id": "fetch-sales",
+            "name": "Fetch Last 60d Sales",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                440,
+                340
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "your-local-postgres-id",
+                    "name": "Local Database"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT c.id_fornecedor, ci.sku, c.data_pedido, c.data_prevista_entrega, c.status_pedido FROM raw_compras c JOIN raw_compras_itens ci ON c.id_pedido_compra = ci.id_pedido_compra WHERE c.status_pedido = 'Entregue';"
+            },
+            "id": "fetch-purchases",
+            "name": "Fetch Purchase History",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                440,
+                540
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "your-local-postgres-id",
+                    "name": "Local Database"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// ============================================\n// NÓ: \"Calculation Core\" (JS)\n// ============================================\n// Analisei seu dashboard e repliquei o padrão:\n// 1. Recebe dados RAW de vários nós.\n// 2. Cria mapas em memória.\n// 3. Itera e Calcula.\n// 4. Retorna JSON pronto para banco.\n\n// --- INPUTS ---\n// Assumindo que o n8n entrega os arrays de cada nó\n// Para simulador (edit mode), $items('Fetch Stock') etc.\n\nconst stockItems = $items('Fetch Stock').map(i => i.json);\nconst salesItems = $items('Fetch Last 60d Sales').map(i => i.json);\nconst purchaseItems = $items('Fetch Purchase History').map(i => i.json);\n\n// --- 1. MAPAS DE DADOS ---\nconst demandMap = new Map(); // sku -> { totalQty, daysActive }\nconst leadTimeMap = new Map(); // sku -> { times: [] }\n\n// Processar Vendas (Demanda)\nfor (const sale of salesItems) {\n  const sku = sale.sku;\n  const qtd = Number(sale.quantidade || 0);\n  \n  if (!demandMap.has(sku)) demandMap.set(sku, { totalQty: 0 });\n  demandMap.get(sku).totalQty += qtd;\n}\n\n// Processar Compras (Lead Time)\nfor (const purch of purchaseItems) {\n   const sku = purch.sku;\n   const dtPedido = new Date(purch.data_pedido);\n   const dtEntrega = new Date(purch.data_prevista_entrega); // idealmente seria data_real_entrega se tiver\n   \n   // Diferença em dias\n   const diffTime = Math.abs(dtEntrega - dtPedido);\n   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); \n   \n   if (!leadTimeMap.has(sku)) leadTimeMap.set(sku, []);\n   leadTimeMap.get(sku).push(diffDays);\n}\n\n// --- 2. CÁLCULOS (Main Loop) ---\nconst results = [];\n\nfor (const stock of stockItems) {\n  const sku = stock.sku;\n  const saldoAtual = Number(stock.saldo_atual || 0);\n  \n  // A. Demanda Diária (Média 60 dias)\n  const demandData = demandMap.get(sku) || { totalQty: 0 };\n  const dailyDemand = demandData.totalQty / 60;\n  const vendas30d = dailyDemand * 30;\n  \n  // B. Lead Time (Média e Desvio)\n  const times = leadTimeMap.get(sku) || [7]; // fallback 7 dias\n  const avgLeadTime = times.reduce((a,b) => a+b, 0) / times.length;\n  const variance = times.reduce((a,b) => a + Math.pow(b - avgLeadTime, 2), 0) / (times.length || 1);\n  const stdDevLeadTime = Math.sqrt(variance);\n  \n  // C. Fórmulas de Estoque\n  const Z = 1.65; // 95% Service Level\n  const safetyStock = Z * stdDevLeadTime * dailyDemand; // Fórmula básica simplificada\n  const ROP = (dailyDemand * avgLeadTime) + safetyStock;\n  \n  // Cobertura\n  const coberturaDias = dailyDemand > 0 ? saldoAtual / dailyDemand : 999;\n  \n  // Sugestão de Compra\n  // Se Estoque <= ROP, compra até EOQ (ou um target simples se não tiver custo pedido)\n  // Aqui simplifiquei: Compra para repor até (ROP + 30 dias de demanda)\n  let sugestao = 0;\n  let risco = false;\n  \n  if (saldoAtual <= ROP) {\n    const target = ROP + (dailyDemand * 30);\n    sugestao = Math.max(0, target - saldoAtual);\n  }\n  \n  if (coberturaDias < avgLeadTime) {\n    risco = true;\n  }\n  \n  results.push({\n     sku,\n     estoque_total: saldoAtual,\n     vendas_30d: Math.round(vendas30d),\n     cobertura_dias: Number(coberturaDias.toFixed(1)),\n     sugestao_compra: Math.ceil(sugestao),\n     risco_ruptura: risco,\n     data_analise: new Date().toISOString()\n  });\n}\n\nreturn results.map(r => ({ json: r }));"
+            },
+            "id": "calc-core-js",
+            "name": "Code: Calculation Logic",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                700,
+                340
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "upsert",
+                "table": "dm_analise_estoque",
+                "columns": [
+                    "sku",
+                    "estoque_total",
+                    "vendas_30d",
+                    "cobertura_dias",
+                    "sugestao_compra",
+                    "risco_ruptura",
+                    "data_analise"
+                ]
+            },
+            "id": "upsert-analysis",
+            "name": "Upsert DM Analysis",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                920,
+                340
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "your-local-postgres-id",
+                    "name": "Local Database"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Daily Calc (4AM)": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Stock",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Last 60d Sales",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Purchase History",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Stock": {
+            "main": [
+                [
+                    {
+                        "node": "Code: Calculation Logic",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Last 60d Sales": {
+            "main": [
+                [
+                    {
+                        "node": "Code: Calculation Logic",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Purchase History": {
+            "main": [
+                [
+                    {
+                        "node": "Code: Calculation Logic",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Code: Calculation Logic": {
+            "main": [
+                [
+                    {
+                        "node": "Upsert DM Analysis",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
