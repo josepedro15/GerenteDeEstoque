@@ -7,37 +7,49 @@ import { getStockAnalysis } from '@/app/actions/inventory';
 export const maxDuration = 30;
 
 // @ts-ignore
+// @ts-nocheck
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
-    const { messages } = await req.json();
+    try {
+        const { messages } = await req.json();
+        const lastMessage = messages[messages.length - 1];
 
-    const result = await streamText({
-        model: openai('gpt-4o'),
-        messages,
-        system: 'Você é um assistente especialista em gestão de estoque. Use as ferramentas disponíveis para responder perguntas sobre o inventário, rupturas e sugestões de compra.',
-        tools: {
-            getInventory: tool({
-                description: 'Obtém a análise atual do estoque, incluindo itens em ruptura, sugestões de compra e níveis de estoque.',
-                parameters: z.object({
-                    query: z.string().optional().describe('Contexto opcional para a busca')
-                }),
-                execute: async (args: any): Promise<any> => {
-                    const { query } = args;
-                    const data = await getStockAnalysis();
-                    // Return a summary or top items to avoid token limits if data is huge
-                    // specific fields to keep it concise
-                    const result = data.slice(0, 50).map(item => ({
-                        produto: item.nome_produto,
-                        codigo: item.codigo_produto,
-                        status: item.status,
-                        estoque: item.estoque_atual,
-                        sugestao: item.quantidade_sugerida,
-                        ruptura_dias: item.cobertura_atual_dias
-                    }));
-                    return JSON.stringify(result);
-                },
+        // Ensure Webhook URL is available
+        const webhookUrl = process.env.N8N_CHAT_WEBHOOK;
+        if (!webhookUrl) {
+            return new Response("Configuração de Webhook ausente (N8N_CHAT_WEBHOOK)", { status: 500 });
+        }
+
+        // Call N8N Webhook
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chatInput: lastMessage.content,
+                messages: messages, // Send full history if N8N needs it
             }),
-        },
-    });
+        });
 
-    return result.toTextStreamResponse();
+        if (!response.ok) {
+            const errorText = await response.text();
+            return new Response(`Erro no N8N: ${errorText}`, { status: response.status });
+        }
+
+        // Assuming N8N returns the answer directly as JSON or Text
+        // If N8N returns { "output": "Hello" }
+        const data = await response.json();
+
+        // Extract the text response. Adjust based on your actual N8N output node.
+        // Common patterns: data.output, data.text, or just data[0].output
+        const reply = data.output || data.text || data.message || JSON.stringify(data);
+
+        return new Response(reply);
+
+    } catch (error) {
+        console.error("Chat Error:", error);
+        return new Response("Erro interno no processamento do chat.", { status: 500 });
+    }
 }
