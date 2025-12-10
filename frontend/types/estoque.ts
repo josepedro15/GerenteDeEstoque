@@ -21,6 +21,7 @@ export interface EstoqueDetalhe extends EstoqueBase {
     dias_de_cobertura: string; // numeric text
     preco: string; // numeric text
     custo: string; // numeric text
+    rank_por_status?: string; // numeric text
 }
 
 export type EstoqueItem = EstoqueSumario | EstoqueDetalhe;
