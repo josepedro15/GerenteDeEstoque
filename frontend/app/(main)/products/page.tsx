@@ -1,10 +1,19 @@
-import { getStockAnalysis } from "@/app/actions/inventory";
+import { getStockData } from "@/app/actions/inventory";
 import { ExplainButton } from "@/components/recommendations/ExplainButton";
 import { Badge } from "@/components/ui/badge";
-import { Search, Package, AlertCircle } from "lucide-react";
+import { Search, Package } from "lucide-react";
 
 export default async function ProductsPage() {
-    const products = await getStockAnalysis();
+    const { detalhe } = await getStockData();
+
+    // Parse data
+    const products = detalhe.map(item => ({
+        ...item,
+        estoque_atual: parseFloat(item.estoque_atual) || 0,
+        custo: parseFloat(item.custo) || 0,
+        preco: parseFloat(item.preco) || 0,
+        dias_de_cobertura: parseFloat(item.dias_de_cobertura) || 0
+    }));
 
     return (
         <div className="space-y-6">
@@ -50,8 +59,8 @@ export default async function ProductsPage() {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {products.map((product) => {
-                                const margin = product.preco_venda > 0
-                                    ? ((product.preco_venda - product.custo) / product.preco_venda) * 100
+                                const margin = product.preco > 0
+                                    ? ((product.preco - product.custo) / product.preco) * 100
                                     : 0;
 
                                 return (
@@ -62,8 +71,8 @@ export default async function ProductsPage() {
                                                     <Package size={20} />
                                                 </div>
                                                 <div className="overflow-hidden">
-                                                    <p className="font-medium text-white truncate max-w-[250px]">{product.nome_produto}</p>
-                                                    <p className="text-xs text-muted-foreground">{product.codigo_produto}</p>
+                                                    <p className="font-medium text-white truncate max-w-[250px]">{product.produto_descricao}</p>
+                                                    <p className="text-xs text-muted-foreground">{product.id_produto}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -76,7 +85,7 @@ export default async function ProductsPage() {
                                             R$ {product.custo.toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 text-right text-white font-medium">
-                                            R$ {product.preco_venda.toFixed(2)}
+                                            R$ {product.preco.toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <span className={`text-xs px-2 py-1 rounded-full ${margin >= 30 ? 'bg-green-500/10 text-green-400' : margin > 0 ? 'bg-yellow-500/10 text-yellow-400' : 'bg-red-500/10 text-red-400'}`}>
@@ -84,19 +93,16 @@ export default async function ProductsPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            {product.estoque_atual === 0 ? (
-                                                <Badge variant="destructive" className="bg-red-500/20 text-red-400 border-red-500/20 hover:bg-red-500/30">
-                                                    Sem Estoque
-                                                </Badge>
-                                            ) : product.estoque_atual < product.estoque_seguranca ? (
-                                                <Badge variant="outline" className="border-yellow-500/50 text-yellow-500">
-                                                    Baixo
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="border-green-500/50 text-green-500">
-                                                    Normal
-                                                </Badge>
-                                            )}
+                                            <Badge
+                                                variant={product.status_ruptura === 'Crítico' || product.status_ruptura === 'Ruptura' ? "destructive" : "outline"}
+                                                className={
+                                                    product.status_ruptura === 'Crítico' || product.status_ruptura === 'Ruptura'
+                                                        ? 'bg-red-500/20 text-red-400 border-red-500/20 hover:bg-red-500/30'
+                                                        : 'border-white/20 text-muted-foreground'
+                                                }
+                                            >
+                                                {product.status_ruptura}
+                                            </Badge>
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <ExplainButton product={product} />
