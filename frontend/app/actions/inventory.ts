@@ -35,7 +35,20 @@ export async function getStockData(): Promise<StockData> {
     }
 }
 
+
 // Deprecated: kept for backward compatibility if needed during transition, but simply calls the new one or returns empty
 export async function getStockAnalysis() {
+    return [];
+}
+
+export interface Supplier {
+    id_fornecedor: number;
+    nome_fornecedor: string;
+    cidade: string;
+    lead_time_padrao: number;
+}
+
+export async function getSuppliers(): Promise<Supplier[]> {
+    // Placeholder to fix build. Future todo: migrate suppliers to new architecture if needed.
     return [];
 }
