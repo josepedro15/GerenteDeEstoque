@@ -25,8 +25,20 @@ export async function getStockData(): Promise<StockData> {
 
         const rawData = data as EstoqueItem[];
 
-        const sumario = rawData.filter((item): item is EstoqueSumario => item.tipo_registro?.toUpperCase() === 'SUMARIO');
-        const detalhe = rawData.filter((item): item is EstoqueDetalhe => item.tipo_registro?.toUpperCase() === 'DETALHE');
+        // Classification fallback: If tipo_registro is missing, deduce from columns.
+        // Summary rows generally have id_produto as null/undefined.
+        // Detail rows have id_produto populated.
+        const sumario = rawData.filter((item): item is EstoqueSumario => {
+            const anyItem = item as any;
+            return anyItem.tipo_registro?.toUpperCase() === 'SUMARIO' ||
+                (!anyItem.id_produto && !!anyItem.total_produtos);
+        });
+
+        const detalhe = rawData.filter((item): item is EstoqueDetalhe => {
+            const anyItem = item as any;
+            return anyItem.tipo_registro?.toUpperCase() === 'DETALHE' ||
+                (!!anyItem.id_produto);
+        });
 
         return { sumario, detalhe };
     } catch (error) {
