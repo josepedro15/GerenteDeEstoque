@@ -4,10 +4,6 @@ import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { getStockAnalysis } from '@/app/actions/inventory';
 
-export const maxDuration = 30;
-
-// @ts-ignore
-// @ts-nocheck
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
