@@ -19,7 +19,7 @@ export async function POST(req: Request) {
                 parameters: z.object({
                     query: z.string().optional().describe('Contexto opcional para a busca')
                 }),
-                execute: async ({ query }) => {
+                execute: async ({ query }: { query?: string }) => {
                     const data = await getStockAnalysis();
                     // Return a summary or top items to avoid token limits if data is huge
                     // specific fields to keep it concise
