@@ -5,13 +5,25 @@ import {
     Filter,
     Download,
     ShoppingCart,
-    ChevronRight
+    ChevronRight,
+    ArrowDown
 } from "lucide-react";
-import { getStockAnalysis } from "@/app/actions/inventory";
+import { getStockData } from "@/app/actions/inventory";
 import { ExplainButton } from "@/components/recommendations/ExplainButton";
 
 export default async function RecommendationsPage() {
-    const data = await getStockAnalysis();
+    const { detalhe } = await getStockData();
+
+    // Parse numeric values
+    const data = detalhe.map(item => ({
+        ...item,
+        estoque_atual: parseFloat(item.estoque_atual) || 0,
+        media_diaria_venda: parseFloat(item.media_diaria_venda) || 0,
+        dias_de_cobertura: parseFloat(item.dias_de_cobertura) || 0,
+        preco: parseFloat(item.preco) || 0,
+        // rank_por_status seems to be the priority in the new view
+        prioridade: parseInt(item.rank_por_status || '999')
+    })).sort((a, b) => a.prioridade - b.prioridade);
 
     return (
         <div className="space-y-6">
@@ -22,7 +34,7 @@ export default async function RecommendationsPage() {
                         Sugestões de Compra (IA)
                     </h1>
                     <p className="mt-1 text-muted-foreground">
-                        Análise preditiva de demanda e reposição de estoque.
+                        Análise de cobertura e risco de ruptura.
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -30,9 +42,9 @@ export default async function RecommendationsPage() {
                         <Download className="mr-2 h-4 w-4" />
                         Exportar
                     </Button>
-                    <Button>
+                    <Button disabled className="opacity-50 cursor-not-allowed">
                         <ShoppingCart className="mr-2 h-4 w-4" />
-                        Gerar Pedidos Selecionados
+                        Gerar Pedidos (Em breve)
                     </Button>
                 </div>
             </div>
@@ -51,14 +63,6 @@ export default async function RecommendationsPage() {
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-white">
                         <Filter className="mr-2 h-3 w-3" />
-                        Fornecedor
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-white">
-                        <Filter className="mr-2 h-3 w-3" />
-                        Categoria
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-white">
-                        <Filter className="mr-2 h-3 w-3" />
                         Status Risco
                     </Button>
                 </div>
@@ -72,71 +76,56 @@ export default async function RecommendationsPage() {
                             <tr>
                                 <th className="px-6 py-4 font-medium">Produto / SKU</th>
                                 <th className="px-6 py-4 font-medium">Estoque</th>
-                                <th className="px-6 py-4 font-medium">Demanda Total</th>
-                                <th className="px-6 py-4 font-medium">Sugestão IA</th>
+                                <th className="px-6 py-4 font-medium">Venda Média/Dia</th>
+                                <th className="px-6 py-4 font-medium">Cobertura (Dias)</th>
                                 <th className="px-6 py-4 font-medium">Status</th>
-                                <th className="px-6 py-4 font-medium">Prioridade</th>
-                                <th className="px-6 py-4 font-medium">Ações</th>
+                                <th className="px-6 py-4 font-medium text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {data.map((item) => (
-                                <tr key={item.codigo_produto} className="group hover:bg-white/5 transition-colors">
+                                <tr key={item.id_produto} className="group hover:bg-white/5 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="h-10 w-10 rounded-lg bg-white/10" />
                                             <div>
-                                                <p className="font-medium text-white">{item.nome_produto}</p>
-                                                <p className="text-[10px] text-muted-foreground">SKU: {item.codigo_produto}</p>
+                                                <p className="font-medium text-white">{item.produto_descricao}</p>
+                                                <p className="text-[10px] text-muted-foreground">SKU: {item.id_produto}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-white">
                                         {item.estoque_atual} un
-                                        <span className={`block text-[10px] ${item.cobertura_atual_dias < 10 ? 'text-red-400' : 'text-green-400'}`}>
-                                            Cobertura: {item.cobertura_atual_dias?.toFixed(0) ?? 0} dias
-                                        </span>
                                     </td>
                                     <td className="px-6 py-4 text-white">
-                                        {item.demanda_total.toLocaleString('pt-BR')} un
-                                        <span className="block text-[10px] text-muted-foreground">
-                                            Média: {item.demanda_media_dia.toFixed(1)}/dia
-                                        </span>
+                                        {item.media_diaria_venda.toFixed(2)}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="default" className="bg-blue-500/20 text-blue-300 hover:bg-blue-500/30">
-                                                +{item.quantidade_sugerida} un
-                                            </Badge>
+                                        <div className={`font-bold ${item.dias_de_cobertura < 15 ? 'text-red-400' : 'text-green-400'}`}>
+                                            {item.dias_de_cobertura.toFixed(0)} dias
                                         </div>
-                                        <span className="text-[10px] text-muted-foreground">
-                                            ROP: {item.rop.toFixed(0)} | Alvo: {item.estoque_alvo.toFixed(0)}
-                                        </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <Badge
                                             variant={
-                                                item.status === 'ruptura' ? 'destructive' :
-                                                    item.status === 'baixo_estoque' ? 'secondary' : // Using secondary as warning-like if variant 'warning' doesn't exist, check Badge definition but usually default/secondary/destructive/outline
-                                                        item.status === 'excesso_estoque' ? 'outline' :
+                                                item.status_ruptura === 'Ruptura' || item.status_ruptura === 'Crítico' ? 'destructive' :
+                                                    item.status_ruptura === 'Atenção' ? 'secondary' :
+                                                        item.status_ruptura === 'Excesso' ? 'outline' :
                                                             'default'
                                             }
                                             className={
-                                                item.status === 'ruptura' ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' :
-                                                    item.status === 'baixo_estoque' ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30' :
-                                                        item.status === 'excesso_estoque' ? 'bg-yellow-500/10 text-yellow-400' :
+                                                item.status_ruptura === 'Ruptura' || item.status_ruptura === 'Crítico' ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' :
+                                                    item.status_ruptura === 'Atenção' ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30' :
+                                                        item.status_ruptura === 'Excesso' ? 'bg-yellow-500/10 text-yellow-400' :
                                                             'bg-green-500/20 text-green-400'
                                             }
                                         >
-                                            {item.status.replace('_', ' ').toUpperCase()}
+                                            {item.status_ruptura.toUpperCase()}
                                         </Badge>
                                     </td>
-                                    <td className="px-6 py-4 text-white">
-                                        {item.prioridade}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <ExplainButton product={item} />
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            {/* <ExplainButton product={item} /> */}
                                             <Button size="sm" variant="ghost" className="h-8 gap-1">
                                                 Detalhes <ChevronRight className="h-3 w-3" />
                                             </Button>
@@ -147,8 +136,8 @@ export default async function RecommendationsPage() {
 
                             {data.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-                                        Nenhuma sugestão encontrada.
+                                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                                        Nenhum dado encontrado na nova visão.
                                     </td>
                                 </tr>
                             )}
@@ -157,7 +146,7 @@ export default async function RecommendationsPage() {
                 </div>
 
                 <div className="flex items-center justify-between border-t border-white/5 bg-white/5 px-6 py-4">
-                    <p className="text-xs text-muted-foreground">Mostrando {data.length} sugestões</p>
+                    <p className="text-xs text-muted-foreground">Mostrando {data.length} produtos</p>
                     <div className="flex gap-2">
                         <Button size="sm" variant="ghost" disabled>Anterior</Button>
                         <Button size="sm" variant="ghost">Próximo</Button>

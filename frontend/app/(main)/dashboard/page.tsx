@@ -1,39 +1,41 @@
 import { ArrowUpRight, AlertTriangle, DollarSign, Package, TrendingUp } from "lucide-react";
-import { getStockAnalysis } from "@/app/actions/inventory";
+import { getStockData } from "@/app/actions/inventory";
 import { ExplainButton } from "@/components/recommendations/ExplainButton";
 import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysisButton";
 
 export default async function DashboardPage() {
-    const data = await getStockAnalysis();
+    const { sumario, detalhe } = await getStockData();
 
-    // Safety check ensuring data is an array
-    if (!Array.isArray(data)) {
-        console.error("Dashboard Error: 'data' is not an array", data);
-        return (
-            <div className="flex h-screen items-center justify-center">
-                <div className="text-center">
-                    <h2 className="text-xl font-bold text-red-400">Erro ao carregar dados</h2>
-                    <p className="text-muted-foreground">O formato dos dados recebidos é inválido.</p>
-                </div>
-            </div>
-        );
-    }
+    // Calculate KPIs from 'sumario' or 'detalhe' depending on what's available
+    // Using 'detalhe' for calculations to ensure accuracy if 'sumario' lacks values
 
-    // Calculate KPIs
-    const ruptureItems = data.filter((item) => item.status === "ruptura");
+    // Parse numeric values from string
+    const items = detalhe.map(item => ({
+        ...item,
+        estoque_atual: parseFloat(item.estoque_atual) || 0,
+        custo: parseFloat(item.custo) || 0,
+        dias_de_cobertura: parseFloat(item.dias_de_cobertura) || 0,
+        preco: parseFloat(item.preco) || 0
+    }));
+
+    const ruptureItems = items.filter((item) => item.status_ruptura === "Crítico" || item.status_ruptura === "Ruptura"); // Adjust based on exact DB string
     const ruptureCount = ruptureItems.length;
 
-    // Capital in Stock: sum(estoque_atual * custo)
-    const capitalTotal = data.reduce((acc, item) => acc + (item.estoque_atual * item.custo), 0);
+    // Capital in Stock
+    const capitalTotal = items.reduce((acc, item) => acc + (item.estoque_atual * item.custo), 0);
 
-    // Purchase Suggestion: sum(quantidade_sugerida * custo)
-    const purchaseSuggestionValue = data.reduce((acc, item) => acc + (item.quantidade_sugerida * item.custo), 0);
-    const purchaseSuggestionCount = data.filter(item => item.quantidade_sugerida > 0).length;
+    // Purchase Suggestion (Not available in new view explicitly, maybe 'Excesso' implies negative suggestion? 
+    // Or we use those with low coverage? The view replaces ROP/Suggestion with coverage/status. 
+    // For now, we'll sum capital of text-critical items as a proxy or set to 0 if not applicable)
+    // Actually, let's use items with 'Crítico' status as "Sugestão de Compra" needed.
+    const purchaseSuggestionItems = items.filter(item => item.status_ruptura === "Crítico" || item.status_ruptura === "Atenção");
+    const purchaseSuggestionValue = 0; // The view doesn't give suggested quantity, so we can't calculate value yet.
+    const purchaseSuggestionCount = purchaseSuggestionItems.length;
 
-    // Service Level (Mock calculation as placeholder, e.g., % of items not in rupture)
-    // If total items is 0, avoid NaN
-    const serviceLevel = data.length > 0
-        ? ((data.length - ruptureCount) / data.length) * 100
+    // Service Level
+    const totalItems = items.length;
+    const serviceLevel = totalItems > 0
+        ? ((totalItems - ruptureCount) / totalItems) * 100
         : 100;
 
     // Format helpers
@@ -58,7 +60,7 @@ export default async function DashboardPage() {
                             capitalTotal,
                             purchaseSuggestionValue,
                             serviceLevel,
-                            itemCount: data.length
+                            itemCount: totalItems
                         }}
                     />
                 </div>
@@ -101,19 +103,19 @@ export default async function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Card 3: Pedidos */}
+                {/* Card 3: Pedidos (Adapted) */}
                 <div className="glass-card rounded-2xl p-6">
                     <div className="flex items-start justify-between">
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Sugestão de Compra</p>
-                            <h3 className="mt-2 text-3xl font-bold text-white">{formatCurrency(purchaseSuggestionValue)}</h3>
+                            <p className="text-sm font-medium text-muted-foreground">Itens p/ Repor</p>
+                            <h3 className="mt-2 text-3xl font-bold text-white">{purchaseSuggestionCount}</h3>
                         </div>
                         <div className="rounded-lg bg-purple-500/10 p-2 text-purple-400">
                             <Package size={20} />
                         </div>
                     </div>
                     <p className="mt-4 text-sm text-muted-foreground">
-                        {purchaseSuggestionCount} itens sugeridos para reposição
+                        Itens com cobertura crítica
                     </p>
                 </div>
 
@@ -156,13 +158,13 @@ export default async function DashboardPage() {
                             <div key={item.id_produto} className="flex items-center gap-4 rounded-xl border border-white/5 bg-white/5 p-3 transition-colors hover:bg-white/10">
                                 <div className="h-10 w-10 shrink-0 rounded-lg bg-white/10" />
                                 <div className="flex-1 overflow-hidden">
-                                    <p className="truncate font-medium text-white">{item.nome_produto}</p>
-                                    <p className="text-xs text-muted-foreground">SKU: {item.codigo_produto}</p>
+                                    <p className="truncate font-medium text-white">{item.produto_descricao}</p>
+                                    <p className="text-xs text-muted-foreground">SKU: {item.id_produto}</p>
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
                                     <div className="flex items-center gap-2">
-                                        <ExplainButton product={item} />
-                                        <p className="text-xs font-bold text-red-400">{item.cobertura_atual_dias.toFixed(0)} dias</p>
+                                        {/* <ExplainButton product={item} />  - Commented out pending ExplainButton refactor */}
+                                        <p className="text-xs font-bold text-red-400">{item.dias_de_cobertura.toFixed(0)} dias</p>
                                     </div>
                                     <p className="text-[10px] text-muted-foreground">para acabar</p>
                                 </div>
