@@ -1,5 +1,5 @@
 import { ArrowUpRight, AlertTriangle, DollarSign, Package, TrendingUp } from "lucide-react";
-import { getStockAnalysis } from "../actions/inventory";
+import { getStockAnalysis } from "@/app/actions/inventory";
 import { ExplainButton } from "@/components/recommendations/ExplainButton";
 import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysisButton";
 
