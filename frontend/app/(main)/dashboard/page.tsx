@@ -3,6 +3,8 @@ import { getStockData } from "@/app/actions/inventory";
 import { ExplainButton } from "@/components/recommendations/ExplainButton";
 import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysisButton";
 
+export const dynamic = 'force-dynamic'; // Force fresh data on every request
+
 export default async function DashboardPage() {
     const { sumario, detalhe } = await getStockData();
 
@@ -32,6 +34,20 @@ export default async function DashboardPage() {
         dias_de_cobertura: parseNumber(item.dias_de_cobertura),
         preco: parseNumber(item.preco)
     }));
+
+    if (items.length === 0) {
+        return (
+            <div className="p-8 text-center text-red-500 bg-red-100 rounded-lg m-4 border border-red-400">
+                <h2 className="text-xl font-bold mb-2">⚠️ Nenhum dado encontrado</h2>
+                <p>O array de detalhes está vazio. Verifique:</p>
+                <ul className="list-disc text-left inline-block mt-2">
+                    <li>Se a tabela <b>dados_estoque</b> tem dados.</li>
+                    <li>Se as variáveis de ambiente (URL/KEY) estão no Vercel.</li>
+                    <li>Se a política RLS permite leitura (anon key).</li>
+                </ul>
+            </div>
+        );
+    }
 
     const ruptureItems = items.filter((item) => {
         const status = item.status_ruptura?.toUpperCase() || '';
