@@ -22,7 +22,6 @@ const menuItems = [
     { icon: Sparkles, label: "Sugestões (IA)", href: "/recommendations", activeColor: "text-blue-400" },
     { icon: Package, label: "Produtos & Estoque", href: "/products" },
     { icon: Truck, label: "Fornecedores", href: "/suppliers" },
-    { icon: Calculator, label: "Simulador", href: "/simulator" },
     { icon: BarChart, label: "Dashboard de vendas", href: "https://n8n.mathiasvelho.store/webhook/dashboard1" },
 ];
 
