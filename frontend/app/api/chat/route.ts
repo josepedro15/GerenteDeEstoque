@@ -17,7 +17,7 @@ export async function POST(req: Request) {
             getInventory: tool({
                 description: 'Obtém a análise atual do estoque, incluindo itens em ruptura, sugestões de compra e níveis de estoque.',
                 parameters: z.object({}),
-                execute: async () => {
+                execute: async (_test) => {
                     const data = await getStockAnalysis();
                     // Return a summary or top items to avoid token limits if data is huge
                     // specific fields to keep it concise
