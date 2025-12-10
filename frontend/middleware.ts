@@ -36,19 +36,24 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/auth') &&
-        request.nextUrl.pathname !== '/' // Allow some public pages if needed, but here we protect main app
-    ) {
-        // Redirect to login if not authenticated
-        // But wait, the user wants the main page protected? 
-        // The current main page is at / (root).
-        // Let's assume /login is the entry point.
-        // If request is for root / and no user -> redirect to /login
-        if (request.nextUrl.pathname === '/') {
-            return NextResponse.redirect(new URL('/login', request.url))
+    if (!user) {
+        // If user is NOT logged in
+        // Protect strict route paths (like /dashboard, /products, etc.)
+        // But allow public access to Landing Page ("/") and Auth ("/login", "/auth")
+
+        const isPublicRoute =
+            request.nextUrl.pathname === '/' ||
+            request.nextUrl.pathname.startsWith('/login') ||
+            request.nextUrl.pathname.startsWith('/auth');
+
+        if (!isPublicRoute) {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
+    } else {
+        // If user IS logged in
+        // If they visit the Landing Page ("/") or Login ("/login"), redirect to Dashboard
+        if (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/login')) {
+            return NextResponse.redirect(new URL('/dashboard', request.url));
         }
     }
 
