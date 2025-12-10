@@ -25,8 +25,8 @@ export async function getStockData(): Promise<StockData> {
 
         const rawData = data as EstoqueItem[];
 
-        const sumario = rawData.filter((item): item is EstoqueSumario => item.tipo_registro === 'SUMARIO');
-        const detalhe = rawData.filter((item): item is EstoqueDetalhe => item.tipo_registro === 'DETALHE');
+        const sumario = rawData.filter((item): item is EstoqueSumario => item.tipo_registro?.toUpperCase() === 'SUMARIO');
+        const detalhe = rawData.filter((item): item is EstoqueDetalhe => item.tipo_registro?.toUpperCase() === 'DETALHE');
 
         return { sumario, detalhe };
     } catch (error) {

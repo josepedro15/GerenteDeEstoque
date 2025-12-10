@@ -6,13 +6,20 @@ import { Search, Package } from "lucide-react";
 export default async function ProductsPage() {
     const { detalhe } = await getStockData();
 
+    // Helper to parse localized numbers
+    const parseNumber = (val: string | number) => {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        return parseFloat(val.toString().replace(/\./g, '').replace(',', '.'));
+    };
+
     // Parse data
     const products = detalhe.map(item => ({
         ...item,
-        estoque_atual: parseFloat(item.estoque_atual) || 0,
-        custo: parseFloat(item.custo) || 0,
-        preco: parseFloat(item.preco) || 0,
-        dias_de_cobertura: parseFloat(item.dias_de_cobertura) || 0
+        estoque_atual: parseNumber(item.estoque_atual),
+        custo: parseNumber(item.custo),
+        preco: parseNumber(item.preco),
+        dias_de_cobertura: parseNumber(item.dias_de_cobertura)
     }));
 
     return (

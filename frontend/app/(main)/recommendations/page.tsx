@@ -14,13 +14,20 @@ import { ExplainButton } from "@/components/recommendations/ExplainButton";
 export default async function RecommendationsPage() {
     const { detalhe } = await getStockData();
 
+    // Helper to parse localized numbers
+    const parseNumber = (val: string | number) => {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        return parseFloat(val.toString().replace(/\./g, '').replace(',', '.'));
+    };
+
     // Parse numeric values
     const data = detalhe.map(item => ({
         ...item,
-        estoque_atual: parseFloat(item.estoque_atual) || 0,
-        media_diaria_venda: parseFloat(item.media_diaria_venda) || 0,
-        dias_de_cobertura: parseFloat(item.dias_de_cobertura) || 0,
-        preco: parseFloat(item.preco) || 0,
+        estoque_atual: parseNumber(item.estoque_atual),
+        media_diaria_venda: parseNumber(item.media_diaria_venda),
+        dias_de_cobertura: parseNumber(item.dias_de_cobertura),
+        preco: parseNumber(item.preco),
         // rank_por_status seems to be the priority in the new view
         prioridade: parseInt(item.rank_por_status || '999')
     })).sort((a, b) => a.prioridade - b.prioridade);

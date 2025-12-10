@@ -6,19 +6,29 @@ import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysi
 export default async function DashboardPage() {
     const { sumario, detalhe } = await getStockData();
 
+    // Helper to parse localized numbers
+    const parseNumber = (val: string | number) => {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        return parseFloat(val.toString().replace(/\./g, '').replace(',', '.'));
+    };
+
     // Calculate KPIs from 'sumario' or 'detalhe' depending on what's available
     // Using 'detalhe' for calculations to ensure accuracy if 'sumario' lacks values
 
-    // Parse numeric values from string
+    // Parse numeric values from string using the helper
     const items = detalhe.map(item => ({
         ...item,
-        estoque_atual: parseFloat(item.estoque_atual) || 0,
-        custo: parseFloat(item.custo) || 0,
-        dias_de_cobertura: parseFloat(item.dias_de_cobertura) || 0,
-        preco: parseFloat(item.preco) || 0
+        estoque_atual: parseNumber(item.estoque_atual),
+        custo: parseNumber(item.custo),
+        dias_de_cobertura: parseNumber(item.dias_de_cobertura),
+        preco: parseNumber(item.preco)
     }));
 
-    const ruptureItems = items.filter((item) => item.status_ruptura === "Crítico" || item.status_ruptura === "Ruptura"); // Adjust based on exact DB string
+    const ruptureItems = items.filter((item) => {
+        const status = item.status_ruptura?.toUpperCase() || '';
+        return status === "CRÍTICO" || status === "CRITICO" || status === "RUPTURA";
+    });
     const ruptureCount = ruptureItems.length;
 
     // Capital in Stock
