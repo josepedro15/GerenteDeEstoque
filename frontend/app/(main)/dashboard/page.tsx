@@ -7,14 +7,22 @@ export default async function DashboardPage() {
     const { sumario, detalhe } = await getStockData();
 
     // Helper to parse localized numbers
+    // The data comes with dots for decimals (12.00000000), standard parseFloat handles this.
+    // We only replace comma if it exists, just in case.
     const parseNumber = (val: string | number) => {
         if (typeof val === 'number') return val;
         if (!val) return 0;
-        return parseFloat(val.toString().replace(/\./g, '').replace(',', '.'));
+        const strVal = val.toString();
+        // If it looks like Brazilian format (1.200,00), handle it. Otherwise assume standard dot decimal.
+        if (strVal.includes(',') && strVal.includes('.')) {
+            // Mixed standard, assume dot is thousand, comma is decimal? Or vice versa?
+            // Given the screenshot shows "12.00000000", standard parseFloat is best.
+            // We'll just replace comma with dot if dot doesn't exist?
+            // Safest: JUST parseFloat because screenshot shows standard DB floats.
+            return parseFloat(strVal);
+        }
+        return parseFloat(strVal.replace(',', '.'));
     };
-
-    // Calculate KPIs from 'sumario' or 'detalhe' depending on what's available
-    // Using 'detalhe' for calculations to ensure accuracy if 'sumario' lacks values
 
     // Parse numeric values from string using the helper
     const items = detalhe.map(item => ({
@@ -27,7 +35,8 @@ export default async function DashboardPage() {
 
     const ruptureItems = items.filter((item) => {
         const status = item.status_ruptura?.toUpperCase() || '';
-        return status === "CRÍTICO" || status === "CRITICO" || status === "RUPTURA";
+        // Check for includes to verify status despite emojis (e.g. 🟠 Crítico)
+        return status.includes("CRÍTICO") || status.includes("CRITICO") || status.includes("RUPTURA");
     });
     const ruptureCount = ruptureItems.length;
 

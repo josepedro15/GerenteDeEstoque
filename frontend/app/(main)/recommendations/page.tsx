@@ -15,10 +15,18 @@ export default async function RecommendationsPage() {
     const { detalhe } = await getStockData();
 
     // Helper to parse localized numbers
+    // Data comes as standard floats string: "12.000000"
     const parseNumber = (val: string | number) => {
         if (typeof val === 'number') return val;
         if (!val) return 0;
-        return parseFloat(val.toString().replace(/\./g, '').replace(',', '.'));
+        // Just standard parse float, as data is standard DB format. 
+        // We only handle commas if they really exist (e.g. from manual input elsewhere), 
+        // but removing dots blindly is what broke it.
+        const strVal = val.toString();
+        if (strVal.includes(',')) {
+            return parseFloat(strVal.replace(',', '.'));
+        }
+        return parseFloat(strVal);
     };
 
     // Parse numeric values
