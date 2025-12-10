@@ -19,11 +19,12 @@ export async function POST(req: Request) {
                 parameters: z.object({
                     query: z.string().optional().describe('Contexto opcional para a busca')
                 }),
-                execute: async ({ query }: { query?: string }) => {
+                execute: async (args: any): Promise<any> => {
+                    const { query } = args;
                     const data = await getStockAnalysis();
                     // Return a summary or top items to avoid token limits if data is huge
                     // specific fields to keep it concise
-                    return data.slice(0, 50).map(item => ({
+                    const result = data.slice(0, 50).map(item => ({
                         produto: item.nome_produto,
                         codigo: item.codigo_produto,
                         status: item.status,
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
                         sugestao: item.quantidade_sugerida,
                         ruptura_dias: item.cobertura_atual_dias
                     }));
+                    return JSON.stringify(result);
                 },
             }),
         },
