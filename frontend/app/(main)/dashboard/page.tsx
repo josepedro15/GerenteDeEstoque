@@ -182,9 +182,6 @@ export default async function DashboardPage() {
                 </div>
             </div>
 
-            <ChatComponent />
         </div>
     );
 }
-
-import { ChatComponent } from "@/components/ChatComponent";
