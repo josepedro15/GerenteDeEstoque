@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, BarChart3, Bot, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, Bot, Zap, TrendingUp, DollarSign } from "lucide-react";
 import Link from "next/link";
 
 const fadeInUp = {
@@ -20,25 +20,25 @@ const staggerContainer = {
 
 export default function LandingPage() {
     return (
-        <div className="min-h-screen bg-black text-white selection:bg-purple-500/30 overflow-hidden">
+        <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 overflow-hidden relative">
             {/* Background Effects */}
-            <div className="fixed inset-0 z-0">
+            <div className="fixed inset-0 z-0 pointer-events-none">
                 <motion.div
                     animate={{
                         scale: [1, 1.2, 1],
-                        opacity: [0.2, 0.3, 0.2],
+                        opacity: [0.4, 0.6, 0.4], // Increased opacity
                     }}
                     transition={{
                         duration: 8,
                         repeat: Infinity,
                         ease: "easeInOut"
                     }}
-                    className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-purple-600/20 blur-[128px]"
+                    className="absolute top-[-20%] left-[-10%] h-[800px] w-[800px] rounded-full bg-purple-600/30 blur-[100px]" // Bigger and brighter
                 />
                 <motion.div
                     animate={{
                         scale: [1, 1.1, 1],
-                        opacity: [0.1, 0.2, 0.1],
+                        opacity: [0.3, 0.5, 0.3], // Increased opacity
                     }}
                     transition={{
                         duration: 10,
@@ -46,7 +46,7 @@ export default function LandingPage() {
                         ease: "easeInOut",
                         delay: 1
                     }}
-                    className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-blue-600/10 blur-[128px]"
+                    className="absolute bottom-[-20%] right-[-10%] h-[600px] w-[600px] rounded-full bg-blue-600/20 blur-[100px]" // Bigger and brighter
                 />
             </div>
 
@@ -143,30 +143,70 @@ export default function LandingPage() {
                     initial={{ opacity: 0, y: 100, rotateX: 20 }}
                     animate={{ opacity: 1, y: 0, rotateX: 0 }}
                     transition={{ duration: 1, delay: 0.5, type: "spring" }}
-                    className="mt-20 relative w-full max-w-6xl"
+                    className="mt-20 relative w-full max-w-6xl px-4"
                 >
-                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-purple-500/30 to-blue-500/30 blur-2xl opacity-50 animate-pulse" />
-                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-[#0A0A0A] border border-white/10 shadow-2xl flex items-center justify-center group">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
-                        {/* Mock UI Content */}
-                        <div className="w-full h-full p-8 flex flex-col items-center justify-center space-y-6">
-                            <div className="grid grid-cols-3 gap-6 w-3/4 opacity-50 blur-[1px] group-hover:blur-0 group-hover:opacity-100 transition-all duration-700">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="h-32 rounded-xl bg-white/5 border border-white/5 p-4 space-y-3">
-                                        <div className="h-8 w-8 rounded-lg bg-white/10" />
-                                        <div className="h-4 w-1/2 rounded bg-white/10" />
-                                        <div className="h-6 w-3/4 rounded bg-white/20" />
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="flex flex-col items-center">
-                                <div className="h-24 w-24 rounded-3xl bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center shadow-2xl shadow-purple-500/20 mb-4">
-                                    <BarChart3 className="w-10 h-10 text-white" />
+                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-purple-500/30 to-blue-500/30 blur-2xl opacity-40 animate-pulse" />
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-[#0F0F0F] border border-white/10 shadow-2xl flex items-center justify-center group ring-1 ring-white/10">
+                        {/* Abstract UI Elements - More Visible Now */}
+                        <div className="absolute inset-0 p-8 flex flex-col gap-6 opacity-80">
+                            {/* Fake Header */}
+                            <div className="h-8 w-full border-b border-white/10 flex items-center justify-between pb-4">
+                                <div className="h-4 w-32 rounded bg-white/10" />
+                                <div className="flex gap-2">
+                                    <div className="h-8 w-8 rounded-full bg-white/10" />
+                                    <div className="h-8 w-8 rounded-full bg-white/10" />
                                 </div>
-                                <p className="text-white font-medium">Dashboard em Tempo Real</p>
-                                <p className="text-white/40 text-sm">Dados que transformam seu negócio</p>
                             </div>
+
+                            {/* Fake KPIs */}
+                            <div className="grid grid-cols-4 gap-4">
+                                <div className="h-24 rounded-xl bg-white/5 border border-white/5 p-4">
+                                    <div className="h-8 w-8 rounded bg-purple-500/20 mb-2" />
+                                    <div className="h-4 w-16 rounded bg-white/10" />
+                                </div>
+                                <div className="h-24 rounded-xl bg-white/5 border border-white/5 p-4">
+                                    <div className="h-8 w-8 rounded bg-blue-500/20 mb-2" />
+                                    <div className="h-4 w-16 rounded bg-white/10" />
+                                </div>
+                                <div className="h-24 rounded-xl bg-white/5 border border-white/5 p-4">
+                                    <div className="h-8 w-8 rounded bg-green-500/20 mb-2" />
+                                    <div className="h-4 w-16 rounded bg-white/10" />
+                                </div>
+                                <div className="h-24 rounded-xl bg-white/5 border border-white/5 p-4">
+                                    <div className="h-8 w-8 rounded bg-red-500/20 mb-2" />
+                                    <div className="h-4 w-16 rounded bg-white/10" />
+                                </div>
+                            </div>
+
+                            {/* Fake Chart Area */}
+                            <div className="flex-1 grid grid-cols-3 gap-4">
+                                <div className="col-span-2 rounded-xl bg-white/5 border border-white/5 p-4 flex items-end gap-2">
+                                    <div className="h-[40%] w-full rounded-t bg-white/10" />
+                                    <div className="h-[70%] w-full rounded-t bg-purple-500/30" />
+                                    <div className="h-[50%] w-full rounded-t bg-white/10" />
+                                    <div className="h-[80%] w-full rounded-t bg-purple-500/40" />
+                                    <div className="h-[60%] w-full rounded-t bg-white/10" />
+                                </div>
+                                <div className="rounded-xl bg-white/5 border border-white/5 p-4 space-y-2">
+                                    <div className="h-3 w-full rounded bg-white/10" />
+                                    <div className="h-3 w-2/3 rounded bg-white/10" />
+                                    <div className="h-3 w-3/4 rounded bg-white/10" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Centered CTA Overlay */}
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center p-8 text-center transition-all duration-500 group-hover:backdrop-blur-none group-hover:bg-black/40">
+                            <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/30 mb-6 group-hover:scale-110 transition-transform duration-500">
+                                <BarChart3 className="w-10 h-10 text-white" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Dashboard em Tempo Real</h3>
+                            <p className="text-white/60 mb-6 max-w-md">
+                                Acompanhe métricas vitais, identifique riscos e tome decisões baseadas em dados.
+                            </p>
+                            <Link href="/login" className="rounded-full bg-white/10 border border-white/10 px-6 py-2 text-sm font-medium hover:bg-white hover:text-black transition-colors">
+                                Explorar Agora
+                            </Link>
                         </div>
                     </div>
                 </motion.div>
@@ -184,14 +224,14 @@ export default function LandingPage() {
                         {
                             title: "Gestão Inteligente",
                             desc: "Evite rupturas com cálculos automáticos de Ponto de Pedido e Estoque de Segurança.",
-                            icon: BarChart3,
+                            icon: TrendingUp,
                             color: "text-blue-400",
                             bg: "bg-blue-500/20"
                         },
                         {
                             title: "Economia Real",
                             desc: "Reduza custos de estoque parado e compre apenas o necessário, no momento certo.",
-                            icon: Zap,
+                            icon: DollarSign,
                             color: "text-green-400",
                             bg: "bg-green-500/20"
                         }
