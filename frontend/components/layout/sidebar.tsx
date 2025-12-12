@@ -20,9 +20,6 @@ import { signout } from "@/app/login/actions";
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
     { icon: Sparkles, label: "Sugestões (IA)", href: "/recommendations", activeColor: "text-blue-400" },
-    { icon: Package, label: "Produtos & Estoque", href: "/products" },
-    { icon: Truck, label: "Fornecedores", href: "/suppliers" },
-    { icon: BarChart, label: "Dashboard de vendas", href: "https://n8n.mathiasvelho.store/webhook/dashboard1" },
 ];
 
 export function Sidebar() {
