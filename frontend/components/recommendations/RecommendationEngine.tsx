@@ -30,6 +30,7 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
 
     const handleAnalyze = () => {
         const payload = {
+            tipo_analise: "ANALISE DE QUEIMA",
             is_purchase_plan: true,
             total_investimento: totalCost,
             sku_count: selectedItems.length,

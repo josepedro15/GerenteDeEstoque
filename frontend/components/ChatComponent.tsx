@@ -3,12 +3,28 @@
 
 import { useChat } from '@ai-sdk/react';
 import { MessageCircle, X, Send } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils'; // Assuming this exists, or I will use standard template literal
 
 export function ChatComponent() {
     const [isOpen, setIsOpen] = useState(false);
-    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+    const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat();
+
+    useEffect(() => {
+        const handleSendProduct = (e: any) => {
+            const productData = e.detail;
+            setIsOpen(true);
+
+            // Send the formatted message to the chat
+            append({
+                role: 'user',
+                content: JSON.stringify(productData, null, 2)
+            });
+        };
+
+        window.addEventListener('chat:send-product', handleSendProduct);
+        return () => window.removeEventListener('chat:send-product', handleSendProduct);
+    }, [append]);
 
     return (
         <div className="fixed bottom-4 right-4 z-50">
