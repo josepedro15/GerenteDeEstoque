@@ -35,14 +35,27 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
 
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedIds);
-        if (newSet.has(id)) newSet.delete(id);
-        else newSet.add(id);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            if (newSet.size >= 5) {
+                alert("Para garantir uma análise de alta qualidade, selecione no máximo 5 itens por vez.");
+                return;
+            }
+            newSet.add(id);
+        }
         setSelectedIds(newSet);
     };
 
     const toggleAll = () => {
-        if (selectedIds.size === sortedSuggestions.length) setSelectedIds(new Set());
-        else setSelectedIds(new Set(sortedSuggestions.map(s => s.id)));
+        if (selectedIds.size > 0) {
+            setSelectedIds(new Set());
+        } else {
+            // Select top 5 or all if less than 5
+            const limit = Math.min(5, sortedSuggestions.length);
+            const topItems = sortedSuggestions.slice(0, limit).map(s => s.id);
+            setSelectedIds(new Set(topItems));
+        }
     };
 
     const selectedItems = sortedSuggestions.filter(s => selectedIds.has(s.id));
@@ -129,7 +142,7 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
                         <tr>
                             <th className="px-6 py-4 w-[40px]">
                                 <Checkbox
-                                    checked={selectedIds.size === sortedSuggestions.length && sortedSuggestions.length > 0}
+                                    checked={selectedIds.size > 0}
                                     onCheckedChange={toggleAll}
                                 />
                             </th>
