@@ -22,6 +22,19 @@ export interface DashboardMetrics {
     };
 }
 
+export interface PurchaseSuggestion {
+    id: string;
+    name: string;
+    currentStock: number;
+    avgDailySales: number;
+    cost: number;
+    coverageDays: number;
+    status: string;
+    suggestedQty: number; // Calculated: (Avg * Target) - Stock
+    purchaseCost: number; // Qty * Cost
+    suggestedAction: 'Comprar Urgente' | 'Comprar' | 'Aguardar' | 'Queimar Estoque';
+}
+
 export interface TopMoverItem {
     id: string;
     name: string;

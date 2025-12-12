@@ -1,5 +1,5 @@
 import { EstoqueDetalhe } from "@/types/estoque";
-import { DashboardMetrics } from "@/types/analytics";
+import { DashboardMetrics, PurchaseSuggestion } from "@/types/analytics";
 import { parseNumber, normalizeStatus } from "./formatters";
 
 export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMetrics {
@@ -141,4 +141,53 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
     metrics.topMovers.excess = excessItems;
 
     return metrics;
+}
+
+export function generateSuggestions(items: EstoqueDetalhe[], targetDays = 45): PurchaseSuggestion[] {
+    return items.map(item => {
+        const qty = parseNumber(item.estoque_atual);
+        const daily = parseNumber(item.media_diaria_venda);
+        const cost = parseNumber(item.custo);
+        const coverage = parseNumber(item.dias_de_cobertura);
+        const status = normalizeStatus(item.status_ruptura);
+
+        // Logic 1: Deterministic Calculation
+        // Required for Target Days
+        const requiredStock = daily * targetDays;
+        let suggestion = Math.ceil(requiredStock - qty);
+
+        // If negative, it means we have more than enough (Excess)
+        if (suggestion < 0) suggestion = 0;
+
+        // Logic 2: Categorization (The "Why")
+        let action: PurchaseSuggestion['suggestedAction'] = 'Aguardar';
+
+        if (status === 'RUPTURA' || coverage <= 0) {
+            action = 'Comprar Urgente';
+            // If sales are 0 but it's rupture, we might not suggest buying unless we have demand signals? 
+            // For now, if daily > 0 we buy. If daily = 0, suggestion is 0.
+        } else if (coverage < 15) { // Below safety buffer
+            action = 'Comprar';
+        } else if (status === 'EXCESSO' || coverage > 90) {
+            action = 'Queimar Estoque';
+            suggestion = 0; // Don't buy
+        }
+
+        return {
+            id: item.id_produto,
+            name: item.produto_descricao,
+            currentStock: qty,
+            avgDailySales: daily,
+            cost: cost,
+            coverageDays: coverage,
+            status: status,
+            suggestedQty: suggestion,
+            purchaseCost: suggestion * cost,
+            suggestedAction: action
+        };
+    }).sort((a, b) => {
+        // Priority Sort: Urgent > Buy > Wait > Burn
+        const priorities: Record<string, number> = { 'Comprar Urgente': 4, 'Comprar': 3, 'Queimar Estoque': 2, 'Aguardar': 1 };
+        return (priorities[b.suggestedAction] || 0) - (priorities[a.suggestedAction] || 0) || b.purchaseCost - a.purchaseCost;
+    });
 }
