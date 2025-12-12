@@ -41,9 +41,13 @@ export function ChatInterface() {
             let prompt = "";
 
             if (data.is_dashboard_analysis) {
-                prompt = `Analise o estado geral do meu estoque atual. Tenho ${data.ruptureCount} itens em ruptura, ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.capitalTotal)} em capital parado e nível de serviço de ${data.serviceLevel.toFixed(1)}%. O que devo priorizar?`;
+                const totalRisco = (data.risco?.itens_ruptura || 0) + (data.risco?.itens_excesso || 0);
+                const capital = data.financeiro?.total_estoque || 0;
+                const nivelServico = data.risco?.share_audavel || 0;
+
+                prompt = `Analise o estado geral do meu estoque atual. Tenho ${data.risco?.itens_ruptura || 0} itens em ruptura, ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(capital)} em capital investido e nível de serviço de ${nivelServico.toFixed(1)}%. O que devo priorizar?`;
             } else {
-                prompt = `Explique por que o sistema sugeriu comprar ${data.quantidade_sugerida} un do produto "${data.nome_produto}" (SKU: ${data.codigo_produto}).`;
+                prompt = `Explique por que o sistema sugeriu comprar ${data.quantidade_sugerida || data.sugestao || 0} un do produto "${data.nome_produto || data.nome}" (SKU: ${data.codigo_produto || data.sku}).`;
             }
 
             // Add user message to UI immediately

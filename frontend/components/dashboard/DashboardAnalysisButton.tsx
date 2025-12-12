@@ -47,12 +47,12 @@ export function DashboardAnalysisButton({ data }: { data: DashboardMetrics }) {
     };
 
     return (
-        <button
+        <Button
             onClick={handleAnalyze}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-blue-500/20 transition-transform hover:scale-105 active:scale-95"
+            className="bg-primary text-primary-foreground shadow-lg shadow-blue-500/20 transition-transform hover:scale-105 active:scale-95"
         >
-            <Sparkles size={16} />
+            <Sparkles size={16} className="mr-2" />
             Rodar Análise IA
-        </button>
+        </Button>
     );
 }
