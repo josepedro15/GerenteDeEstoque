@@ -148,6 +148,7 @@ export function generateSuggestions(items: EstoqueDetalhe[], targetDays = 45): P
         const qty = parseNumber(item.estoque_atual);
         const daily = parseNumber(item.media_diaria_venda);
         const cost = parseNumber(item.custo);
+        const price = parseNumber(item.preco);
         const coverage = parseNumber(item.dias_de_cobertura);
         const status = normalizeStatus(item.status_ruptura);
 
@@ -179,6 +180,8 @@ export function generateSuggestions(items: EstoqueDetalhe[], targetDays = 45): P
             currentStock: qty,
             avgDailySales: daily,
             cost: cost,
+            price: price,
+            totalValue: qty * cost,
             coverageDays: coverage,
             status: status,
             suggestedQty: suggestion,

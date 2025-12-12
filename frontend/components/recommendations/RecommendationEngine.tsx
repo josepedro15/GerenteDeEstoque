@@ -1,17 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PurchaseSuggestion } from "@/types/analytics";
 import { formatCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useChat } from "@/contexts/ChatContext";
-import { ShoppingCart, Sparkles, AlertCircle } from "lucide-react";
+import { ShoppingCart, Sparkles, AlertCircle, ArrowUpDown } from "lucide-react";
 
 export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSuggestion[] }) {
     const { sendProductMessage } = useChat();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [sortCriteria, setSortCriteria] = useState<string>("impacto");
+
+    const sortedSuggestions = useMemo(() => {
+        return [...suggestions].sort((a, b) => {
+            switch (sortCriteria) {
+                case "impacto": return b.totalValue - a.totalValue; // Capital tied
+                case "quantidade": return b.currentStock - a.currentStock;
+                case "valor": return b.price - a.price;
+                case "sugestao": return b.suggestedQty - a.suggestedQty;
+                default: return 0;
+            }
+        });
+    }, [suggestions, sortCriteria]);
 
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedIds);
@@ -21,11 +41,11 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
     };
 
     const toggleAll = () => {
-        if (selectedIds.size === suggestions.length) setSelectedIds(new Set());
-        else setSelectedIds(new Set(suggestions.map(s => s.id)));
+        if (selectedIds.size === sortedSuggestions.length) setSelectedIds(new Set());
+        else setSelectedIds(new Set(sortedSuggestions.map(s => s.id)));
     };
 
-    const selectedItems = suggestions.filter(s => selectedIds.has(s.id));
+    const selectedItems = sortedSuggestions.filter(s => selectedIds.has(s.id));
     const totalCost = selectedItems.reduce((acc, curr) => acc + curr.purchaseCost, 0);
 
     const handleAnalyze = () => {
@@ -58,6 +78,26 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
 
     return (
         <div className="space-y-4">
+            {/* Controls Bar */}
+            <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur-md">
+                <div className="flex items-center gap-4">
+                    <span className="text-sm text-muted-foreground flex items-center gap-2">
+                        <ArrowUpDown size={14} /> Ordenar por:
+                    </span>
+                    <Select value={sortCriteria} onValueChange={setSortCriteria}>
+                        <SelectTrigger className="w-[180px] bg-black/20 border-white/10 text-white">
+                            <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="impacto">Maior Valor em Estoque</SelectItem>
+                            <SelectItem value="quantidade">Maior Quantidade</SelectItem>
+                            <SelectItem value="valor">Maior Preço (Venda)</SelectItem>
+                            <SelectItem value="sugestao">Maior Sugestão Compra</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
             {/* Action Bar */}
             {selectedIds.size > 0 && (
                 <div className="sticky top-4 z-50 flex items-center justify-between rounded-xl border border-blue-500/20 bg-blue-500/10 p-4 backdrop-blur-md animate-in fade-in slide-in-from-top-2">
@@ -82,21 +122,22 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
                 <table className="w-full text-left text-sm">
                     <thead className="bg-white/5 text-xs uppercase text-muted-foreground">
                         <tr>
-                            <th className="px-6 py-4">
+                            <th className="px-6 py-4 w-[40px]">
                                 <Checkbox
-                                    checked={selectedIds.size === suggestions.length && suggestions.length > 0}
+                                    checked={selectedIds.size === sortedSuggestions.length && sortedSuggestions.length > 0}
                                     onCheckedChange={toggleAll}
                                 />
                             </th>
                             <th className="px-6 py-4 font-medium">Produto</th>
-                            <th className="px-6 py-4 font-medium">Ação Sugerida (Lógica)</th>
-                            <th className="px-6 py-4 font-medium">Qtd. Sugerida</th>
-                            <th className="px-6 py-4 font-medium">Custo Estimado</th>
+                            <th className="px-6 py-4 font-medium">Estoque Atual</th>
+                            <th className="px-6 py-4 font-medium">Valor Total</th>
+                            <th className="px-6 py-4 font-medium">Sugestão</th>
+                            <th className="px-6 py-4 font-medium">Custo / Preço</th>
                             <th className="px-6 py-4 font-medium">Cobertura</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                        {suggestions.map((item) => (
+                        {sortedSuggestions.map((item) => (
                             <tr key={item.id} className={`group hover:bg-white/5 transition-colors ${selectedIds.has(item.id) ? 'bg-blue-500/5' : ''}`}>
                                 <td className="px-6 py-4">
                                     <Checkbox
@@ -107,19 +148,30 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
                                 <td className="px-6 py-4">
                                     <div>
                                         <p className="font-medium text-white max-w-[250px] truncate" title={item.name}>{item.name}</p>
-                                        <p className="text-[10px] text-muted-foreground">SKU: {item.id}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Badge variant="outline" className={`border text-[10px] px-1 py-0 ${getActionColor(item.suggestedAction)}`}>
+                                                {item.suggestedAction}
+                                            </Badge>
+                                            <p className="text-[10px] text-muted-foreground">SKU: {item.id}</p>
+                                        </div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4">
-                                    <Badge variant="outline" className={`border ${getActionColor(item.suggestedAction)}`}>
-                                        {item.suggestedAction}
-                                    </Badge>
+                                <td className="px-6 py-4 text-white">
+                                    {item.currentStock} un
                                 </td>
-                                <td className="px-6 py-4 text-white font-mono">
-                                    {item.suggestedQty} un
+                                <td className="px-6 py-4 text-white font-medium">
+                                    {formatCurrency(item.totalValue)}
                                 </td>
                                 <td className="px-6 py-4 text-white">
-                                    {formatCurrency(item.purchaseCost)}
+                                    <span className="font-mono bg-white/10 px-2 py-1 rounded text-xs">
+                                        {item.suggestedQty > 0 ? `+${item.suggestedQty}` : '0'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-xs">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-muted-foreground">C: {formatCurrency(item.cost)}</span>
+                                        <span className="text-green-400">V: {formatCurrency(item.price)}</span>
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className={`flex items-center gap-2 ${item.coverageDays < 15 ? 'text-red-400' : 'text-green-400'}`}>

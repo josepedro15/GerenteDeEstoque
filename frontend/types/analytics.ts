@@ -28,6 +28,8 @@ export interface PurchaseSuggestion {
     currentStock: number;
     avgDailySales: number;
     cost: number;
+    price: number;
+    totalValue: number; // Current Stock * Cost
     coverageDays: number;
     status: string;
     suggestedQty: number; // Calculated: (Avg * Target) - Stock
