@@ -1,30 +1,12 @@
 import { ArrowUpRight, AlertTriangle, DollarSign, Package, TrendingUp } from "lucide-react";
 import { getStockData } from "@/app/actions/inventory";
-import { ExplainButton } from "@/components/recommendations/ExplainButton";
 import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysisButton";
+import { parseNumber, normalizeStatus, cleanStatusText, formatCurrency } from "@/lib/formatters";
 
 export const dynamic = 'force-dynamic'; // Force fresh data on every request
 
 export default async function DashboardPage() {
     const { sumario, detalhe } = await getStockData();
-
-    // Helper to parse localized numbers
-    // The data comes with dots for decimals (12.00000000), standard parseFloat handles this.
-    // We only replace comma if it exists, just in case.
-    const parseNumber = (val: string | number) => {
-        if (typeof val === 'number') return val;
-        if (!val) return 0;
-        const strVal = val.toString();
-        // If it looks like Brazilian format (1.200,00), handle it. Otherwise assume standard dot decimal.
-        if (strVal.includes(',') && strVal.includes('.')) {
-            // Mixed standard, assume dot is thousand, comma is decimal? Or vice versa?
-            // Given the screenshot shows "12.00000000", standard parseFloat is best.
-            // We'll just replace comma with dot if dot doesn't exist?
-            // Safest: JUST parseFloat because screenshot shows standard DB floats.
-            return parseFloat(strVal);
-        }
-        return parseFloat(strVal.replace(',', '.'));
-    };
 
     // Parse numeric values from string using the helper
     const items = detalhe.map(item => ({
@@ -35,7 +17,7 @@ export default async function DashboardPage() {
         preco: parseNumber(item.preco)
     }));
 
-    if (items.length === 0) {
+    if (items.length === 0 && sumario.length === 0) {
         return (
             <div className="p-8 text-center text-red-500 bg-red-100 rounded-lg m-4 border border-red-400">
                 <h2 className="text-xl font-bold mb-2">⚠️ Nenhum dado encontrado</h2>
@@ -49,33 +31,39 @@ export default async function DashboardPage() {
         );
     }
 
+    // Filter items for the list
     const ruptureItems = items.filter((item) => {
-        const status = item.status_ruptura?.toUpperCase() || '';
-        // Check for includes to verify status despite emojis (e.g. 🟠 Crítico)
-        return status.includes("CRÍTICO") || status.includes("CRITICO") || status.includes("RUPTURA");
+        const normalized = normalizeStatus(item.status_ruptura);
+        return normalized === 'CRÍTICO' || normalized === 'RUPTURA';
     });
-    const ruptureCount = ruptureItems.length;
 
-    // Capital in Stock
+    // Extract detailed KPIs from Summary rows (which contain pre-calculated totals)
+    // Map database status strings (with emojis) to our internal logic
+    // DB Statuses found: "⚪ Excesso", "🟠 Crítico", "🟡 Atenção", "🟢 Saudável"
+
+    const getSummaryValue = (statusKey: string) => {
+        const found = sumario.find(s => normalizeStatus(s.status_ruptura) === statusKey);
+        return found ? parseInt(found.total_produtos) : 0;
+    };
+
+    const ruptureCount = getSummaryValue('CRÍTICO'); // 🟠 Crítico
+    const attentionCount = getSummaryValue('ATENÇÃO'); // 🟡 Atenção
+    const excessCount = getSummaryValue('EXCESSO');    // ⚪ Excesso
+    const healthyCount = getSummaryValue('SAUDÁVEL');  // 🟢 Saudável
+
+    // Capital in Stock - Calculate from details as summary might not have it yet
     const capitalTotal = items.reduce((acc, item) => acc + (item.estoque_atual * item.custo), 0);
 
-    // Purchase Suggestion (Not available in new view explicitly, maybe 'Excesso' implies negative suggestion? 
-    // Or we use those with low coverage? The view replaces ROP/Suggestion with coverage/status. 
-    // For now, we'll sum capital of text-critical items as a proxy or set to 0 if not applicable)
-    // Actually, let's use items with 'Crítico' status as "Sugestão de Compra" needed.
-    const purchaseSuggestionItems = items.filter(item => item.status_ruptura === "Crítico" || item.status_ruptura === "Atenção");
-    const purchaseSuggestionValue = 0; // The view doesn't give suggested quantity, so we can't calculate value yet.
-    const purchaseSuggestionCount = purchaseSuggestionItems.length;
+    const purchaseSuggestionCount = ruptureCount + attentionCount;
+    const purchaseSuggestionValue = 0; // Not available in summary
 
-    // Service Level
-    const totalItems = items.length;
+    // Service Level Calculation
+    const totalItems = ruptureCount + attentionCount + excessCount + healthyCount;
+    // Or use items.length if summary total matches
+
     const serviceLevel = totalItems > 0
         ? ((totalItems - ruptureCount) / totalItems) * 100
         : 100;
-
-    // Format helpers
-    const formatCurrency = (val: number) =>
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
     return (
         <div className="space-y-8">
@@ -116,8 +104,8 @@ export default async function DashboardPage() {
                     </div>
                     <div className="mt-4 flex items-center gap-2 text-sm text-red-400">
                         <TrendingUp size={16} />
-                        <span className="font-medium">Atenção</span>
-                        <span className="text-muted-foreground">items críticos</span>
+                        <span className="font-medium">Crítico</span>
+                        <span className="text-muted-foreground">repor urgente</span>
                     </div>
                 </div>
 
@@ -138,19 +126,19 @@ export default async function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Card 3: Pedidos (Adapted) */}
+                {/* Card 3: Pedidos (Adapted to 'Atenção') */}
                 <div className="glass-card rounded-2xl p-6">
                     <div className="flex items-start justify-between">
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Itens p/ Repor</p>
-                            <h3 className="mt-2 text-3xl font-bold text-white">{purchaseSuggestionCount}</h3>
+                            <p className="text-sm font-medium text-muted-foreground">Atenção</p>
+                            <h3 className="mt-2 text-3xl font-bold text-white">{attentionCount} Itens</h3>
                         </div>
                         <div className="rounded-lg bg-purple-500/10 p-2 text-purple-400">
                             <Package size={20} />
                         </div>
                     </div>
                     <p className="mt-4 text-sm text-muted-foreground">
-                        Itens com cobertura crítica
+                        Monitorar cobertura
                     </p>
                 </div>
 
@@ -180,8 +168,8 @@ export default async function DashboardPage() {
                 <div className="glass-card col-span-2 rounded-2xl p-6 h-[400px]">
                     <h3 className="text-lg font-semibold text-white">Evolução de Vendas vs Estoque</h3>
                     <div className="flex h-full items-center justify-center text-muted-foreground">
-                        {/* Chart Placeholder */}
-                        [Gráfico de Linha aqui via Recharts]
+                        {/* Chart Placeholder used here, user can request implementation later */}
+                        [Gráfico de Linha temporariamente indisponível - Requer dados históricos]
                     </div>
                 </div>
 
@@ -198,7 +186,6 @@ export default async function DashboardPage() {
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
                                     <div className="flex items-center gap-2">
-                                        {/* <ExplainButton product={item} />  - Commented out pending ExplainButton refactor */}
                                         <p className="text-xs font-bold text-red-400">{item.dias_de_cobertura.toFixed(0)} dias</p>
                                     </div>
                                     <p className="text-[10px] text-muted-foreground">para acabar</p>

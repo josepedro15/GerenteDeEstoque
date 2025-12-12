@@ -10,30 +10,16 @@ import {
 } from "lucide-react";
 import { getStockData } from "@/app/actions/inventory";
 import { ExplainButton } from "@/components/recommendations/ExplainButton";
+import { parseNumber, normalizeStatus, cleanStatusText } from "@/lib/formatters";
 
 export default async function RecommendationsPage() {
     const { detalhe } = await getStockData();
-
-    // Helper to parse localized numbers
-    // Data comes as standard floats string: "12.000000"
-    const parseNumber = (val: string | number) => {
-        if (typeof val === 'number') return val;
-        if (!val) return 0;
-        // Just standard parse float, as data is standard DB format. 
-        // We only handle commas if they really exist (e.g. from manual input elsewhere), 
-        // but removing dots blindly is what broke it.
-        const strVal = val.toString();
-        if (strVal.includes(',')) {
-            return parseFloat(strVal.replace(',', '.'));
-        }
-        return parseFloat(strVal);
-    };
 
     // Parse numeric values
     const data = detalhe.map(item => ({
         ...item,
         estoque_atual: parseNumber(item.estoque_atual),
-        media_diaria_venda: parseNumber(item.media_diaria_venda),
+        media_diaria_venda: item.media_diaria_venda ? parseNumber(item.media_diaria_venda) : 0,
         dias_de_cobertura: parseNumber(item.dias_de_cobertura),
         preco: parseNumber(item.preco),
         // rank_por_status seems to be the priority in the new view
@@ -98,56 +84,59 @@ export default async function RecommendationsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {data.map((item) => (
-                                <tr key={item.id_produto} className="group hover:bg-white/5 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-lg bg-white/10" />
-                                            <div>
-                                                <p className="font-medium text-white">{item.produto_descricao}</p>
-                                                <p className="text-[10px] text-muted-foreground">SKU: {item.id_produto}</p>
+                            {data.map((item) => {
+                                const statusNorm = normalizeStatus(item.status_ruptura);
+                                return (
+                                    <tr key={item.id_produto} className="group hover:bg-white/5 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-lg bg-white/10" />
+                                                <div>
+                                                    <p className="font-medium text-white">{item.produto_descricao}</p>
+                                                    <p className="text-[10px] text-muted-foreground">SKU: {item.id_produto}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-white">
-                                        {item.estoque_atual} un
-                                    </td>
-                                    <td className="px-6 py-4 text-white">
-                                        {item.media_diaria_venda.toFixed(2)}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className={`font-bold ${item.dias_de_cobertura < 15 ? 'text-red-400' : 'text-green-400'}`}>
-                                            {item.dias_de_cobertura.toFixed(0)} dias
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <Badge
-                                            variant={
-                                                item.status_ruptura === 'Ruptura' || item.status_ruptura === 'Crítico' ? 'destructive' :
-                                                    item.status_ruptura === 'Atenção' ? 'secondary' :
-                                                        item.status_ruptura === 'Excesso' ? 'outline' :
-                                                            'default'
-                                            }
-                                            className={
-                                                item.status_ruptura === 'Ruptura' || item.status_ruptura === 'Crítico' ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' :
-                                                    item.status_ruptura === 'Atenção' ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30' :
-                                                        item.status_ruptura === 'Excesso' ? 'bg-yellow-500/10 text-yellow-400' :
-                                                            'bg-green-500/20 text-green-400'
-                                            }
-                                        >
-                                            {item.status_ruptura.toUpperCase()}
-                                        </Badge>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            {/* <ExplainButton product={item} /> */}
-                                            <Button size="sm" variant="ghost" className="h-8 gap-1">
-                                                Detalhes <ChevronRight className="h-3 w-3" />
-                                            </Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                        <td className="px-6 py-4 text-white">
+                                            {item.estoque_atual} un
+                                        </td>
+                                        <td className="px-6 py-4 text-white">
+                                            {item.media_diaria_venda.toFixed(2)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className={`font-bold ${item.dias_de_cobertura < 15 ? 'text-red-400' : 'text-green-400'}`}>
+                                                {item.dias_de_cobertura.toFixed(0)} dias
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <Badge
+                                                variant={
+                                                    statusNorm === 'RUPTURA' || statusNorm === 'CRÍTICO' ? 'destructive' :
+                                                        statusNorm === 'ATENÇÃO' ? 'secondary' :
+                                                            statusNorm === 'EXCESSO' ? 'outline' :
+                                                                'default'
+                                                }
+                                                className={
+                                                    statusNorm === 'RUPTURA' || statusNorm === 'CRÍTICO' ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' :
+                                                        statusNorm === 'ATENÇÃO' ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30' :
+                                                            statusNorm === 'EXCESSO' ? 'bg-yellow-500/10 text-yellow-400' :
+                                                                'bg-green-500/20 text-green-400'
+                                                }
+                                            >
+                                                {cleanStatusText(item.status_ruptura || '')}
+                                            </Badge>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {/* <ExplainButton product={item} /> */}
+                                                <Button size="sm" variant="ghost" className="h-8 gap-1">
+                                                    Detalhes <ChevronRight className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
 
                             {data.length === 0 && (
                                 <tr>

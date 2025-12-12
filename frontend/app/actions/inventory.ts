@@ -23,22 +23,17 @@ export async function getStockData(): Promise<StockData> {
             return { sumario: [], detalhe: [] };
         }
 
-        const rawData = data as EstoqueItem[];
+        const rawData = data as any[];
 
-        // Classification fallback: If tipo_registro is missing, deduce from columns.
-        // Summary rows generally have id_produto as null/undefined.
-        // Detail rows have id_produto populated.
-        const sumario = rawData.filter((item): item is EstoqueSumario => {
-            const anyItem = item as any;
-            return anyItem.tipo_registro?.toUpperCase() === 'SUMARIO' ||
-                (!anyItem.id_produto && !!anyItem.total_produtos);
-        });
+        // Filter SUMARIO: tipo_registro is 'SUMARIO'
+        // CASTING note: The database returns everything as strings usually, but our interface expects numbers.
+        // We will pass the raw strings to the frontend and let the frontend formatters handle parsing
+        // OR we map them here. Since we made `formatters.ts`, let's keep raw data flowing to components 
+        // essentially, or loosely cast.
 
-        const detalhe = rawData.filter((item): item is EstoqueDetalhe => {
-            const anyItem = item as any;
-            return anyItem.tipo_registro?.toUpperCase() === 'DETALHE' ||
-                (!!anyItem.id_produto);
-        });
+        const sumario = rawData.filter(item => item.tipo_registro === 'SUMARIO') as EstoqueSumario[];
+
+        const detalhe = rawData.filter(item => item.tipo_registro === 'DETALHE') as EstoqueDetalhe[];
 
         return { sumario, detalhe };
     } catch (error) {
