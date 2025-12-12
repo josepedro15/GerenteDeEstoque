@@ -57,9 +57,14 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
             itens: selectedItems.map(s => ({
                 sku: s.id,
                 nome: s.name,
-                sugestao: s.suggestedQty,
+                estoque_atual: s.currentStock,
+                custo_unit: s.cost,
+                preco_venda: s.price,
+                valor_total_estoque: s.totalValue,
+                cobertura: s.coverageDays,
+                sugestao_compra: s.suggestedQty,
                 motivo: s.suggestedAction,
-                custo_est: s.purchaseCost
+                custo_estimado_compra: s.purchaseCost
             })),
             contexto: "O usuário selecionou estes itens para um possível pedido de compra. Analise a viabilidade, riscos e sugira negociações."
         };
