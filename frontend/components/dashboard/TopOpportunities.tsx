@@ -17,12 +17,12 @@ export function TopOpportunities({
                 </div>
                 <div className="space-y-4">
                     {ruptureItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between border-b border-white/5 pb-3">
-                            <div>
-                                <p className="font-medium text-white truncate max-w-[200px]">{item.name}</p>
-                                <p className="text-xs text-muted-foreground">{item.id}</p>
+                        <div key={item.id} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                            <div className="flex-1 min-w-0 pr-4">
+                                <p className="font-medium text-white truncate">{item.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{item.id}</p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0">
                                 <p className="font-bold text-red-400">{formatCurrency(item.value)}</p>
                                 <p className="text-[10px] text-muted-foreground">Perda Diária Est.</p>
                             </div>
@@ -39,12 +39,12 @@ export function TopOpportunities({
                 </div>
                 <div className="space-y-4">
                     {excessItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between border-b border-white/5 pb-3">
-                            <div>
-                                <p className="font-medium text-white truncate max-w-[200px]">{item.name}</p>
-                                <p className="text-xs text-muted-foreground">{item.id}</p>
+                        <div key={item.id} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                            <div className="flex-1 min-w-0 pr-4">
+                                <p className="font-medium text-white truncate">{item.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{item.id}</p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right shrink-0">
                                 <p className="font-bold text-blue-400">{formatCurrency(item.value)}</p>
                                 <p className="text-[10px] text-muted-foreground">Valor Total</p>
                             </div>
