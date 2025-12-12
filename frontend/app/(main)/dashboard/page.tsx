@@ -5,12 +5,21 @@ import { KPIGrid } from "@/components/dashboard/KPIGrid";
 import { StockStatusPie } from "@/components/dashboard/StockStatusPie";
 import { CoverageBar } from "@/components/dashboard/CoverageBar";
 import { TopOpportunities } from "@/components/dashboard/TopOpportunities";
+import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysisButton";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 
 export default async function DashboardPage() {
     const { detalhe } = await getStockData();
     const metrics = calculateDashboardMetrics(detalhe);
+
+    const analysisData = {
+        ruptureCount: metrics.risk.ruptureCount,
+        capitalTotal: metrics.financial.totalInventoryValue,
+        purchaseSuggestionValue: 0, // Placeholder, can be calculated effectively later or sum rupture value
+        serviceLevel: metrics.risk.healthyShare, // Use healthyShare as service level proxy
+        itemCount: metrics.financial.totalSkuCount
+    };
 
     return (
         <div className="space-y-6">
@@ -25,6 +34,7 @@ export default async function DashboardPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <DashboardAnalysisButton data={analysisData} />
                     <Button variant="outline" className="border-white/10 bg-white/5 text-muted-foreground hover:text-white hover:bg-white/10">
                         <Calendar className="mr-2 h-4 w-4" />
                         Hoje

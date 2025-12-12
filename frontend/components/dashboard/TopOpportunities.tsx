@@ -1,5 +1,6 @@
 import { TopMoverItem } from "@/types/analytics";
 import { formatCurrency } from "@/lib/formatters";
+import { ExplainButton } from "@/components/recommendations/ExplainButton";
 
 export function TopOpportunities({
     ruptureItems,
@@ -22,9 +23,12 @@ export function TopOpportunities({
                                 <p className="font-medium text-white truncate">{item.name}</p>
                                 <p className="text-xs text-muted-foreground truncate">{item.id}</p>
                             </div>
-                            <div className="text-right shrink-0">
-                                <p className="font-bold text-red-400">{formatCurrency(item.value)}</p>
-                                <p className="text-[10px] text-muted-foreground">Perda Diária Est.</p>
+                            <div className="flex items-center gap-3 shrink-0">
+                                <div className="text-right">
+                                    <p className="font-bold text-red-400">{formatCurrency(item.value)}</p>
+                                    <p className="text-[10px] text-muted-foreground">Perda Diária Est.</p>
+                                </div>
+                                <ExplainButton product={{ ...item, id_produto: item.id, produto_descricao: item.name }} />
                             </div>
                         </div>
                     ))}
@@ -44,9 +48,12 @@ export function TopOpportunities({
                                 <p className="font-medium text-white truncate">{item.name}</p>
                                 <p className="text-xs text-muted-foreground truncate">{item.id}</p>
                             </div>
-                            <div className="text-right shrink-0">
-                                <p className="font-bold text-blue-400">{formatCurrency(item.value)}</p>
-                                <p className="text-[10px] text-muted-foreground">Valor Total</p>
+                            <div className="flex items-center gap-3 shrink-0">
+                                <div className="text-right">
+                                    <p className="font-bold text-blue-400">{formatCurrency(item.value)}</p>
+                                    <p className="text-[10px] text-muted-foreground">Valor Total</p>
+                                </div>
+                                <ExplainButton product={{ ...item, id_produto: item.id, produto_descricao: item.name }} />
                             </div>
                         </div>
                     ))}
