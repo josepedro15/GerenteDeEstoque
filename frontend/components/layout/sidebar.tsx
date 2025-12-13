@@ -12,7 +12,9 @@ import {
     Calculator,
     Settings,
     LogOut,
-    BarChart
+    BarChart,
+    BrainCircuit,
+    PackageCheck
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { signout } from "@/app/login/actions";
@@ -20,6 +22,8 @@ import { signout } from "@/app/login/actions";
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
     { icon: Sparkles, label: "Sugestões (IA)", href: "/recommendations", activeColor: "text-blue-400" },
+    { icon: BrainCircuit, label: "Simulador IA", href: "/simulator", activeColor: "text-purple-400" },
+    { icon: PackageCheck, label: "Fornecedores", href: "/suppliers", activeColor: "text-orange-400" },
 ];
 
 export function Sidebar() {
@@ -78,19 +82,15 @@ export function Sidebar() {
                 {/* Bottom Actions */}
                 <div className="mt-auto border-t border-white/5 pt-4">
                     <NextLink
-                        href="/calculator"
+                        href="/settings" // Updated to use Link
                         className={cn(
-                            "group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors hover:bg-white/5",
-                            pathname === "/calculator" ? "text-white" : "text-muted-foreground hover:text-white",
+                            "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors hover:bg-white/5",
+                            pathname === "/settings" ? "text-white" : "text-muted-foreground hover:text-white"
                         )}
                     >
-                        <Calculator size={20} />
-                        <span>Calculadora</span>
-                    </NextLink>
-                    <button className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-white">
                         <Settings size={20} />
-                        Configurações
-                    </button>
+                        <span>Configurações</span>
+                    </NextLink>
                     <form action={signout}>
                         <button className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-red-400/80 transition-colors hover:bg-red-500/10 hover:text-red-400">
                             <LogOut size={20} />

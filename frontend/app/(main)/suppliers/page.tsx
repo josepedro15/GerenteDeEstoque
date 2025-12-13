@@ -1,79 +1,99 @@
-import { getSuppliers } from "@/app/actions/inventory";
-import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+"use client";
 
-export default async function SuppliersPage() {
-    const suppliers = await getSuppliers();
+import { motion } from "framer-motion";
+import { PackageCheck, ShieldCheck, Clock, TrendingUp, AlertTriangle } from "lucide-react";
+import { useState } from "react";
 
+// Mock Data
+const suppliers = [
+    { id: 1, name: "Votorantim Cimentos", reliability: 98, avgLeadTime: "2 dias", risk: "BAIXO", status: "Excelente" },
+    { id: 2, name: "Tigre Tubos e Conexões", reliability: 95, avgLeadTime: "3 dias", risk: "BAIXO", status: "Bom" },
+    { id: 3, name: "Gerdau Aços", reliability: 88, avgLeadTime: "5 dias", risk: "MÉDIO", status: "Atenção" },
+    { id: 4, name: "Fornecedor Local X", reliability: 65, avgLeadTime: "10 dias", risk: "ALTO", status: "Crítico" },
+];
+
+export default function SuppliersPage() {
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Fornecedores</h1>
-                    <p className="text-muted-foreground mt-1">Gerenciamento e visualização de parceiros.</p>
-                </div>
-            </div>
+        <div className="min-h-screen bg-[#050505] p-8 text-white">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mx-auto max-w-6xl"
+            >
+                <header className="mb-10 border-b border-white/10 pb-6">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/20 text-orange-400 p-2">
+                            <PackageCheck size={32} />
+                        </div>
+                        <h1 className="text-3xl font-bold tracking-tight">Scorecard de Fornecedores</h1>
+                    </div>
+                    <p className="max-w-2xl text-muted-foreground">
+                        Monitoramento de desempenho e confiabilidade dos seus parceiros comerciais.
+                    </p>
+                </header>
 
-            {/* Filters */}
-            <div className="flex items-center gap-4 rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur-md">
-                <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Buscar fornecedor..."
-                        className="w-full rounded-lg border border-white/10 bg-black/20 py-2 pl-9 pr-4 text-sm text-white placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                </div>
-            </div>
-
-            {/* Table */}
-            <div className="rounded-xl border border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-white/5 text-xs uppercase text-muted-foreground">
-                            <tr>
-                                <th className="px-6 py-4 font-medium">Fornecedor</th>
-                                <th className="px-6 py-4 font-medium">Cidade</th>
-                                <th className="px-6 py-4 font-medium">Lead Time (Dias)</th>
-                                <th className="px-6 py-4 font-medium">ID</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {suppliers.map((supplier) => (
-                                <tr key={supplier.id_fornecedor} className="group hover:bg-white/5 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-xs">
-                                                {supplier.nome_fornecedor.substring(0, 2).toUpperCase()}
-                                            </div>
-                                            <span className="font-medium text-white">{supplier.nome_fornecedor}</span>
+                <div className="grid gap-6">
+                    {suppliers.map((supplier, i) => (
+                        <motion.div
+                            key={supplier.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all hover:bg-white/10"
+                        >
+                            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                                {/* Name & Status */}
+                                <div className="flex items-center gap-4">
+                                    <div className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold ${supplier.risk === 'BAIXO' ? 'bg-emerald-500/20 text-emerald-400' :
+                                            supplier.risk === 'MÉDIO' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                'bg-red-500/20 text-red-400'
+                                        }`}>
+                                        {supplier.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">{supplier.name}</h3>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <span className={`inline-block h-2 w-2 rounded-full ${supplier.risk === 'BAIXO' ? 'bg-emerald-500' :
+                                                    supplier.risk === 'MÉDIO' ? 'bg-yellow-500' :
+                                                        'bg-red-500'
+                                                }`} />
+                                            Status: {supplier.status}
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-muted-foreground">
-                                        {supplier.cidade || "-"}
-                                    </td>
-                                    <td className="px-6 py-4 text-white">
-                                        <Badge variant="outline" className="bg-white/5">
-                                            {supplier.lead_time_padrao} dias
-                                        </Badge>
-                                    </td>
-                                    <td className="px-6 py-4 text-xs text-muted-foreground">
-                                        {supplier.id_fornecedor}
-                                    </td>
-                                </tr>
-                            ))}
+                                    </div>
+                                </div>
 
-                            {suppliers.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                                        Nenhum fornecedor encontrado.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                {/* Metrics */}
+                                <div className="grid grid-cols-2 gap-8 md:grid-cols-3">
+                                    <div className="text-center md:text-left">
+                                        <div className="mb-1 flex items-center justify-center gap-2 text-sm text-muted-foreground md:justify-start">
+                                            <ShieldCheck size={16} />
+                                            Confiabilidade
+                                        </div>
+                                        <span className="text-xl font-bold text-white">{supplier.reliability}%</span>
+                                    </div>
+                                    <div className="text-center md:text-left">
+                                        <div className="mb-1 flex items-center justify-center gap-2 text-sm text-muted-foreground md:justify-start">
+                                            <Clock size={16} />
+                                            Lead Time
+                                        </div>
+                                        <span className="text-xl font-bold text-white">{supplier.avgLeadTime}</span>
+                                    </div>
+                                    <div className="hidden text-center md:block md:text-left">
+                                        <div className="mb-1 flex items-center justify-center gap-2 text-sm text-muted-foreground md:justify-start">
+                                            <AlertTriangle size={16} />
+                                            Risco
+                                        </div>
+                                        <span className={`text-xl font-bold ${supplier.risk === 'BAIXO' ? 'text-emerald-400' :
+                                                supplier.risk === 'MÉDIO' ? 'text-yellow-400' :
+                                                    'text-red-400'
+                                            }`}>{supplier.risk}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }

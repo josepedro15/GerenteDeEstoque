@@ -9,12 +9,15 @@ import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysi
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 
+import { MorningBriefing } from "@/components/dashboard/MorningBriefing";
+
 export default async function DashboardPage() {
     const { detalhe } = await getStockData();
     const metrics = calculateDashboardMetrics(detalhe);
 
     return (
         <div className="space-y-6">
+            <MorningBriefing />
             {/* Header Area */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
