@@ -1,34 +1,139 @@
 'use server';
 
+import { supabase } from "@/lib/supabase";
+
+// N8N Webhook URL provided by user
+const N8N_WEBHOOK_URL = 'https://webhook.aiensed.com/webhook/marketing';
+
+export async function getMarketingOpportunities() {
+    try {
+        const { data, error } = await supabase
+            .from('dados_estoque')
+            .select('*')
+            .eq('tipo_registro', 'DETALHE');
+
+        if (error) throw error;
+        if (!data) return [];
+
+        // Logic to categorize items
+        // 1. EXCESS: High count (e.g., > 100) or high value? Let's say coverage > 90 days.
+        // 2. SEASONAL: Mock logic (random items) until we have sales history.
+        // 3. NEW: Items with 'data_cadastro' recent? Schema doesn't have it clearly in 'dados_estoque', assume random for demo or low stock items as 'New Arrivals' logic?
+        
+        // For this MVP, we map based on simple heuristics from the 'status' or numeric fields
+        
+        const products = data.map((item: any) => ({
+            id: item.sku, // database uses sku as identifier mostly
+            name: item.produto || item.sku,
+            stock: Number(item.estoque_atual || 0),
+            price: Number(item.preco_venda || 0),
+            coverage: Number(item.cobertura_dias || 0)
+        }));
+
+        // Filter and Label
+        const opportunities = [];
+
+        // Excess Logic: Coverage > 90 days
+        const excessItems = products.filter(p => p.coverage > 90).slice(0, 3);
+        excessItems.forEach(p => opportunities.push({
+            id: p.id,
+            name: p.name,
+            reason: "EXCESS",
+            label: `Excesso Crítico (${p.coverage.toFixed(0)} dias)`,
+            stock: p.stock,
+            price: p.price
+        }));
+
+        // Seasonal Logic: High Stock + High Price (Mock heuristic)
+        const seasonalItems = products.filter(p => p.price > 100 && p.stock > 10).slice(0, 2);
+        seasonalItems.forEach(p => opportunities.push({
+            id: p.id,
+            name: p.name,
+            reason: "SEASONAL",
+            label: "Alta Sazonalidade (Sugestão IA)",
+            stock: p.stock,
+            price: p.price
+        }));
+
+         // New Logic: Just pick some others
+        const newItems = products.slice(10, 12);
+         newItems.forEach(p => opportunities.push({
+            id: p.id,
+            name: p.name,
+            reason: "NEW",
+            label: "Lançamento / Destaque",
+            stock: p.stock,
+            price: p.price
+        }));
+
+        return opportunities;
+
+    } catch (e) {
+        console.error("Error fetching opportunities:", e);
+        return [];
+    }
+}
+
 export async function generateCampaign(productIds: string[]) {
-    // In a real scenario, fetch product details from DB using IDs
-    // Then send to n8n webhook
-
-    await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate thinking
-
-    // Mock Response
-    return {
-        success: true,
-        summary: {
-            objective: "Queima de Estoque",
-            tone: "Urgente & Promocional"
-        },
-        channels: {
-            instagram: {
-                copy: "🚨 QUEIMA DE ESTOQUE! 🚨\n\nSó hoje você leva Cimento CP-II com preço de custo! É pra zerar o pátio.\n\n🏗 Ideal para sua obra render mais.\n🏃‍♂️ Corra que restam poucas unidades.\n\n📍 Venha nos visitar ou peça pelo link na bio!\n\n#Oferta #Construção #Cimento #PromoçãoRelampago",
-                imagePrompt: "Foto de alta qualidade de sacos de cimento empilhados em um armazém organizado, com iluminação dramática e um selo vermelho grande escrito 'OFERTA URGENTE' em 3D no canto.",
-                sticker: "🔥 SÓ HOJE"
-            },
-            whatsapp: {
-                script: "Olá [Nome do Cliente]! Tudo bem? \n\nAqui é o Pedro da SmartOrders. \n\nEstou com uma oportunidade única hoje: Cimento CP-II saindo a *R$ 28,90*! 🔥\n\nO preço tá muito abaixo da tabela, mas é só para as últimas 500 unidades. \n\nPosso separar quantos sacos pra você? 🚛",
-                trigger: "Escassez: Últimas 500 unidades"
-            },
-            physical: {
-                headline: "A OPORTUNIDADE QUE SUA OBRA ESPERAVA",
-                subheadline: "Cimento CP-II com preço de fábrica. Leve agora.",
-                offer: "De R$ 32,90 por R$ 28,90",
-                layout: "Cartaz A3 com fundo amarelo e letras pretas impactantes."
-            }
+    try {
+        // 1. Fetch full product details
+        const { data: products } = await supabase
+            .from('dados_estoque')
+            .select('*')
+            .in('sku', productIds)
+            .eq('tipo_registro', 'DETALHE');
+        
+        if (!products || products.length === 0) {
+            throw new Error("Produtos não encontrados");
         }
-    };
+
+        // 2. Prepare Payload for AI
+        const payload = {
+            action: "generate_campaign",
+            products: products.map(p => ({
+                sku: p.sku,
+                name: p.produto,
+                price: p.preco_venda,
+                stock: p.estoque_atual,
+                coverage: p.cobertura_dias
+            })),
+            date: new Date().toISOString().split('T')[0],
+            context: "Gerar campanha focada em conversão imediata."
+        };
+
+        // 3. Send to N8N
+        const response = await fetch(N8N_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro no N8N: ${response.statusText}`);
+        }
+
+        const aiResult = await response.json();
+
+        // 4. Return formatted result
+        // Expected format from N8N matching our UI:
+        // { success: true, channels: { instagram: {...}, whatsapp: {...}, physical: {...} } }
+        
+        // Ensure structure even if N8N returns raw text (defensive coding)
+        if (aiResult.channels) {
+            return aiResult;
+        } else {
+             // Fallback if AI returns unstructured data
+             return {
+                 success: true,
+                 campaign: aiResult // Pass through whatever we got
+             }
+        }
+
+    } catch (e) {
+        console.error("Campaign Generation Error:", e);
+        return {
+            success: false,
+            error: "Falha ao conectar com o Agente de Marketing."
+        };
+    }
 }
