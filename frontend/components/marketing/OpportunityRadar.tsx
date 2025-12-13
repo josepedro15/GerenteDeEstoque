@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, TrendingDown, X, Loader2, CheckCircle2, Megaphone, AlertCircle } from "lucide-react";
+import { Sparkles, TrendingDown, X, Loader2, CheckCircle2, Megaphone, AlertCircle, Search } from "lucide-react";
 import { generateCampaign, getExcessStockProducts, ProductCandidate } from "@/app/actions/marketing";
 
 // UI Components for the Modal
@@ -43,16 +43,23 @@ export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated:
     const [loading, setLoading] = useState(false);
     const [generating, setGenerating] = useState(false);
 
+    const [searchTerm, setSearchTerm] = useState("");
+
     // Fetch products when modal opens
     useEffect(() => {
         if (isModalOpen) {
             setLoading(true);
+            setSearchTerm(""); // Reset search on open
             getExcessStockProducts()
                 .then(data => setProducts(data))
                 .catch(err => console.error(err))
                 .finally(() => setLoading(false));
         }
     }, [isModalOpen]);
+
+    const filteredProducts = products.filter(p =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const toggleSelect = (id: string) => {
         if (selected.includes(id)) {
@@ -100,36 +107,48 @@ export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated:
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-[#0F0F0F] shadow-2xl"
+                            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-[#0F0F0F] shadow-2xl h-[600px] flex flex-col"
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-between border-b border-white/10 p-6">
-                                <div>
-                                    <h2 className="text-xl font-bold text-white">Selecionar Produtos (Excesso)</h2>
-                                    <p className="text-sm text-muted-foreground">
-                                        Escolha até 10 itens para a campanha. ({selected.length}/10)
-                                    </p>
+                            <div className="shrink-0 border-b border-white/10 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-white">Selecionar Produtos (Excesso)</h2>
+                                        <p className="text-sm text-muted-foreground">
+                                            Escolha até 10 itens para a campanha. ({selected.length}/10)
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="rounded-full p-2 text-muted-foreground hover:bg-white/10 hover:text-white"
+                                    >
+                                        <X size={20} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="rounded-full p-2 text-muted-foreground hover:bg-white/10 hover:text-white"
-                                >
-                                    <X size={20} />
-                                </button>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar produto..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                                    />
+                                </div>
                             </div>
 
                             {/* List */}
-                            <div className="h-[400px] overflow-y-auto p-6">
+                            <div className="flex-1 overflow-y-auto p-6 min-h-0">
                                 {loading ? (
                                     <ProductListSkeleton />
-                                ) : products.length === 0 ? (
+                                ) : filteredProducts.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                         <AlertCircle size={32} className="mb-2" />
-                                        <p>Nenhum produto em excesso crítico encontrado.</p>
+                                        <p>Nenhum produto encontrado.</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
-                                        {products.map((item) => {
+                                        {filteredProducts.map((item) => {
                                             const isSelected = selected.includes(item.id);
                                             return (
                                                 <div
