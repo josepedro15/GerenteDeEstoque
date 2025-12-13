@@ -46,6 +46,11 @@ export async function generateCampaign(productIds: string[]) {
     console.log("🚀 Starting Campaign Generation for IDs:", productIds);
 
     try {
+        // 0. Get User Context
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id || 'anonymous';
+        console.log("👤 User ID:", userId);
+
         // 1. Fetch full product details
         const { data: products, error } = await supabase
             .from('dados_estoque')
@@ -69,6 +74,7 @@ export async function generateCampaign(productIds: string[]) {
         // 2. Prepare Payload for AI
         const payload = {
             action: "generate_campaign",
+            user_id: userId,
             products: products.map(p => ({
                 sku: p.id_produto,
                 name: p.produto_descricao,
