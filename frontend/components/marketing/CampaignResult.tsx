@@ -72,15 +72,33 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                             <div className="flex gap-6">
                                 {/* Visual Mockup */}
                                 <div className="w-1/3 aspect-[4/5] bg-neutral-900 rounded-lg border border-white/10 flex items-center justify-center relative overflow-hidden group">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-4">
-                                        <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded inline-block w-fit mb-2">
-                                            {campaign.channels.instagram.sticker}
+                                    {campaign.channels.instagram.imageUrl ? (
+                                        <>
+                                            <img
+                                                src={campaign.channels.instagram.imageUrl}
+                                                alt="Generated Campaign"
+                                                className="absolute inset-0 w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                                                <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded inline-block w-fit">
+                                                    {campaign.channels.instagram.sticker}
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-4">
+                                            <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded inline-block w-fit mb-2">
+                                                {campaign.channels.instagram.sticker}
+                                            </span>
+                                            <p className="text-white text-xs opacity-75">Visual suggestion based on prompt</p>
+                                        </div>
+                                    )}
+
+                                    {!campaign.channels.instagram.imageUrl && (
+                                        <span className="text-white/20 text-xs text-center px-4 relative z-10">
+                                            {campaign.channels.instagram.imagePrompt}
                                         </span>
-                                        <p className="text-white text-xs opacity-75">Visual suggestion based on prompt</p>
-                                    </div>
-                                    <span className="text-white/20 text-xs text-center px-4">
-                                        {campaign.channels.instagram.imagePrompt}
-                                    </span>
+                                    )}
                                 </div>
 
                                 {/* Copy Actions */}
