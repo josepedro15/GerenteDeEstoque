@@ -148,18 +148,28 @@ export function CampaignResult({ campaign }: { campaign: any }) {
 
                     {activeTab === 'physical' && (
                         <div className="space-y-6 text-center">
-                            <div className="max-w-md mx-auto bg-white text-black p-8 rounded-xl shadow-2xl transform rotate-1 border-4 border-yellow-400">
-                                <h2 className="text-3xl font-black uppercase mb-2 tracking-tighter text-red-600">
-                                    {campaign.channels.physical.headline}
-                                </h2>
-                                <p className="text-lg font-bold mb-6 border-b-2 border-black pb-4">
-                                    {campaign.channels.physical.subheadline}
-                                </p>
-                                <div className="bg-yellow-400 p-4 rounded-lg transform -rotate-2 mb-4">
-                                    <p className="text-2xl font-black">{campaign.channels.physical.offer}</p>
+                            {campaign.channels.physical.posterUrl ? (
+                                <div className="max-w-md mx-auto bg-white p-2 rounded-xl shadow-2xl transform rotate-1 border-4 border-white">
+                                    <img
+                                        src={campaign.channels.physical.posterUrl}
+                                        alt="Cartaz Gerado"
+                                        className="w-full h-auto rounded"
+                                    />
                                 </div>
-                                <p className="text-sm font-medium opacity-60 mt-4">Oferta válida enquanto durarem os estoques.</p>
-                            </div>
+                            ) : (
+                                <div className="max-w-md mx-auto bg-white text-black p-8 rounded-xl shadow-2xl transform rotate-1 border-4 border-yellow-400">
+                                    <h2 className="text-3xl font-black uppercase mb-2 tracking-tighter text-red-600">
+                                        {campaign.channels.physical.headline}
+                                    </h2>
+                                    <p className="text-lg font-bold mb-6 border-b-2 border-black pb-4">
+                                        {campaign.channels.physical.subheadline}
+                                    </p>
+                                    <div className="bg-yellow-400 p-4 rounded-lg transform -rotate-2 mb-4">
+                                        <p className="text-2xl font-black">{campaign.channels.physical.offer}</p>
+                                    </div>
+                                    <p className="text-sm font-medium opacity-60 mt-4">Oferta válida enquanto durarem os estoques.</p>
+                                </div>
+                            )}
 
                             <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20 inline-block text-left">
                                 <h4 className="text-orange-400 text-sm font-bold mb-1">Especificações de Impressão 🖨</h4>
