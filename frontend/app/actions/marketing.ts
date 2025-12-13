@@ -21,18 +21,19 @@ export async function getExcessStockProducts(): Promise<ProductCandidate[]> {
             // Filter for 'DETALHE' type
             .eq('tipo_registro', 'DETALHE')
             // Order by highest coverage (Excess stock optimization)
-            .order('cobertura_dias', { ascending: false })
+            // Note: DB column is 'dias_de_cobertura' based on user screenshots
+            .order('dias_de_cobertura', { ascending: false })
             .limit(50); // Fetch top 50 candidates
 
         if (error) throw error;
         if (!data) return [];
 
         return data.map((item: any) => ({
-            id: item.sku,
-            name: item.produto_descricao || item.produto || item.sku,
+            id: item.id_produto, // matches DB 'id_produto'
+            name: item.produto_descricao, // matches DB 'produto_descricao'
             stock: Number(item.estoque_atual || 0),
-            price: Number(item.preco_venda || 0),
-            coverage: Number(item.cobertura_dias || 0)
+            price: Number(item.preco || 0), // matches DB 'preco'
+            coverage: Number(item.dias_de_cobertura || 0) // matches DB 'dias_de_cobertura'
         }));
 
     } catch (e) {
@@ -49,7 +50,8 @@ export async function generateCampaign(productIds: string[]) {
         const { data: products, error } = await supabase
             .from('dados_estoque')
             .select('*')
-            .in('sku', productIds)
+            // Match against 'id_produto' (SKU equivalent)
+            .in('id_produto', productIds)
             .eq('tipo_registro', 'DETALHE');
 
         if (error) {
@@ -68,11 +70,11 @@ export async function generateCampaign(productIds: string[]) {
         const payload = {
             action: "generate_campaign",
             products: products.map(p => ({
-                sku: p.sku,
-                name: p.produto_descricao || p.produto,
-                price: p.preco_venda,
+                sku: p.id_produto,
+                name: p.produto_descricao,
+                price: p.preco,
                 stock: p.estoque_atual,
-                coverage: p.cobertura_dias
+                coverage: p.dias_de_cobertura
             })),
             date: new Date().toISOString().split('T')[0],
             context: "Gerar campanha focada em conversão imediata (Excess Stock)."
