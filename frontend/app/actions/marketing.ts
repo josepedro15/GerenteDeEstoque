@@ -19,9 +19,9 @@ export async function getMarketingOpportunities() {
         // 1. EXCESS: High count (e.g., > 100) or high value? Let's say coverage > 90 days.
         // 2. SEASONAL: Mock logic (random items) until we have sales history.
         // 3. NEW: Items with 'data_cadastro' recent? Schema doesn't have it clearly in 'dados_estoque', assume random for demo or low stock items as 'New Arrivals' logic?
-        
+
         // For this MVP, we map based on simple heuristics from the 'status' or numeric fields
-        
+
         const products = data.map((item: any) => ({
             id: item.sku, // database uses sku as identifier mostly
             name: item.produto || item.sku,
@@ -31,7 +31,16 @@ export async function getMarketingOpportunities() {
         }));
 
         // Filter and Label
-        const opportunities = [];
+        interface Opportunity {
+            id: string;
+            name: string;
+            reason: string;
+            label: string;
+            stock: number;
+            price: number;
+        }
+
+        const opportunities: Opportunity[] = [];
 
         // Excess Logic: Coverage > 90 days
         const excessItems = products.filter(p => p.coverage > 90).slice(0, 3);
@@ -55,9 +64,9 @@ export async function getMarketingOpportunities() {
             price: p.price
         }));
 
-         // New Logic: Just pick some others
+        // New Logic: Just pick some others
         const newItems = products.slice(10, 12);
-         newItems.forEach(p => opportunities.push({
+        newItems.forEach(p => opportunities.push({
             id: p.id,
             name: p.name,
             reason: "NEW",
@@ -82,7 +91,7 @@ export async function generateCampaign(productIds: string[]) {
             .select('*')
             .in('sku', productIds)
             .eq('tipo_registro', 'DETALHE');
-        
+
         if (!products || products.length === 0) {
             throw new Error("Produtos não encontrados");
         }
@@ -117,16 +126,16 @@ export async function generateCampaign(productIds: string[]) {
         // 4. Return formatted result
         // Expected format from N8N matching our UI:
         // { success: true, channels: { instagram: {...}, whatsapp: {...}, physical: {...} } }
-        
+
         // Ensure structure even if N8N returns raw text (defensive coding)
         if (aiResult.channels) {
             return aiResult;
         } else {
-             // Fallback if AI returns unstructured data
-             return {
-                 success: true,
-                 campaign: aiResult // Pass through whatever we got
-             }
+            // Fallback if AI returns unstructured data
+            return {
+                success: true,
+                campaign: aiResult // Pass through whatever we got
+            }
         }
 
     } catch (e) {
