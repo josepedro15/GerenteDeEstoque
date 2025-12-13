@@ -3,7 +3,7 @@
 import { supabase } from "@/lib/supabase";
 
 // N8N Webhook URL provided by user
-const N8N_WEBHOOK_URL = 'https://webhook.aiensed.com/webhook/marketing';
+const N8N_WEBHOOK_URL = 'https://webhook.aiensed.com/webhook/estoque';
 
 export async function getMarketingOpportunities() {
     try {
@@ -24,7 +24,7 @@ export async function getMarketingOpportunities() {
 
         const products = data.map((item: any) => ({
             id: item.sku, // database uses sku as identifier mostly
-            name: item.produto || item.sku,
+            name: item.produto_descricao || item.produto || item.sku,
             stock: Number(item.estoque_atual || 0),
             price: Number(item.preco_venda || 0),
             coverage: Number(item.cobertura_dias || 0)
@@ -101,7 +101,7 @@ export async function generateCampaign(productIds: string[]) {
             action: "generate_campaign",
             products: products.map(p => ({
                 sku: p.sku,
-                name: p.produto,
+                name: p.produto_descricao || p.produto,
                 price: p.preco_venda,
                 stock: p.estoque_atual,
                 coverage: p.cobertura_dias

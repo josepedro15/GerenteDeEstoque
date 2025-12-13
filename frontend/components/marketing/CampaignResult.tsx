@@ -9,14 +9,20 @@ export function CampaignResult({ campaign }: { campaign: any }) {
     const [activeTab, setActiveTab] = useState<'instagram' | 'whatsapp' | 'physical'>('instagram');
     const [copied, setCopied] = useState(false);
 
-    if (!campaign) {
+    if (!campaign || !campaign.channels) {
         return (
             <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-xl">
                 <div className="mb-4 rounded-full bg-pink-500/10 p-6">
                     <Megaphone className="text-pink-500/50" size={48} />
                 </div>
-                <h3 className="text-lg font-medium text-white">Nenhuma Campanha Gerada</h3>
-                <p className="text-muted-foreground">Selecione produtos no Radar para a IA criar seus materiais.</p>
+                <h3 className="text-lg font-medium text-white">
+                    {campaign ? "Resposta da IA Incompleta" : "Nenhuma Campanha Gerada"}
+                </h3>
+                <p className="text-muted-foreground">
+                    {campaign
+                        ? "A IA respondeu, mas não gerou os canais esperados. Tente novamente."
+                        : "Selecione produtos no Radar para a IA criar seus materiais."}
+                </p>
             </div>
         );
     }
