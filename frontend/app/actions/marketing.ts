@@ -42,16 +42,45 @@ export async function getExcessStockProducts(): Promise<ProductCandidate[]> {
     }
 }
 
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+// ... keep interfaces ...
+
 export async function generateCampaign(productIds: string[]) {
     console.log("🚀 Starting Campaign Generation for IDs:", productIds);
 
     try {
-        // 0. Get User Context
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id || 'anonymous';
-        console.log("👤 User ID:", userId);
+        // 0. Initialize Server Client for Auth
+        const cookieStore = await cookies();
 
-        // 1. Fetch full product details
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    getAll() {
+                        return cookieStore.getAll()
+                    },
+                    setAll(cookiesToSet) {
+                        try {
+                            cookiesToSet.forEach(({ name, value, options }) =>
+                                cookieStore.set(name, value, options)
+                            )
+                        } catch {
+                            // Ignored
+                        }
+                    },
+                },
+            }
+        );
+
+        // 0b. Get User Context safely
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id || 'anonymous';
+        console.log("👤 User ID (Server Auth):", userId);
+
+        // 1. Fetch full product details (using the same server client is fine)
         const { data: products, error } = await supabase
             .from('dados_estoque')
             .select('*')
