@@ -2,121 +2,182 @@
 
 import { useState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
-import { motion } from "framer-motion";
-import { Sparkles, TrendingDown, Calendar, Star, Loader2, CheckCircle2 } from "lucide-react";
-import { generateCampaign, getMarketingOpportunities } from "@/app/actions/marketing";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, TrendingDown, X, Loader2, CheckCircle2, Megaphone, AlertCircle } from "lucide-react";
+import { generateCampaign, getExcessStockProducts, ProductCandidate } from "@/app/actions/marketing";
 
-// Using real data now
-
-
-function SubmitButton({ disabled }: { disabled: boolean }) {
-    const { pending } = useFormStatus();
+// UI Components for the Modal
+function StartCampaignButton({ onClick }: { onClick: () => void }) {
     return (
         <button
-            type="submit"
-            disabled={pending || disabled}
-            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-pink-600 py-4 font-bold text-white transition-all hover:bg-pink-500 hover:shadow-lg hover:shadow-pink-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={onClick}
+            className="group flex w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-white/20 bg-white/5 p-12 transition-all hover:bg-white/10 hover:border-pink-500/50"
         >
-            {pending ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
-            {pending ? "Criando Magia..." : "Gerar Campanha com IA"}
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-pink-500/10 text-pink-500 group-hover:scale-110 transition-transform">
+                <Megaphone size={40} />
+            </div>
+            <div className="text-center">
+                <h3 className="text-xl font-semibold text-white">Criar Nova Campanha</h3>
+                <p className="text-sm text-muted-foreground mt-2 max-w-md">
+                    Selecione manualmente os produtos com excesso de estoque e deixe a IA criar todo o material de divulgação.
+                </p>
+            </div>
         </button>
     );
 }
 
-export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated: (data: any) => void }) {
-    const [selected, setSelected] = useState<string[]>([]);
-    const [opportunities, setOpportunities] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+function ProductListSkeleton() {
+    return (
+        <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-16 w-full rounded-xl bg-white/5 animate-pulse" />
+            ))}
+        </div>
+    );
+}
 
+export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated: (data: any) => void }) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [products, setProducts] = useState<ProductCandidate[]>([]);
+    const [selected, setSelected] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [generating, setGenerating] = useState(false);
+
+    // Fetch products when modal opens
     useEffect(() => {
-        async function load() {
-            const data = await getMarketingOpportunities();
-            setOpportunities(data);
-            setLoading(false);
+        if (isModalOpen) {
+            setLoading(true);
+            getExcessStockProducts()
+                .then(data => setProducts(data))
+                .catch(err => console.error(err))
+                .finally(() => setLoading(false));
         }
-        load();
-    }, []);
+    }, [isModalOpen]);
 
     const toggleSelect = (id: string) => {
         if (selected.includes(id)) {
             setSelected(selected.filter(i => i !== id));
         } else {
+            if (selected.length >= 10) return; // Max 10 limit
             setSelected([...selected, id]);
         }
     };
 
-    const handleSubmit = async (formData: FormData) => {
-        // Append selected IDs manually or handle via hidden inputs
-        // For server action, we prefer binding or simple passing
-        const result = await generateCampaign(selected);
-        onCampaignGenerated(result);
+    const handleGenerate = async () => {
+        if (selected.length === 0) return;
+        setGenerating(true);
+        try {
+            const result = await generateCampaign(selected);
+            onCampaignGenerated(result);
+            setIsModalOpen(false); // Close on success
+        } catch (error) {
+            console.error("Failed to generate:", error);
+        } finally {
+            setGenerating(false);
+        }
     };
 
     return (
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <h2 className="mb-6 text-xl font-semibold text-white flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                Radar de Oportunidades
-            </h2>
+        <>
+            {/* Main Trigger */}
+            <StartCampaignButton onClick={() => setIsModalOpen(true)} />
 
-            {loading ? (
-                <div className="flex justify-center p-8">
-                    <Loader2 className="animate-spin text-white/50" />
-                </div>
-            ) : (
-                <form action={handleSubmit}>
-                    <div className="space-y-3 mb-6">
-                        {opportunities.map((item) => {
-                            const isSelected = selected.includes(item.id);
-                            return (
-                                <div
-                                    key={item.id}
-                                    onClick={() => toggleSelect(item.id)}
-                                    className={`cursor-pointer relative overflow-hidden rounded-xl border p-4 transition-all ${isSelected
-                                        ? "border-pink-500 bg-pink-500/10"
-                                        : "border-white/10 bg-black/40 hover:bg-white/5"
-                                        }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${item.reason === 'EXCESS' ? 'bg-red-500/20 text-red-400' :
-                                                item.reason === 'SEASONAL' ? 'bg-orange-500/20 text-orange-400' :
-                                                    'bg-blue-500/20 text-blue-400'
-                                                }`}>
-                                                {item.reason === 'EXCESS' ? <TrendingDown size={18} /> :
-                                                    item.reason === 'SEASONAL' ? <Calendar size={18} /> :
-                                                        <Star size={18} />}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-white">{item.name}</h3>
-                                                <p className="text-xs text-muted-foreground">{item.label}</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-medium text-white">R$ {item.price.toFixed(2)}</p>
-                                            <p className="text-xs text-muted-foreground">{item.stock} un</p>
-                                        </div>
-                                    </div>
-                                    {isSelected && (
-                                        <div className="absolute top-2 right-2 text-pink-500">
-                                            <CheckCircle2 size={16} />
-                                        </div>
-                                    )}
+            {/* Selection Modal */}
+            <AnimatePresence>
+                {isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsModalOpen(false)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        />
+
+                        {/* Modal Content */}
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-[#0F0F0F] shadow-2xl"
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between border-b border-white/10 p-6">
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">Selecionar Produtos (Excesso)</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Escolha até 10 itens para a campanha. ({selected.length}/10)
+                                    </p>
                                 </div>
-                            );
-                        })}
-                    </div>
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="rounded-full p-2 text-muted-foreground hover:bg-white/10 hover:text-white"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
 
-                    <div className="rounded-xl bg-pink-500/10 p-4 border border-pink-500/20 mb-6">
-                        <p className="text-xs text-pink-200/80">
-                            ✨ Selecione um ou mais itens. A IA irá criar posts, textos e scripts focados no objetivo (Queima ou Margem).
-                        </p>
-                    </div>
+                            {/* List */}
+                            <div className="h-[400px] overflow-y-auto p-6">
+                                {loading ? (
+                                    <ProductListSkeleton />
+                                ) : products.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                        <AlertCircle size={32} className="mb-2" />
+                                        <p>Nenhum produto em excesso crítico encontrado.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {products.map((item) => {
+                                            const isSelected = selected.includes(item.id);
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    onClick={() => toggleSelect(item.id)}
+                                                    className={`cursor-pointer group relative flex items-center justify-between overflow-hidden rounded-xl border p-4 transition-all ${isSelected
+                                                        ? "border-pink-500 bg-pink-500/10"
+                                                        : "border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                                                        }`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`p-2 rounded-lg bg-white/5 text-muted-foreground group-hover:text-white`}>
+                                                            <TrendingDown size={18} />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className={`font-medium ${isSelected ? 'text-white' : 'text-gray-300'}`}>{item.name}</h4>
+                                                            <p className="text-xs text-muted-foreground">Cobertura: {item.coverage} dias • Estoque: {item.stock}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="text-sm font-semibold text-white">R$ {item.price.toFixed(2)}</span>
+                                                        <div className={`h-6 w-6 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'border-pink-500 bg-pink-500 text-white' : 'border-white/20'
+                                                            }`}>
+                                                            {isSelected && <CheckCircle2 size={14} />}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
 
-                    <SubmitButton disabled={selected.length === 0} />
-                </form>
-            )}
-        </div>
+                            {/* Footer */}
+                            <div className="border-t border-white/10 p-6 bg-black/20">
+                                <button
+                                    onClick={handleGenerate}
+                                    disabled={selected.length === 0 || generating}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-pink-600 py-4 font-bold text-white transition-all hover:bg-pink-500 hover:shadow-lg hover:shadow-pink-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {generating ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
+                                    {generating ? "Gerando Campanha..." : `Gerar Campanha (${selected.length})`}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </>
     );
 }
-
