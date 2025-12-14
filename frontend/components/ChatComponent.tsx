@@ -2,13 +2,15 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { MessageCircle, X, Send } from 'lucide-react';
+import { MessageCircle, X, Send, Maximize2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils'; // Assuming this exists, or I will use standard template literal
 
 export function ChatComponent() {
     const [isOpen, setIsOpen] = useState(false);
     const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat();
+    const router = useRouter();
 
     useEffect(() => {
         const handleSendProduct = (e: any) => {
@@ -26,6 +28,11 @@ export function ChatComponent() {
         return () => window.removeEventListener('chat:send-product', handleSendProduct);
     }, [append]);
 
+    const handleExpand = () => {
+        setIsOpen(false);
+        router.push('/chat');
+    };
+
     return (
         <div className="fixed bottom-4 right-4 z-50">
             {/* Chat Window */}
@@ -33,13 +40,25 @@ export function ChatComponent() {
                 <div className="mb-4 h-[500px] w-[350px] overflow-hidden rounded-2xl border border-white/10 bg-black/90 shadow-2xl backdrop-blur-xl sm:w-[400px]">
                     {/* Header */}
                     <div className="flex items-center justify-between bg-white/5 p-4 border-b border-white/5">
-                        <h3 className="font-semibold text-white">Assistente IA</h3>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="rounded-full p-1 text-muted-foreground hover:bg-white/10 hover:text-white"
-                        >
-                            <X size={18} />
-                        </button>
+                        <h3 className="font-semibold text-white flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            Assistente IA
+                        </h3>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={handleExpand}
+                                className="rounded-full p-1.5 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
+                                title="Abrir em tela cheia"
+                            >
+                                <Maximize2 size={16} />
+                            </button>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="rounded-full p-1.5 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Messages */}
