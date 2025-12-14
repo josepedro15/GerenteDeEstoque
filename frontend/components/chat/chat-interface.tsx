@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { sendMessage } from "@/app/actions/chat";
-import { Send, Bot, User, Maximize2, Minimize2 } from "lucide-react";
+import { Send, Bot, User, Maximize2, Minimize2, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
@@ -15,9 +16,16 @@ interface Message {
 
 import { useChat } from "@/contexts/ChatContext";
 
+
 export function ChatInterface() {
     const { isOpen, closeChat } = useChat(); // Consuming context for visibility
     const [isExpanded, setIsExpanded] = useState(false);
+    const router = useRouter();
+
+    const handleOpenPage = () => {
+        closeChat();
+        router.push('/chat');
+    };
 
     const cleanContent = (text: string) => {
         return text.replace(/^```markdown\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
@@ -125,21 +133,28 @@ export function ChatInterface() {
             isExpanded ? "bottom-4 right-4 w-[800px] h-[80vh]" : "bottom-4 right-4 w-[400px] h-[600px]"
         )}>
             {/* Header / Close Button */}
-            <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/5">
+            <div className="flex items-center justify-between p-3 border-b border-white/5 bg-white/5">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="font-medium text-white">Assistente IA</span>
+                    <span className="font-medium text-white text-sm">Assistente IA</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleOpenPage}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 hover:text-white text-xs font-medium transition-all border border-blue-500/30"
+                    >
+                        <ExternalLink size={14} />
+                        Abrir Página
+                    </button>
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-white"
+                        className="h-7 w-7 text-muted-foreground hover:text-white"
                         onClick={() => setIsExpanded(!isExpanded)}
                     >
                         {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-white" onClick={closeChat}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-white" onClick={closeChat}>
                         <span className="sr-only">Fechar</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                     </Button>
