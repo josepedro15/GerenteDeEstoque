@@ -95,7 +95,7 @@ export default function MarketingPage() {
                             className="lg:col-span-5"
                         >
                             <div className="sticky top-8">
-                                <div className="rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
+                                <div className="rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl p-1">
                                     <div className="rounded-[20px] bg-neutral-950/50 p-6">
                                         <div className="flex items-center gap-2 mb-6">
                                             <Sparkles size={16} className="text-pink-400" />
