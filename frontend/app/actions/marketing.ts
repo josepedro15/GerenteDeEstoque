@@ -132,8 +132,14 @@ export async function generateCampaign(productIds: string[]) {
             throw new Error(`Erro no N8N: ${response.statusText}`);
         }
 
-        const aiResult = await response.json();
+        let aiResult = await response.json();
         console.log("✅ N8N Success Response:", JSON.stringify(aiResult, null, 2));
+
+        // Handle N8N returning an array (common with 'All Incoming Items')
+        if (Array.isArray(aiResult) && aiResult.length > 0) {
+            console.log("⚠️ N8N returned an array, using first item.");
+            aiResult = aiResult[0];
+        }
 
         // 4. Return formatted result
         if (aiResult.channels) {
