@@ -39,22 +39,22 @@ export function ChatComponent() {
             {isOpen && (
                 <div className="mb-4 h-[500px] w-[350px] overflow-hidden rounded-2xl border border-white/10 bg-black/90 shadow-2xl backdrop-blur-xl sm:w-[400px]">
                     {/* Header */}
-                    <div className="flex items-center justify-between bg-white/5 p-4 border-b border-white/5">
-                        <h3 className="font-semibold text-white flex items-center gap-2">
+                    <div className="flex items-center justify-between bg-white/5 p-3 border-b border-white/5">
+                        <h3 className="font-semibold text-white flex items-center gap-2 text-sm">
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                             Assistente IA
                         </h3>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
                             <button
                                 onClick={handleExpand}
-                                className="rounded-full p-1.5 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
-                                title="Abrir em tela cheia"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 hover:text-white text-xs font-medium transition-all border border-indigo-500/30"
                             >
-                                <Maximize2 size={16} />
+                                <Maximize2 size={14} />
+                                Expandir
                             </button>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="rounded-full p-1.5 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
+                                className="rounded-lg p-1.5 text-neutral-400 hover:bg-white/10 hover:text-white transition-colors"
                             >
                                 <X size={18} />
                             </button>
