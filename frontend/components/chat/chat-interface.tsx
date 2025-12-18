@@ -43,7 +43,8 @@ function getUserId(): string {
     return devId;
 }
 
-export function ChatInterface() {
+
+export function ChatInterface({ fullPage = false }: { fullPage?: boolean }) {
     const { isOpen, closeChat } = useChat();
     const [isExpanded, setIsExpanded] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -275,48 +276,53 @@ export function ChatInterface() {
 
     return (
         <div className={cn(
-            "fixed bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl flex flex-col z-50 transition-all duration-300 ease-in-out",
-            isOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-10 pointer-events-none",
-            isExpanded ? "bottom-4 right-4 w-[800px] h-[80vh]" : "bottom-4 right-4 w-[400px] h-[600px]"
+            "flex flex-col transition-all duration-300 ease-in-out",
+            fullPage
+                ? "w-full h-full bg-transparent"
+                : "fixed bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl z-50",
+            !fullPage && (isOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-10 pointer-events-none"),
+            !fullPage && (isExpanded ? "bottom-4 right-4 w-[800px] h-[80vh]" : "bottom-4 right-4 w-[400px] h-[600px]")
         )}>
-            {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b border-white/5 bg-white/5">
-                <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="font-medium text-white text-sm">Assistente IA</span>
-                    {isLoadingHistory && (
-                        <Loader2 size={12} className="animate-spin text-blue-400" />
-                    )}
+            {/* Header - só mostra no widget flutuante */}
+            {!fullPage && (
+                <div className="flex items-center justify-between p-3 border-b border-white/5 bg-white/5">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="font-medium text-white text-sm">Assistente IA</span>
+                        {isLoadingHistory && (
+                            <Loader2 size={12} className="animate-spin text-blue-400" />
+                        )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={handleClearChat}
+                            className="p-1.5 rounded-lg hover:bg-red-500/20 text-neutral-400 hover:text-red-400 transition-colors"
+                            title="Limpar conversa"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                        <button
+                            onClick={handleOpenPage}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 hover:text-white text-xs font-medium transition-all border border-blue-500/30"
+                        >
+                            <ExternalLink size={14} />
+                            Abrir Página
+                        </button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-white"
+                            onClick={() => setIsExpanded(!isExpanded)}
+                        >
+                            {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-white" onClick={closeChat}>
+                            <span className="sr-only">Fechar</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                        </Button>
+                    </div>
                 </div>
-                <div className="flex items-center gap-1">
-                    <button
-                        onClick={handleClearChat}
-                        className="p-1.5 rounded-lg hover:bg-red-500/20 text-neutral-400 hover:text-red-400 transition-colors"
-                        title="Limpar conversa"
-                    >
-                        <Trash2 size={14} />
-                    </button>
-                    <button
-                        onClick={handleOpenPage}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 hover:text-white text-xs font-medium transition-all border border-blue-500/30"
-                    >
-                        <ExternalLink size={14} />
-                        Abrir Página
-                    </button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-white"
-                        onClick={() => setIsExpanded(!isExpanded)}
-                    >
-                        {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-white" onClick={closeChat}>
-                        <span className="sr-only">Fechar</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-                    </Button>
-                </div>
-            </div>
+            )}
 
             {/* Messages Area */}
             <div
