@@ -327,7 +327,7 @@ export function ChatInterface({ fullPage = false }: { fullPage?: boolean }) {
             {/* Messages Area */}
             <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/20"
+                className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-black/20"
             >
                 {isLoadingHistory ? (
                     <div className="flex flex-col items-center justify-center h-full gap-3">
@@ -398,7 +398,7 @@ export function ChatInterface({ fullPage = false }: { fullPage?: boolean }) {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 border-t border-white/5 bg-white/5 backdrop-blur-md">
+            <div className="shrink-0 p-4 border-t border-white/5 bg-white/5 backdrop-blur-md">
                 <form onSubmit={handleSubmit} className="flex gap-2">
                     <input
                         value={input}
