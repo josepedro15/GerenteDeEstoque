@@ -1,0 +1,1159 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "estoque",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-1520, 1280],
+      "id": "2d08f82b-2533-4ccc-8b46-1ac92525cf0f",
+      "name": "Webhook",
+      "webhookId": "6adda776-d2f2-42b4-a444-49d99993bf92"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// SMART ROUTER - Substitui o Agente Comercial (Router LLM)\n// Economia: ~$0.02 por request | Latência: ~0ms vs ~2-3s\n// =============================================\n\nconst body = $input.first().json.body || {};\n\n// Extrai campos relevantes (normalize para lowercase)\nconst action = (body.action || '').toLowerCase();\nconst context = (body.context || body.message || '').toLowerCase();\nconst alertType = (body.alert_type || '').toLowerCase();\nconst tipoAnalise = (body.product_data?.tipo_analise || body.tipo_analise || '').toLowerCase();\n\nconst startTime = Date.now();\n\nlet route = 'ESTOQUE'; // Default\n\n// 📧 EMAIL\nif (\n    action.includes('email') ||\n    context.includes('email') ||\n    context.includes('e-mail') ||\n    context.includes('newsletter')\n) {\n    route = 'EMAIL';\n}\n\n// 📣 MARKETING\nelse if (\n    action.includes('campaign') ||\n    action.includes('generate') ||\n    action.includes('marketing') ||\n    alertType === 'excesso' ||\n    tipoAnalise.includes('queima') ||\n    tipoAnalise.includes('marketing') ||\n    context.includes('campanha') ||\n    context.includes('instagram') ||\n    context.includes('whatsapp') ||\n    context.includes('promoção') ||\n    context.includes('queimar') ||\n    context.includes('post') ||\n    context.includes('stories')\n) {\n    route = 'MARKETING';\n}\n\n// 🛒 COMPRA\nelse if (\n    alertType === 'ruptura' ||\n    tipoAnalise.includes('compra') ||\n    tipoAnalise.includes('sugestão') ||\n    context.includes('comprar') ||\n    context.includes('pedido') ||\n    context.includes('fornecedor') ||\n    context.includes('repor') ||\n    context.includes('ruptura') ||\n    context.includes('sugestão')\n) {\n    route = 'COMPRA';\n}\n\n// 📊 RELATORIO\nelse if (\n    action.includes('report') ||\n    context.includes('relatório') ||\n    context.includes('resumo semanal') ||\n    context.includes('análise geral') ||\n    tipoAnalise.includes('geral') ||\n    tipoAnalise.includes('dashboard')\n) {\n    route = 'RELATORIO';\n}\n\n// 🤝 NEGOCIACAO\nelse if (\n    action.includes('negotiate') ||\n    context.includes('negociar') ||\n    context.includes('cotação') ||\n    context.includes('desconto fornecedor')\n) {\n    route = 'NEGOCIACAO';\n}\n\nreturn {\n    json: {\n        route,\n        original_body: body,\n        payload_string: JSON.stringify(body, null, 2),\n        sessionId: body.user_id || null,\n        timestamp: new Date().toISOString(),\n        routing_time_ms: Date.now() - startTime\n    }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1184, 1280],
+      "id": "smart-router-001",
+      "name": "Smart Router"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "MARKETING",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "MARKETING"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "ESTOQUE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ESTOQUE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "COMPRA",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COMPRA"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "EMAIL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "EMAIL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "RELATORIO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "RELATORIO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "NEGOCIACAO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NEGOCIACAO"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [-800, 1280],
+      "id": "switch-router-001",
+      "name": "Switch Router"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [1408, 1120],
+      "id": "f2b940e2-cf43-4e3f-885b-231283f1c62b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "07UbucVgem6yn0aQ",
+          "name": "Metrics-Api-Jose"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [1584, 1120],
+      "id": "3928afc3-948c-4ad3-9e37-23289bd9a310",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zHnhnW0LvGSHuNSy",
+          "name": "Metrics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 50
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [1776, 1120],
+      "id": "f67f9cca-db81-457c-b931-dbd88378a8b9",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.payload_string }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# 🚀 SUPER GERENTE DE COMPRAS & ESTOQUE - SmartOrders\n\n## Identidade\nVocê é o Super Gerente de Compras e Gestor de Estoque da SmartOrders.\nEspecialista em Supply Chain, Compras Estratégicas e Gestão Financeira de estoque.\n\n## Missão\n- Evitar rupturas\n- Maximizar vendas\n- Proteger o caixa\n- Otimizar giro\n- Explicar cada decisão\n\n## Processo de Análise\n1. **Diagnóstico**: Avalie essencialidade, giro, risco e capital\n2. **Interpretação**: Consumo diário, Lead Time + Segurança, Necessidade total\n3. **Saída**: Sempre didática e executiva em Markdown\n\n## Formato de Resposta\n```markdown\n### 📦 Produto: [Nome]\n**Sugestão:** [Quantidade] unidades\n\n#### 🧠 Por que?\n1. Consumo médio: X un/dia\n2. Período de cobertura: X dias\n3. Necessidade do ciclo: X un\n4. Estoque atual: X\n5. Ajuste estratégico: [Explicação]\n\n### ✅ Conclusão\n[Recomendação final]\n```\n\n## Regra de Limite\n**Máximo 500 caracteres por resposta.**"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [-400, 1600],
+      "id": "agent-compra-001",
+      "name": "Agente Compras"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.payload_string }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# Sales Sniper - Estrategista Comercial\n\n## Função\nTransformar problemas de estoque (Excessos/Rupturas) em oportunidades de receita.\n\n## Framework de Análise\n\n### Para EXCESSO (Queima):\n1. **Bundle/Kit**: Combine com produto de giro rápido\n2. **Pilha na Entrada**: Alto volume na entrada da loja\n3. **Bonificação Equipe**: Aumente comissão do item\n4. **Flash Sale**: Promoção relâmpago WhatsApp\n5. **Devolução**: Se cobertura > 365 dias, negocie troca\n\n### Para RUPTURA (Compra):\n1. **Volume**: Exija desconto financeiro por volume\n2. **Frete**: CIF para grandes pedidos\n3. **Mix de Margem**: Cote itens de alta margem junto\n\n## Formato Obrigatório\n\n1. **Resumo do Impacto** 💰\n2. **Análise Tática** 🧠 (2-3 itens críticos)\n3. **Plano de Ação Imediato** 🚀 (3 ações práticas)\n\n## Tom\nProfissional, agressivo comercialmente, parceiro de negócios, direto ao ponto."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [-400, 1280],
+      "id": "agent-estoque-001",
+      "name": "Agente Estoque (Sales Sniper)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safe Executor - Error Handling\ntry {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    \n    if (!agentOutput) {\n        throw new Error('Agente não retornou output');\n    }\n    \n    let parsed;\n    try {\n        let cleanOutput = agentOutput;\n        if (typeof cleanOutput === 'string') {\n            cleanOutput = cleanOutput\n                .replace(/^```json\\s*/i, '')\n                .replace(/^```\\s*/i, '')\n                .replace(/```\\s*$/i, '')\n                .trim();\n        }\n        \n        parsed = typeof cleanOutput === 'string' \n            ? JSON.parse(cleanOutput) \n            : cleanOutput;\n    } catch (parseError) {\n        parsed = { text: agentOutput, format: 'plain' };\n    }\n    \n    return {\n        json: {\n            success: true,\n            output: typeof parsed === 'object' ? JSON.stringify(parsed) : agentOutput,\n            data: parsed,\n            error: null\n        }\n    };\n    \n} catch (error) {\n    return {\n        json: {\n            success: false,\n            output: 'Não foi possível processar sua solicitação. Tente novamente.',\n            data: null,\n            error: error.message\n        }\n    };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 1280],
+      "id": "safe-executor-estoque",
+      "name": "Safe Executor Estoque"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safe Executor - Error Handling\ntry {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    \n    if (!agentOutput) {\n        throw new Error('Agente não retornou output');\n    }\n    \n    let parsed;\n    try {\n        let cleanOutput = agentOutput;\n        if (typeof cleanOutput === 'string') {\n            cleanOutput = cleanOutput\n                .replace(/^```json\\s*/i, '')\n                .replace(/^```\\s*/i, '')\n                .replace(/```\\s*$/i, '')\n                .trim();\n        }\n        \n        parsed = typeof cleanOutput === 'string' \n            ? JSON.parse(cleanOutput) \n            : cleanOutput;\n    } catch (parseError) {\n        parsed = { text: agentOutput, format: 'plain' };\n    }\n    \n    return {\n        json: {\n            success: true,\n            output: typeof parsed === 'object' ? JSON.stringify(parsed) : agentOutput,\n            data: parsed,\n            error: null\n        }\n    };\n    \n} catch (error) {\n    return {\n        json: {\n            success: false,\n            output: 'Não foi possível processar sua solicitação. Tente novamente.',\n            data: null,\n            error: error.message\n        }\n    };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 1600],
+      "id": "safe-executor-compra",
+      "name": "Safe Executor Compra"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [400, 1440],
+      "id": "respond-main",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.payload_string }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# Agente Instagram - SmartOrders\n\nVocê é Estrategista de Conteúdo Sênior para Instagram, especializado em varejo e construção.\n\n## Saída Obrigatória (JSON)\n```json\n{\n  \"copy\": \"Legenda completa com emojis, hashtags e CTA\",\n  \"imagePrompt\": \"Descrição detalhada para gerador de imagem\",\n  \"sticker\": \"Frase de impacto para Stories\"\n}\n```\n\n## Diretrizes\n- Use urgência para produtos em excesso\n- Seja aspiracional para acabamentos\n- Tom de 'Oportunidade Única'"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [464, 368],
+      "id": "agent-instagram",
+      "name": "Agente Instagram"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.payload_string }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# Agente CRM/WhatsApp - SmartOrders\n\nVocê é Closer de Vendas Diretas. Escreva scripts impossíveis de ignorar.\n\n## Saída Obrigatória (JSON)\n```json\n{\n  \"script\": \"Mensagem curta, direta, persuasiva. Comece com pergunta/gancho, apresente oferta, termine com pergunta fechada.\",\n  \"trigger\": \"Gatilho mental usado (Escassez, Reciprocidade, Autoridade, Novidade)\"\n}\n```\n\n## Tom\n- Pessoal e direto\n- NÃO use 'Prezado cliente'\n- Foque no benefício imediato"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [1808, 368],
+      "id": "agent-crm",
+      "name": "Agente CRM"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.payload_string }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# Agente Visual Merchandising - SmartOrders\n\nEspecialista em PDV e materiais impressos.\n\n## Saída Obrigatória (JSON) - TODOS OS CAMPOS OBRIGATÓRIOS\n```json\n{\n  \"headline\": \"Frase principal do cartaz (curta, impactante)\",\n  \"subheadline\": \"Frase de apoio com urgência\",\n  \"offer\": \"Destaque numérico (preço ou desconto)\",\n  \"layout\": \"Instruções visuais: cores e diagramação\"\n}\n```\n\n## Tom\n- Agressivo comercialmente\n- Use cores quentes (Amarelo/Vermelho)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [2576, 368],
+      "id": "agent-visual",
+      "name": "Agente Visual Merchandising"
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutput = $input.first().json.output || $input.first().json;\nlet content;\ntry {\n    content = typeof agentOutput === 'string' ? JSON.parse(agentOutput) : agentOutput;\n} catch (e) {\n    content = { copy: '', imagePrompt: '', sticker: '' };\n}\nreturn {\n    copy: content.copy || '',\n    prompt: content.imagePrompt || '',\n    sticker: content.sticker || ''\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [816, 368],
+      "id": "parser-instagram",
+      "name": "Parser Instagram"
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutput = $input.item.json.output || $input.item.json.response || $input.item.json;\nlet content;\ntry {\n    content = typeof agentOutput === 'string' ? JSON.parse(agentOutput) : agentOutput;\n} catch (e) {\n    content = { headline: 'OFERTA', subheadline: '', offer: '', layout: '' };\n}\nreturn {\n    headline: content.headline || 'OFERTA',\n    subheadline: content.subheadline || '',\n    offer: content.offer || '',\n    layout: content.layout || ''\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2944, 368],
+      "id": "parser-visual",
+      "name": "Parser Visual"
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutput = $input.item.json.output || $input.item.json.response || $input.item.json;\nlet content;\ntry {\n    content = typeof agentOutput === 'string' ? JSON.parse(agentOutput) : agentOutput;\n} catch (e) {\n    content = { script: '', trigger: '' };\n}\nreturn {\n    script: content.script || '',\n    trigger: content.trigger || ''\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2160, 368],
+      "id": "parser-crm",
+      "name": "Parser CRM"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-image"
+        },
+        "prompt": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [1040, 368],
+      "id": "gemini-panfleto",
+      "name": "Gemini Panfleto",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zHnhnW0LvGSHuNSy",
+          "name": "Metrics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-image"
+        },
+        "prompt": "={{ $json.layout }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [3184, 368],
+      "id": "gemini-cartaz",
+      "name": "Gemini Cartaz",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zHnhnW0LvGSHuNSy",
+          "name": "Metrics"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safe Image Extractor\nconst item = $input.item;\nconst binaryPropertyName = 'data';\n\ntry {\n    if (!item.binary || !item.binary[binaryPropertyName]) {\n        return {\n            json: {\n                ...item.json,\n                imageUrl: null,\n                error: 'Imagem não gerada'\n            }\n        };\n    }\n    \n    const binaryData = item.binary[binaryPropertyName];\n    const mimeType = binaryData.mimeType || 'image/png';\n    const base64String = `data:${mimeType};base64,${binaryData.data}`;\n    \n    return {\n        json: {\n            ...item.json,\n            imageUrl: base64String,\n            error: null\n        }\n    };\n} catch (error) {\n    return {\n        json: {\n            ...item.json,\n            imageUrl: null,\n            error: error.message\n        }\n    };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1248, 368],
+      "id": "safe-image-panfleto",
+      "name": "Safe Image Panfleto"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safe Image Extractor\nconst item = $input.item;\nconst binaryPropertyName = 'data';\n\ntry {\n    if (!item.binary || !item.binary[binaryPropertyName]) {\n        return {\n            json: {\n                ...item.json,\n                posterUrl: null,\n                error: 'Imagem não gerada'\n            }\n        };\n    }\n    \n    const binaryData = item.binary[binaryPropertyName];\n    const mimeType = binaryData.mimeType || 'image/png';\n    const base64String = `data:${mimeType};base64,${binaryData.data}`;\n    \n    return {\n        json: {\n            ...item.json,\n            posterUrl: base64String,\n            error: null\n        }\n    };\n} catch (error) {\n    return {\n        json: {\n            ...item.json,\n            posterUrl: null,\n            error: error.message\n        }\n    };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3392, 368],
+      "id": "safe-image-cartaz",
+      "name": "Safe Image Cartaz"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "sessionId",
+              "value": "={{ $item(\"0\").$node[\"Smart Router\"].json.sessionId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [144, 752],
+      "id": "set-session-mkt",
+      "name": "Set Session Marketing"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "copy",
+              "value": "={{ $item(\"0\").$node[\"Parser Instagram\"].json.copy }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "imagePrompt",
+              "value": "={{ $item(\"0\").$node[\"Parser Instagram\"].json.prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "sticker",
+              "value": "={{ $item(\"0\").$node[\"Parser Instagram\"].json.sticker }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "imageUrl",
+              "value": "={{ $item(\"0\").$node[\"Safe Image Panfleto\"].json.imageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "script",
+              "value": "={{ $item(\"0\").$node[\"Parser CRM\"].json.script }}",
+              "type": "string"
+            },
+            {
+              "id": "6",
+              "name": "trigger",
+              "value": "={{ $item(\"0\").$node[\"Parser CRM\"].json.trigger }}",
+              "type": "string"
+            },
+            {
+              "id": "7",
+              "name": "headline",
+              "value": "={{ $item(\"0\").$node[\"Parser Visual\"].json.headline }}",
+              "type": "string"
+            },
+            {
+              "id": "8",
+              "name": "subheadline",
+              "value": "={{ $item(\"0\").$node[\"Parser Visual\"].json.subheadline }}",
+              "type": "string"
+            },
+            {
+              "id": "9",
+              "name": "offer",
+              "value": "={{ $item(\"0\").$node[\"Parser Visual\"].json.offer }}",
+              "type": "string"
+            },
+            {
+              "id": "10",
+              "name": "layout",
+              "value": "={{ $item(\"0\").$node[\"Parser Visual\"].json.layout }}",
+              "type": "string"
+            },
+            {
+              "id": "11",
+              "name": "posterUrl",
+              "value": "={{ $item(\"0\").$node[\"Safe Image Cartaz\"].json.posterUrl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3632, 368],
+      "id": "merge-mkt-results",
+      "name": "Merge Marketing Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nreturn {\n    channels: {\n        instagram: {\n            copy: input.copy || '',\n            imagePrompt: input.imagePrompt || '',\n            sticker: input.sticker || '',\n            imageUrl: input.imageUrl || null\n        },\n        whatsapp: {\n            script: input.script || '',\n            trigger: input.trigger || ''\n        },\n        physical: {\n            headline: input.headline || '',\n            subheadline: input.subheadline || '',\n            offer: input.offer || '',\n            layout: input.layout || '',\n            posterUrl: input.posterUrl || null\n        }\n    }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3840, 368],
+      "id": "struct-response-mkt",
+      "name": "Structure Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [4112, 368],
+      "id": "respond-mkt",
+      "name": "Respond Marketing"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "sessionId",
+              "value": "={{ $item(\"0\").$node[\"Smart Router\"].json.sessionId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1536, 368],
+      "id": "set-session-crm",
+      "name": "Set Session CRM"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "sessionId",
+              "value": "={{ $item(\"0\").$node[\"Smart Router\"].json.sessionId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2368, 368],
+      "id": "set-session-visual",
+      "name": "Set Session Visual"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.payload_string }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# Agente de E-mail Marketing - SmartOrders\n\nEspecialista em E-mail Marketing focado em varejo.\n\n## Saída Obrigatória (JSON)\n```json\n{\n  \"subject\": \"Linha de assunto (máx 50 chars, com emoji)\",\n  \"preheader\": \"Texto de preview (máx 100 chars)\",\n  \"headline\": \"Título principal do e-mail\",\n  \"body\": \"Corpo do e-mail em HTML simples\",\n  \"cta_text\": \"Texto do botão CTA\",\n  \"cta_url\": \"{{CTA_URL}}\",\n  \"footer\": \"Rodapé\",\n  \"urgency_element\": \"Elemento de urgência\"\n}\n```\n\n## Diretrizes\n- Use urgência para produtos em excesso\n- Personalize com {{primeiro_nome}}\n- Máximo 3 produtos por e-mail"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [-400, 2000],
+      "id": "agent-email",
+      "name": "Agente Email"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.payload_string }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# Agente de Relatórios - SmartOrders\n\nAnalista de BI Sênior especializado em varejo.\n\n## Saída Obrigatória (JSON)\n```json\n{\n  \"periodo\": \"01/12 a 07/12/2024\",\n  \"resumo_executivo\": \"2-3 linhas com principais insights\",\n  \"kpis\": [{\"nome\": \"X\", \"valor\": \"Y\", \"variacao\": \"+Z%\", \"status\": \"success|warning|danger\"}],\n  \"destaques_positivos\": [\"Item 1\", \"Item 2\"],\n  \"alertas\": [\"Item 1\", \"Item 2\"],\n  \"recomendacoes\": [{\"prioridade\": \"ALTA\", \"acao\": \"X\", \"impacto_estimado\": \"Y\"}],\n  \"proximos_passos\": [\"Passo 1\", \"Passo 2\"]\n}\n```\n\n## Tom\n- Executivo e direto\n- Acionável com ações específicas\n- Quantificado (números, %, R$)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [-400, 2400],
+      "id": "agent-relatorio",
+      "name": "Agente Relatórios"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.payload_string }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# Agente de Negociação - SmartOrders\n\nComprador Sênior especializado em negociação B2B.\n\n## Saída Obrigatória (JSON)\n```json\n{\n  \"resumo_pedido\": {\"total_itens\": 15, \"valor_estimado\": 50000, \"peso_negociacao\": \"ALTO\"},\n  \"poder_de_barganha\": {\"nivel\": \"FORTE\", \"justificativa\": \"Volume + histórico\"},\n  \"argumentos\": [{\"tipo\": \"VOLUME\", \"argumento\": \"...\", \"meta\": \"5%\", \"fallback\": \"3%\"}],\n  \"script_negociacao\": {\"abertura\": \"...\", \"pedido_desconto\": \"...\", \"fechamento\": \"...\"},\n  \"perguntas_estrategicas\": [\"Q1\", \"Q2\"],\n  \"alertas\": [{\"tipo\": \"VERMELHO\", \"alerta\": \"NÃO aceite menos que X\"}],\n  \"meta_final\": {\"desconto_ideal\": \"7%\", \"desconto_aceitavel\": \"5%\", \"economia_potencial\": \"R$ 3.500\"}\n}\n```\n\n## Táticas\n- ANCORAGEM: Peça mais do que espera\n- SILÊNCIO: Quem fala primeiro perde\n- ALTERNATIVAS: Mencione outras opções"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [-400, 2800],
+      "id": "agent-negociacao",
+      "name": "Agente Negociação"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safe Executor genérico\ntry {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Sem output');\n    \n    let parsed;\n    try {\n        let clean = agentOutput.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n        parsed = JSON.parse(clean);\n    } catch (e) {\n        parsed = { text: agentOutput };\n    }\n    \n    return { json: { success: true, output: JSON.stringify(parsed), data: parsed, error: null } };\n} catch (error) {\n    return { json: { success: false, output: 'Erro ao processar.', data: null, error: error.message } };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 2000],
+      "id": "safe-executor-email",
+      "name": "Safe Executor Email"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safe Executor genérico\ntry {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Sem output');\n    \n    let parsed;\n    try {\n        let clean = agentOutput.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n        parsed = JSON.parse(clean);\n    } catch (e) {\n        parsed = { text: agentOutput };\n    }\n    \n    return { json: { success: true, output: JSON.stringify(parsed), data: parsed, error: null } };\n} catch (error) {\n    return { json: { success: false, output: 'Erro ao processar.', data: null, error: error.message } };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 2400],
+      "id": "safe-executor-relatorio",
+      "name": "Safe Executor Relatorio"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safe Executor genérico\ntry {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Sem output');\n    \n    let parsed;\n    try {\n        let clean = agentOutput.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n        parsed = JSON.parse(clean);\n    } catch (e) {\n        parsed = { text: agentOutput };\n    }\n    \n    return { json: { success: true, output: JSON.stringify(parsed), data: parsed, error: null } };\n} catch (error) {\n    return { json: { success: false, output: 'Erro ao processar.', data: null, error: error.message } };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 2800],
+      "id": "safe-executor-negociacao",
+      "name": "Safe Executor Negociacao"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Smart Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Smart Router": {
+      "main": [
+        [
+          {
+            "node": "Switch Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Router": {
+      "main": [
+        [
+          {
+            "node": "Set Session Marketing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente Estoque (Sales Sniper)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente Compras",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente Relatórios",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente Negociação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Compras",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agente Estoque (Sales Sniper)",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agente Instagram",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agente CRM",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agente Visual Merchandising",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agente Email",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agente Relatórios",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agente Negociação",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Compras",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Agente Estoque (Sales Sniper)",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Agente Instagram",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Agente CRM",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Agente Visual Merchandising",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Agente Email",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Agente Relatórios",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Agente Negociação",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Compras",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Agente Estoque (Sales Sniper)",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Agente Instagram",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Agente CRM",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Agente Visual Merchandising",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Agente Email",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Agente Relatórios",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Agente Negociação",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Estoque (Sales Sniper)": {
+      "main": [
+        [
+          {
+            "node": "Safe Executor Estoque",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Compras": {
+      "main": [
+        [
+          {
+            "node": "Safe Executor Compra",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safe Executor Estoque": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safe Executor Compra": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Session Marketing": {
+      "main": [
+        [
+          {
+            "node": "Agente Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Instagram": {
+      "main": [
+        [
+          {
+            "node": "Parser Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser Instagram": {
+      "main": [
+        [
+          {
+            "node": "Gemini Panfleto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Panfleto": {
+      "main": [
+        [
+          {
+            "node": "Safe Image Panfleto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safe Image Panfleto": {
+      "main": [
+        [
+          {
+            "node": "Set Session CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Session CRM": {
+      "main": [
+        [
+          {
+            "node": "Agente CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente CRM": {
+      "main": [
+        [
+          {
+            "node": "Parser CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser CRM": {
+      "main": [
+        [
+          {
+            "node": "Set Session Visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Session Visual": {
+      "main": [
+        [
+          {
+            "node": "Agente Visual Merchandising",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Visual Merchandising": {
+      "main": [
+        [
+          {
+            "node": "Parser Visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser Visual": {
+      "main": [
+        [
+          {
+            "node": "Gemini Cartaz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Cartaz": {
+      "main": [
+        [
+          {
+            "node": "Safe Image Cartaz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safe Image Cartaz": {
+      "main": [
+        [
+          {
+            "node": "Merge Marketing Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Marketing Results": {
+      "main": [
+        [
+          {
+            "node": "Structure Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Marketing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Email": {
+      "main": [
+        [
+          {
+            "node": "Safe Executor Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Relatórios": {
+      "main": [
+        [
+          {
+            "node": "Safe Executor Relatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Negociação": {
+      "main": [
+        [
+          {
+            "node": "Safe Executor Negociacao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safe Executor Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safe Executor Relatorio": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Safe Executor Negociacao": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "27e203b8d0ac73891032fa9f58c8cd38e53bbb56abd519cce7d9751638aae6d0"
+  }
+}
