@@ -84,7 +84,7 @@ export default function ChatPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 }}
-                        className="flex-1 rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl overflow-hidden flex flex-col"
+                        className="flex-1 min-h-0 rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl flex flex-col"
                     >
                         <ChatInterface fullPage={true} />
                     </motion.div>
