@@ -78,7 +78,7 @@
         {
             "parameters": {
                 "method": "GET",
-                "url": "=https://tfhwtejlsybilioiajbx.supabase.co/rest/v1/dados_estoque?tipo_registro=eq.DETALHE{{ $json.filters.search_term ? '&produto_descricao=ilike.' + $json.filters.search_term : '' }}{{ $json.filters.status ? '&status_ruptura=ilike.*' + $json.filters.status + '*' : '' }}&limit={{ $json.filters.limit || 50 }}",
+                "url": "=https://tfhwtejlsybilioiajbx.supabase.co/rest/v1/dados_estoque?tipo_registro=eq.DETALHE{{ $json.filters.search_term ? '&produto_descricao=ilike.*' + $json.filters.search_term.replace(/%/g, '').split(' ').join('*') + '*' : '' }}&limit=100",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
