@@ -17,7 +17,8 @@ import {
     PackageCheck,
     Megaphone,
     Menu,
-    X
+    X,
+    MessageCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signout } from "@/app/login/actions";
@@ -25,6 +26,7 @@ import { signout } from "@/app/login/actions";
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
     { icon: Sparkles, label: "Sugestões (IA)", href: "/recommendations", activeColor: "text-blue-400" },
+    { icon: MessageCircle, label: "Bate-papo", href: "/chat", activeColor: "text-indigo-400" },
     { icon: BrainCircuit, label: "Simulador IA", href: "/simulator", activeColor: "text-purple-400" },
     { icon: Megaphone, label: "Marketing AI", href: "/marketing", activeColor: "text-pink-400" },
     { icon: PackageCheck, label: "Fornecedores", href: "/suppliers", activeColor: "text-orange-400" },
