@@ -1,0 +1,1502 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "sessionId",
+                            "value": "={{ $json.sessionId }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -688,
+                6544
+            ],
+            "id": "a299582e-019d-4253-82ca-86f7a5c54e86",
+            "name": "Set Session Marketing"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente Instagram\n\n## REGRA: Use APENAS os produtos do contexto.\n\n## Saída (JSON)\n{\n  \"copy\": \"Legenda com emojis, hashtags e CTA\",\n  \"imagePrompt\": \"Descrição para gerar imagem\",\n  \"sticker\": \"Frase para Stories\"\n}"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -368,
+                6160
+            ],
+            "id": "0d6fc8b0-4330-4f71-8582-d5611eaed222",
+            "name": "Agente Instagram"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente Visual Merchandising\n\n## REGRA: Use APENAS os produtos do contexto.\n\n## Saída (JSON)\n{\n  \"headline\": \"Frase principal (curta)\",\n  \"subheadline\": \"Frase de apoio\",\n  \"offer\": \"Preço ou desconto\",\n  \"layout\": \"Descrição visual\"\n}"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                1744,
+                6160
+            ],
+            "id": "568950cf-1d99-4f9e-9c83-b74e1e5507d1",
+            "name": "Agente Visual Merchandising"
+        },
+        {
+            "parameters": {
+                "jsCode": "const agentOutput = $input.first().json.output || $input.first().json;\nlet content;\ntry {\n    content = typeof agentOutput === 'string' ? JSON.parse(agentOutput.replace(/```json/g,'').replace(/```/g,'')) : agentOutput;\n} catch (e) {\n    content = { copy: '', imagePrompt: '', sticker: '' };\n}\nreturn { copy: content.copy || '', prompt: content.imagePrompt || '', sticker: content.sticker || '' };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -16,
+                6160
+            ],
+            "id": "e1b9338d-ec2b-4fcf-b1ae-409725a457de",
+            "name": "Parser Instagram"
+        },
+        {
+            "parameters": {
+                "jsCode": "const agentOutput = $input.item.json.output || $input.item.json.response || $input.item.json;\nlet content;\ntry {\n    content = typeof agentOutput === 'string' ? JSON.parse(agentOutput.replace(/```json/g,'').replace(/```/g,'')) : agentOutput;\n} catch (e) {\n    content = { headline: 'OFERTA', subheadline: '', offer: '', layout: '' };\n}\nreturn { headline: content.headline || 'OFERTA', subheadline: content.subheadline || '', offer: content.offer || '', layout: content.layout || '' };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2112,
+                6160
+            ],
+            "id": "94982860-5330-4151-b852-28a8870b550d",
+            "name": "Parser Visual"
+        },
+        {
+            "parameters": {
+                "jsCode": "const agentOutput = $input.item.json.output || $input.item.json.response || $input.item.json;\nlet content;\ntry {\n    content = typeof agentOutput === 'string' ? JSON.parse(agentOutput.replace(/```json/g,'').replace(/```/g,'')) : agentOutput;\n} catch (e) {\n    content = { script: '', trigger: '' };\n}\nreturn { script: content.script || '', trigger: content.trigger || '' };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1328,
+                6160
+            ],
+            "id": "b6b96e26-21b1-4c5c-9988-7b9a116a1c80",
+            "name": "Parser CRM"
+        },
+        {
+            "parameters": {
+                "resource": "image",
+                "modelId": {
+                    "__rl": true,
+                    "value": "models/gemini-2.5-flash-image",
+                    "mode": "list"
+                },
+                "prompt": "={{ $json.prompt }}",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                208,
+                6160
+            ],
+            "id": "d225e8c3-ac24-4699-b1c7-07c77c243352",
+            "name": "Gemini Panfleto",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "zHnhnW0LvGSHuNSy",
+                    "name": "Metrics"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "image",
+                "modelId": {
+                    "__rl": true,
+                    "value": "models/gemini-2.5-flash-image",
+                    "mode": "list"
+                },
+                "prompt": "={{ $json.layout }}",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                2352,
+                6160
+            ],
+            "id": "a1f19c83-0556-4177-a3d0-465f4486c178",
+            "name": "Gemini Cartaz",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "zHnhnW0LvGSHuNSy",
+                    "name": "Metrics"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const item = $input.item;\nconst binaryPropertyName = 'data';\ntry {\n    if (!item.binary || !item.binary[binaryPropertyName]) {\n        return { json: { ...item.json, imageUrl: null, error: 'Imagem não gerada' } };\n    }\n    const binaryData = item.binary[binaryPropertyName];\n    const mimeType = binaryData.mimeType || 'image/png';\n    return { json: { ...item.json, imageUrl: `data:${mimeType};base64,${binaryData.data}`, error: null } };\n} catch (error) {\n    return { json: { ...item.json, imageUrl: null, error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                416,
+                6160
+            ],
+            "id": "f1a2d8d9-3ed8-432c-8b76-1e2ff0aad1fe",
+            "name": "Safe Image Panfleto"
+        },
+        {
+            "parameters": {
+                "jsCode": "const item = $input.item;\nconst binaryPropertyName = 'data';\ntry {\n    if (!item.binary || !item.binary[binaryPropertyName]) {\n        return { json: { ...item.json, posterUrl: null, error: 'Imagem não gerada' } };\n    }\n    const binaryData = item.binary[binaryPropertyName];\n    const mimeType = binaryData.mimeType || 'image/png';\n    return { json: { ...item.json, posterUrl: `data:${mimeType};base64,${binaryData.data}`, error: null } };\n} catch (error) {\n    return { json: { ...item.json, posterUrl: null, error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2560,
+                6160
+            ],
+            "id": "e8449930-5e35-4229-b83d-3abf39559c87",
+            "name": "Safe Image Cartaz"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "copy",
+                            "value": "={{ $('Parser Instagram').first().json.copy }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "2",
+                            "name": "imageUrl",
+                            "value": "={{ $('Safe Image Panfleto').first().json.imageUrl }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "3",
+                            "name": "sticker",
+                            "value": "={{ $('Parser Instagram').first().json.sticker }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "5",
+                            "name": "script",
+                            "value": "={{ $('Parser CRM').first().json.script }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "7",
+                            "name": "headline",
+                            "value": "={{ $('Parser Visual').first().json.headline }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "8",
+                            "name": "subheadline",
+                            "value": "={{ $('Parser Visual').first().json.subheadline }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "9",
+                            "name": "offer",
+                            "value": "={{ $('Parser Visual').first().json.offer }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "11",
+                            "name": "posterUrl",
+                            "value": "={{ $('Safe Image Cartaz').first().json.posterUrl }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                2800,
+                6160
+            ],
+            "id": "d80a1729-57a9-4ed8-a15d-f9db6d11aca5",
+            "name": "Merge Marketing Results"
+        },
+        {
+            "parameters": {
+                "jsCode": "const input = $input.first().json;\nreturn {\n    channels: {\n        instagram: { copy: input.copy || '', sticker: input.sticker || '', imageUrl: input.imageUrl || null },\n        whatsapp: { script: input.script || '' },\n        physical: { headline: input.headline || '', subheadline: input.subheadline || '', offer: input.offer || '', posterUrl: input.posterUrl || null }\n    }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3008,
+                6160
+            ],
+            "id": "5b59fa85-c091-4998-8c3e-6a0e0a45510e",
+            "name": "Structure Response"
+        },
+        {
+            "parameters": {
+                "respondWith": "allIncomingItems",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.4,
+            "position": [
+                3280,
+                6160
+            ],
+            "id": "7ffd9ea9-7a34-4cec-ac2d-6b57850783f6",
+            "name": "Respond Marketing"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "sessionId",
+                            "value": "={{ $json.sessionId }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                704,
+                6160
+            ],
+            "id": "6be54ba7-585d-41fb-bd44-33e7c714f573",
+            "name": "Set Session CRM"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "sessionId",
+                            "value": "={{ $json.sessionId }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                1536,
+                6160
+            ],
+            "id": "c456e27b-6eb3-40db-8bc7-cda67f18aaee",
+            "name": "Set Session Visual"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente CRM/WhatsApp\n\n## REGRA: Use APENAS os produtos do contexto.\n\n## Saída (JSON)\n{\n  \"script\": \"Mensagem curta e persuasiva\",\n  \"trigger\": \"Gatilho mental usado\"\n}"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                976,
+                6160
+            ],
+            "id": "cda566d6-6e6d-4ec4-8c33-f3f99a7663e3",
+            "name": "Agente CRM1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.body.message || $json.body.context || JSON.stringify($json.body) }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente Analisador de Intenção - SmartOrders\n\n## Sua Função\nVocê é o primeiro passo de um sistema de chat inteligente. Sua ÚNICA tarefa é:\n1. Entender o que o usuário quer\n2. Determinar se precisa buscar dados do banco\n3. Identificar entidades mencionadas (produtos, fornecedores)\n\n## REGRA CRÍTICA: requires_data\nDefina `requires_data: true` APENAS quando:\n- Usuário pergunta sobre um produto específico (\"estoque do cimento\")\n- Usuário pede lista de produtos (\"produtos em ruptura\")\n- Usuário quer relatório ou números (\"resumo geral\")\n- Usuário quer campanha/marketing para produtos específicos\n\nDefina `requires_data: false` quando:\n- Usuário faz pergunta conversacional (\"pode explicar melhor?\")\n- Usuário agradece (\"obrigado\", \"valeu\")\n- Usuário faz follow-up sem mencionar produto novo (\"e sobre isso?\", \"continua\")\n- Usuário pede esclarecimento (\"o que você quis dizer?\")\n- Mensagem é sobre negociação sem mencionar produto específico\n\n## Output OBRIGATÓRIO (JSON puro, sem markdown, sem ```)\n{\n  \"intent\": \"consulta_produto | conversa | esclarecimento | agradecimento | negociacao | campanha_marketing | relatorio_geral | busca_generica\",\n  \"requires_data\": true ou false,\n  \"confidence\": 0.0 a 1.0,\n  \"entities\": {\"produto\": \"nome ou null\", \"categoria\": \"categoria ou null\"},\n  \"data_needs\": [\"produtos\", \"financeiro\"] ou [],\n  \"filters\": {\"search_term\": \"termo ou null\", \"status\": \"RUPTURA|CRITICO|ATENCAO|SAUDAVEL|EXCESSO ou null\", \"limit\": 10},\n  \"requires_aggregation\": true ou false,\n  \"original_question\": \"pergunta original\"\n}"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -2480,
+                6976
+            ],
+            "id": "b92167d5-f99e-43d4-9e9f-f44dc5b93d7e",
+            "name": "Agente Analisador"
+        },
+        {
+            "parameters": {
+                "jsCode": "const output = $input.first().json.output || '';\nconst originalBody = $('Webhook2').first().json.body || {};\ntry {\n    let cleanOutput = output.replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```\\s*$/i, '').trim();\n    const parsed = JSON.parse(cleanOutput);\n    const requiresData = parsed.requires_data === true || (parsed.data_needs && parsed.data_needs.length > 0);\n    return {json: {success: true, intent: parsed.intent || 'busca_generica', requires_data: requiresData, confidence: parsed.confidence || 0.5, entities: parsed.entities || {}, data_needs: parsed.data_needs || [], filters: parsed.filters || { limit: 10 }, requires_aggregation: parsed.requires_aggregation || false, original_question: parsed.original_question || originalBody.message || '', original_body: originalBody, sessionId: originalBody.user_id || null}};\n} catch (error) {\n    return {json: {success: false, intent: 'conversa', requires_data: false, confidence: 0.3, entities: {}, data_needs: [], filters: {}, requires_aggregation: false, original_question: originalBody.message || '', original_body: originalBody, sessionId: originalBody.user_id || null, parse_error: error.message}};\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -2112,
+                6976
+            ],
+            "id": "c076a277-786a-4860-bb69-0c6a8fb04b58",
+            "name": "Parser Analisador"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.requires_data }}",
+                                        "rightValue": true,
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "PRECISA_DADOS"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.requires_data }}",
+                                        "rightValue": false,
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "CONVERSA"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.3,
+            "position": [
+                -1872,
+                6976
+            ],
+            "id": "3c85847b-1f9d-44e7-8f6e-43d27dd52ed3",
+            "name": "Precisa RAG?"
+        },
+        {
+            "parameters": {
+                "jsCode": "const allItems = $input.all();\nconst parserData = $('Parser Analisador').first().json;\nlet produtos = allItems.map(item => item.json).filter(p => p.tipo_registro === 'DETALHE');\nconst searchTerm = parserData.filters?.search_term;\nif (searchTerm && produtos.length > 0) {\n    const searchPattern = searchTerm.replace(/%/g, '').toLowerCase();\n    const terms = searchPattern.split(/\\s+/).filter(t => t.length > 0);\n    produtos = produtos.filter(p => terms.every(term => (p.produto_descricao || '').toLowerCase().includes(term)));\n}\nconst statusFilter = parserData.filters?.status;\nif (statusFilter && produtos.length > 0) {\n    produtos = produtos.filter(p => (p.status_ruptura || '').toUpperCase().includes(statusFilter.toUpperCase()));\n}\nconst limit = parserData.filters?.limit || 10;\nprodutos = produtos.slice(0, limit);\nconst produtosFormatados = produtos.map(p => ({nome: p.produto_descricao, id: p.id_produto, estoque: p.estoque_atual, demanda_dia: p.media_diaria_venda, cobertura_dias: p.dias_de_cobertura, status: p.status_ruptura, preco: p.preco, custo: p.custo}));\nconst contextoDados = `\\n## Produtos Encontrados (${produtosFormatados.length})\\n${JSON.stringify(produtosFormatados.slice(0, 10), null, 2)}`;\nfunction mapIntentToRoute(intent) {const map = {'campanha_marketing': 'MARKETING', 'sugestao_compra': 'COMPRA', 'negociacao': 'NEGOCIACAO', 'relatorio_geral': 'RELATORIO'}; return map[intent] || 'ESTOQUE';}\nreturn {json: {route: mapIntentToRoute(parserData.intent), original_body: parserData.original_body, payload_string: `# PERGUNTA DO USUÁRIO\\n${parserData.original_question}\\n\\n# DADOS REAIS DO SISTEMA SmartOrders${contextoDados}\\n\\n# INSTRUÇÕES\\nResponda usando APENAS os dados acima. Seja preciso e cite números.`, sessionId: parserData.sessionId, intent: parserData.intent, has_data: true, timestamp: new Date().toISOString()}};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1392,
+                6816
+            ],
+            "id": "b70981ea-260a-4939-9517-2ac0410117ee",
+            "name": "Construir Contexto RAG"
+        },
+        {
+            "parameters": {
+                "jsCode": "const parserData = $('Parser Analisador').first().json;\nconst intentMessages = {'agradecimento': 'O usuário está agradecendo. Responda de forma cordial.', 'esclarecimento': 'O usuário quer um esclarecimento. Se precisar de dados, peça que especifique.', 'conversa': 'Continue a conversa de forma natural.'};\nconst instrucao = intentMessages[parserData.intent] || 'Responda de forma natural e conversacional.';\nreturn {json: {route: 'ESTOQUE', original_body: parserData.original_body, payload_string: `# MENSAGEM DO USUÁRIO\\n${parserData.original_question}\\n\\n# CONTEXTO\\nEsta é uma mensagem conversacional. NÃO há dados novos do banco.\\n\\n# INSTRUÇÕES\\n${instrucao}`, sessionId: parserData.sessionId, intent: parserData.intent, has_data: false, timestamp: new Date().toISOString()}};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1392,
+                7136
+            ],
+            "id": "e29c322d-c66d-417b-8be9-834a581a5dac",
+            "name": "Construir Contexto Conversa"
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "estoque",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -2720,
+                6976
+            ],
+            "id": "57b26525-5a12-45c3-8433-7080603f6ca8",
+            "name": "Webhook2",
+            "webhookId": "6adda776-d2f2-42b4-a444-49d99993bf92"
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "value": "gpt-3.5-turbo",
+                    "mode": "list"
+                },
+                "options": {
+                    "temperature": 0
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "position": [
+                -2496,
+                7248
+            ],
+            "id": "2f7d243e-f383-43a1-9ba1-f8e110d260f6",
+            "name": "OpenAI Analisador (3.5)1",
+            "credentials": {
+                "openAiApi": {
+                    "id": "07UbucVgem6yn0aQ",
+                    "name": "Metrics-Api-Jose"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "=https://tfhwtejlsybilioiajbx.supabase.co/rest/v1/dados_estoque?tipo_registro=eq.DETALHE{{ $json.filters.search_term ? '&produto_descricao=ilike.*' + $json.filters.search_term.replace(/%/g, '').split(' ').join('*') + '*' : '' }}&limit=100",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaHd0ZWpsc3liaWxpb2lhamJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzM3OTUsImV4cCI6MjA4MDYwOTc5NX0.6Hc1b2h_g7DyGa9fPiOtGx0rL_BWE9xJ-kWBa8jSOrg"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaHd0ZWpsc3liaWxpb2lhamJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzM3OTUsImV4cCI6MjA4MDYwOTc5NX0.6Hc1b2h_g7DyGa9fPiOtGx0rL_BWE9xJ-kWBa8jSOrg"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                -1632,
+                6816
+            ],
+            "id": "9730a730-a166-4239-98eb-7bfa88cc8c21",
+            "name": "Supabase: Buscar Dados1"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "MARKETING",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "MARKETING"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "ESTOQUE",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "ESTOQUE"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "COMPRA",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "COMPRA"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "EMAIL",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "EMAIL"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "RELATORIO",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "RELATORIO"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "NEGOCIACAO",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "NEGOCIACAO"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.3,
+            "position": [
+                -912,
+                6912
+            ],
+            "id": "b824c003-e436-4243-a6c7-a26fcc0328e1",
+            "name": "Switch Router1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# SUPER GERENTE DE COMPRAS & ESTOQUE - SmartOrders\n\n## REGRA PRINCIPAL\nVocê DEVE usar APENAS os dados fornecidos no contexto. NÃO invente números.\nSe o contexto indicar que não há dados do banco, responda de forma conversacional.\n\n## Identidade\nVocê é o Super Gerente de Compras e Gestor de Estoque da SmartOrders.\n\n## Para Mensagens Conversacionais\nQuando não houver dados do banco, responda de forma natural e amigável."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -512,
+                7232
+            ],
+            "id": "80c9861b-3f07-4ee2-88a1-a1a48e06b3c1",
+            "name": "Agente Compras1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Assistente SmartOrders - Especialista em Estoque\n\n## REGRAS\n1. Se houver dados de produtos no contexto, use-os para responder com precisão\n2. Se NÃO houver dados (mensagem conversacional), responda de forma natural e amigável\n3. NUNCA invente números ou dados"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -512,
+                6912
+            ],
+            "id": "b0cb4666-56e4-461c-82fd-1b8c797783df",
+            "name": "Agente Estoque (Sales Sniper)1"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Agente não retornou output');\n    return {json: {success: true, output: agentOutput, error: null}};\n} catch (error) {\n    return {json: {success: false, output: 'Não foi possível processar sua solicitação.', error: error.message}};\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -112,
+                6912
+            ],
+            "id": "354a17ec-ac69-4573-8cb3-b3fbec562eb8",
+            "name": "Safe Executor Estoque1"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Agente não retornou output');\n    return {json: {success: true, output: agentOutput, error: null}};\n} catch (error) {\n    return {json: {success: false, output: 'Não foi possível processar sua solicitação.', error: error.message}};\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -112,
+                7232
+            ],
+            "id": "32d095dc-683d-4e41-a449-a295a765c0e8",
+            "name": "Safe Executor Compra1"
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "={{ $json.output }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.4,
+            "position": [
+                288,
+                7072
+            ],
+            "id": "ba22416a-972c-4df9-a257-5b9d5d334c35",
+            "name": "Respond to Webhook2"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente de E-mail Marketing\n\n## REGRA: Use APENAS os produtos do contexto."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -512,
+                7632
+            ],
+            "id": "8d41a7a3-c750-4ffb-89c8-de42f8c2ef5e",
+            "name": "Agente Email1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente de Relatórios - BI Executivo\n\n## REGRA: Use APENAS os dados financeiros do contexto."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -512,
+                8032
+            ],
+            "id": "73819eba-eb29-4716-b8cf-6b0b5f8a93cd",
+            "name": "Agente Relatórios1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente de Negociação B2B\n\n## REGRA: Use APENAS os produtos do contexto para calcular valores."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -512,
+                8432
+            ],
+            "id": "75ba821a-438e-4b9a-8911-529bcb39a8ae",
+            "name": "Agente Negociação1"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Sem output');\n    return { json: { success: true, output: agentOutput, error: null } };\n} catch (error) {\n    return { json: { success: false, output: 'Erro ao processar.', error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -112,
+                7632
+            ],
+            "id": "1ff05649-8a18-4b60-9d7a-34342d620694",
+            "name": "Safe Executor Email1"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Sem output');\n    return { json: { success: true, output: agentOutput, error: null } };\n} catch (error) {\n    return { json: { success: false, output: 'Erro ao processar.', error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -112,
+                8032
+            ],
+            "id": "76506a19-7424-48c5-8738-d576584bbb6b",
+            "name": "Safe Executor Relatorio1"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Sem output');\n    return { json: { success: true, output: agentOutput, error: null } };\n} catch (error) {\n    return { json: { success: false, output: 'Erro ao processar.', error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -112,
+                8432
+            ],
+            "id": "9625aaef-9c02-4420-837d-e9cc2c764be9",
+            "name": "Safe Executor Negociacao1"
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "value": "gpt-4o",
+                    "mode": "list"
+                },
+                "options": {
+                    "temperature": 0.3
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "position": [
+                976,
+                7008
+            ],
+            "id": "747e3dda-e5b7-4636-9efa-1bf33dd008aa",
+            "name": "OpenAI Chat Model3",
+            "credentials": {
+                "openAiApi": {
+                    "id": "07UbucVgem6yn0aQ",
+                    "name": "Metrics-Api-Jose"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "modelName": "models/gemini-2.5-pro",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                1152,
+                7008
+            ],
+            "id": "2ffa5b3b-883c-4c39-b608-3c33d4ffcb53",
+            "name": "Google Gemini Chat Model4",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "zHnhnW0LvGSHuNSy",
+                    "name": "Metrics"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "contextWindowLength": 50
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                1344,
+                7008
+            ],
+            "id": "59f3a621-4085-49d2-bd92-39f7e94eefd5",
+            "name": "Simple Memory3"
+        },
+        {
+            "parameters": {
+                "modelName": "models/gemini-2.5-pro",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                -2416,
+                7376
+            ],
+            "id": "a70ea78e-f56f-4f0f-aaea-872dd9c4b786",
+            "name": "Google Gemini Chat Model5",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "zHnhnW0LvGSHuNSy",
+                    "name": "Metrics"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Set Session Marketing": {
+            "main": [
+                [
+                    {
+                        "node": "Agente Instagram",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Instagram": {
+            "main": [
+                [
+                    {
+                        "node": "Parser Instagram",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Visual Merchandising": {
+            "main": [
+                [
+                    {
+                        "node": "Parser Visual",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parser Instagram": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Panfleto",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parser Visual": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Cartaz",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parser CRM": {
+            "main": [
+                [
+                    {
+                        "node": "Set Session Visual",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Panfleto": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Image Panfleto",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Cartaz": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Image Cartaz",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Image Panfleto": {
+            "main": [
+                [
+                    {
+                        "node": "Set Session CRM",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Image Cartaz": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Marketing Results",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Merge Marketing Results": {
+            "main": [
+                [
+                    {
+                        "node": "Structure Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Structure Response": {
+            "main": [
+                [
+                    {
+                        "node": "Respond Marketing",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Session CRM": {
+            "main": [
+                [
+                    {
+                        "node": "Agente CRM1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Session Visual": {
+            "main": [
+                [
+                    {
+                        "node": "Agente Visual Merchandising",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente CRM1": {
+            "main": [
+                [
+                    {
+                        "node": "Parser CRM",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Analisador": {
+            "main": [
+                [
+                    {
+                        "node": "Parser Analisador",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parser Analisador": {
+            "main": [
+                [
+                    {
+                        "node": "Precisa RAG?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Precisa RAG?": {
+            "main": [
+                [
+                    {
+                        "node": "Supabase: Buscar Dados1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Construir Contexto Conversa",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Construir Contexto RAG": {
+            "main": [
+                [
+                    {
+                        "node": "Switch Router1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Construir Contexto Conversa": {
+            "main": [
+                [
+                    {
+                        "node": "Switch Router1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Webhook2": {
+            "main": [
+                [
+                    {
+                        "node": "Agente Analisador",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Analisador (3.5)1": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Analisador",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Supabase: Buscar Dados1": {
+            "main": [
+                [
+                    {
+                        "node": "Construir Contexto RAG",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Switch Router1": {
+            "main": [
+                [
+                    {
+                        "node": "Set Session Marketing",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Estoque (Sales Sniper)1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Compras1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Email1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Relatórios1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Negociação1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Compras1": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Compra1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Estoque (Sales Sniper)1": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Estoque1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Estoque1": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Compra1": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Email1": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Email1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Relatórios1": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Relatorio1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Negociação1": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Negociacao1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Email1": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Relatorio1": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Negociacao1": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Chat Model3": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Compras1",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Estoque (Sales Sniper)1",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Email1",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Relatórios1",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Negociação1",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Instagram",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente CRM1",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Visual Merchandising",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model4": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Compras1",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Estoque (Sales Sniper)1",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Email1",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Relatórios1",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Negociação1",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Instagram",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente CRM1",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Visual Merchandising",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Simple Memory3": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agente Compras1",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Estoque (Sales Sniper)1",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Email1",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Relatórios1",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Negociação1",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Instagram",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente CRM1",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Visual Merchandising",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model5": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Analisador",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "27e203b8d0ac73891032fa9f58c8cd38e53bbb56abd519cce7d9751638aae6d0"
+    }
+}
