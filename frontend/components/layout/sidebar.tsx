@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     LayoutDashboard,
     Sparkles,
@@ -143,16 +143,46 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             </div>
 
             {/* User Mini Profile */}
-            <div className="mt-6 flex items-center gap-3 rounded-xl bg-accent p-3">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500" />
-                <div className="flex flex-col">
-                    <span className="text-xs font-medium text-foreground">Pedro Silva</span>
-                    <span className="text-[10px] text-muted-foreground">Gerente de Compras</span>
-                </div>
+            <UserProfile />
+        </div>
+    );
+}
+
+function UserProfile() {
+    const [user, setUser] = useState({ name: "Pedro Silva", role: "Gerente de Compras" });
+
+    useEffect(() => {
+        // Load initial
+        const stored = localStorage.getItem("user_profile");
+        if (stored) {
+            setUser(JSON.parse(stored));
+        }
+
+        // Listen for updates
+        const handleUpdate = () => {
+            const stored = localStorage.getItem("user_profile");
+            if (stored) {
+                setUser(JSON.parse(stored));
+            }
+        };
+
+        window.addEventListener("user-profile-updated", handleUpdate);
+        return () => window.removeEventListener("user-profile-updated", handleUpdate);
+    }, []);
+
+    return (
+        <div className="mt-6 flex items-center gap-3 rounded-xl bg-accent p-3">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                {user.name.charAt(0)}
+            </div>
+            <div className="flex flex-col">
+                <span className="text-xs font-medium text-foreground">{user.name}</span>
+                <span className="text-[10px] text-muted-foreground">{user.role}</span>
             </div>
         </div>
     );
 }
+
 
 export function Sidebar() {
     return (

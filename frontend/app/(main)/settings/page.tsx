@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, Phone, Bell, ShieldAlert, Calendar, Flame, Loader2 } from "lucide-react";
+import { Save, Phone, Bell, ShieldAlert, Calendar, Flame, Loader2, User } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { getUserSettings, saveUserSettings } from "@/app/actions/settings";
 
@@ -40,12 +40,18 @@ export default function SettingsPage() {
 
     // Custom form action wrapper
     const handleSubmit = async (formData: FormData) => {
+        // Save profile to localStorage for immediate UI update (simulating DB)
+        const name = formData.get('userName') as string;
+        const role = formData.get('userRole') as string;
+        if (name && role) {
+            localStorage.setItem("user_profile", JSON.stringify({ name, role }));
+            window.dispatchEvent(new Event("user-profile-updated"));
+        }
+
         const result = await saveUserSettings(null, formData);
-        const newState = { message: result.message, type: result.type };
+
         // @ts-ignore
         import("react-dom").then((rd) => {
-            // If we were using useFormState we would update it there. 
-            // For this simple implementation, valid alert is enough.
             alert(result.message);
         });
     };
@@ -76,6 +82,42 @@ export default function SettingsPage() {
 
                 <form action={handleSubmit} className="space-y-8">
                     <input type="hidden" name="userId" value={MOCK_USER_ID} />
+
+                    {/* Profile Section */}
+                    <div className="rounded-2xl border border-border bg-accent p-8 backdrop-blur-xl">
+                        <div className="mb-6 flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
+                                <User size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-semibold">Perfil de Usuário</h2>
+                                <p className="text-sm text-muted-foreground">Informações visíveis no seu cartão de perfil.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-muted-foreground">Nome Completo</label>
+                                <input
+                                    type="text"
+                                    name="userName"
+                                    defaultValue={typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("user_profile") || '{}').name || "Pedro Silva" : "Pedro Silva"}
+                                    placeholder="Seu nome"
+                                    className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-muted-foreground">Cargo / Função</label>
+                                <input
+                                    type="text"
+                                    name="userRole"
+                                    defaultValue={typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("user_profile") || '{}').role || "Gerente de Compras" : "Gerente de Compras"}
+                                    placeholder="Ex: Gerente de Compras"
+                                    className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Contact Section */}
                     <div className="rounded-2xl border border-border bg-accent p-8 backdrop-blur-xl">
