@@ -7,7 +7,7 @@ import { ChatInterface } from "@/components/chat/chat-interface";
 
 export default function ChatPage() {
     return (
-        <div className="min-h-screen relative overflow-hidden">
+        <div className="h-[calc(100vh-4rem)] md:h-screen relative overflow-hidden flex flex-col">
             {/* Animated Background */}
             <div className="absolute inset-0 -z-10">
                 <div className="absolute inset-0 bg-[#050505]" />
@@ -15,16 +15,16 @@ export default function ChatPage() {
                 <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px]" />
             </div>
 
-            <div className="p-6 lg:p-8 h-screen flex flex-col">
+            <div className="p-4 md:p-6 lg:p-8 flex-1 flex flex-col min-h-0 overflow-hidden">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mx-auto max-w-4xl w-full flex-1 flex flex-col"
+                    className="mx-auto max-w-4xl w-full flex-1 flex flex-col min-h-0"
                 >
                     {/* Header */}
-                    <header className="mb-6 shrink-0">
+                    <header className="mb-4 shrink-0">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-5">
+                            <div className="flex items-center gap-4">
                                 <Link
                                     href="/dashboard"
                                     className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
@@ -37,11 +37,11 @@ export default function ChatPage() {
                                     transition={{ type: "spring", bounce: 0.5, delay: 0.2 }}
                                     className="relative"
                                 >
-                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
-                                        <Bot size={28} className="text-white" />
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
+                                        <Bot size={24} className="text-white" />
                                     </div>
-                                    <div className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 rounded-full bg-green-500 border-2 border-[#050505] animate-pulse">
-                                        <Sparkles size={10} className="text-white" />
+                                    <div className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-green-500 border-2 border-[#050505] animate-pulse">
+                                        <Sparkles size={8} className="text-white" />
                                     </div>
                                 </motion.div>
                                 <div>
@@ -49,7 +49,7 @@ export default function ChatPage() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.3 }}
-                                        className="text-2xl lg:text-3xl font-bold tracking-tight text-white"
+                                        className="text-xl lg:text-2xl font-bold tracking-tight text-white"
                                     >
                                         Assistente IA
                                         <span className="inline-block ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white uppercase tracking-wider">
@@ -60,7 +60,7 @@ export default function ChatPage() {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.4 }}
-                                        className="text-sm text-neutral-400"
+                                        className="text-xs text-neutral-400"
                                     >
                                         Análises de estoque, sugestões de compra e estratégias de queima
                                     </motion.p>
@@ -84,7 +84,7 @@ export default function ChatPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 }}
-                        className="flex-1 min-h-0 rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl flex flex-col"
+                        className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl flex flex-col overflow-hidden"
                     >
                         <ChatInterface fullPage={true} />
                     </motion.div>
@@ -93,3 +93,4 @@ export default function ChatPage() {
         </div>
     );
 }
+
