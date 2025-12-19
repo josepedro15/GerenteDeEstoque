@@ -17,7 +17,7 @@ export default function ChatPage() {
 
             {/* Header compacto */}
             <header className="shrink-0 px-4 py-2 md:px-6 md:py-3">
-                <div className="mx-auto max-w-4xl flex items-center justify-between">
+                <div className="mx-auto max-w-6xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/dashboard"
@@ -55,7 +55,7 @@ export default function ChatPage() {
 
             {/* Chat Container - ocupa todo o espaço restante */}
             <div className="flex-1 min-h-0 px-4 pb-4 md:px-6 md:pb-6">
-                <div className="mx-auto max-w-4xl h-full rounded-2xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl overflow-hidden">
+                <div className="mx-auto max-w-6xl h-full rounded-2xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl overflow-hidden">
                     <ChatInterface fullPage={true} />
                 </div>
             </div>

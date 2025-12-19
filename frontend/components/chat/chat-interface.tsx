@@ -9,6 +9,7 @@ import { Send, Bot, User, Maximize2, Minimize2, ExternalLink, Trash2, Loader2 } 
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { useChat } from "@/contexts/ChatContext";
+import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 
 interface Message {
     id: string;
@@ -228,28 +229,26 @@ export function ChatInterface({ fullPage = false }: { fullPage?: boolean }) {
         }
     }, [messages, isOpen]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || isLoading) return;
+    // Função para enviar mensagem via PromptInputBox
+    const handleSendMessage = async (userContent: string) => {
+        if (!userContent.trim() || isLoading) return;
 
-        const userContent = input.trim();
         const userMsg: Message = {
             id: Date.now().toString(),
             role: "user",
-            content: userContent
+            content: userContent.trim()
         };
 
         setMessages(prev => [...prev, userMsg]);
-        setInput("");
         setIsLoading(true);
 
         // Salva mensagem do usuário no banco (não bloqueia a UI)
         if (userId && sessionId) {
-            saveChatMessage(userId, sessionId, 'user', userContent).catch(console.error);
+            saveChatMessage(userId, sessionId, 'user', userContent.trim()).catch(console.error);
         }
 
         try {
-            const response = await sendMessage(userContent);
+            const response = await sendMessage(userContent.trim());
             const aiMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
@@ -272,6 +271,13 @@ export function ChatInterface({ fullPage = false }: { fullPage?: boolean }) {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim() || isLoading) return;
+        handleSendMessage(input.trim());
+        setInput("");
     };
 
     return (
@@ -397,18 +403,15 @@ export function ChatInterface({ fullPage = false }: { fullPage?: boolean }) {
 
             {/* Input Area */}
             <div className="shrink-0 p-4 border-t border-white/5 bg-white/5 backdrop-blur-md">
-                <form onSubmit={handleSubmit} className="flex gap-2">
-                    <input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Digite sua pergunta sobre o estoque..."
-                        className="flex-1 bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-500"
-                        disabled={isLoadingHistory}
-                    />
-                    <Button type="submit" size="icon" disabled={isLoading || isLoadingHistory || !input.trim()}>
-                        <Send size={18} />
-                    </Button>
-                </form>
+                <PromptInputBox
+                    onSend={(message) => {
+                        if (message.trim() && !isLoading && !isLoadingHistory) {
+                            handleSendMessage(message);
+                        }
+                    }}
+                    isLoading={isLoading}
+                    placeholder="Digite sua pergunta sobre o estoque..."
+                />
             </div>
         </div>
     );
