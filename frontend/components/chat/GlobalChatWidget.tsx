@@ -18,28 +18,28 @@ export function GlobalChatWidget() {
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className={`rounded-2xl border border-white/10 bg-[#1a1c23] backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ${isExpanded
-                                ? "w-[800px] h-[80vh]"
-                                : "w-[400px] h-[600px] max-h-[80vh]"
+                        className={`rounded-2xl border border-border bg-card backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ${isExpanded
+                            ? "w-[800px] h-[80vh]"
+                            : "w-[400px] h-[600px] max-h-[80vh]"
                             }`}
                     >
                         {/* Header do Widget */}
-                        <div className="flex items-center justify-between p-3 border-b border-white/5 bg-white/5 shrink-0">
+                        <div className="flex items-center justify-between p-3 border-b border-border bg-accent shrink-0">
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                <span className="font-medium text-white text-sm">Assistente IA</span>
+                                <span className="font-medium text-foreground text-sm">Assistente IA</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <button
                                     onClick={() => setIsExpanded(!isExpanded)}
-                                    className="p-1.5 rounded-lg hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                                     title={isExpanded ? "Reduzir" : "Expandir"}
                                 >
                                     {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                                 </button>
                                 <button
                                     onClick={toggleChat}
-                                    className="p-1.5 rounded-lg hover:bg-red-500/20 text-neutral-400 hover:text-red-400 transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-colors"
                                     title="Fechar"
                                 >
                                     <X size={16} />

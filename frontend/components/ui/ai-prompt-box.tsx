@@ -15,7 +15,7 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ className, ...props }, ref) => (
     <textarea
         className={cn(
-            "flex w-full rounded-md border-none bg-transparent px-3 py-2.5 text-base text-gray-100 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] resize-none",
+            "flex w-full rounded-md border-none bg-transparent px-3 py-2.5 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] resize-none",
             className
         )}
         ref={ref}
@@ -37,7 +37,7 @@ const TooltipContent = React.forwardRef<
         ref={ref}
         sideOffset={sideOffset}
         className={cn(
-            "z-50 overflow-hidden rounded-md border border-[#333333] bg-[#1F2023] px-3 py-1.5 text-sm text-white shadow-md animate-in fade-in-0 zoom-in-95",
+            "z-50 overflow-hidden rounded-md border border-border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95",
             className
         )}
         {...props}
@@ -53,9 +53,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant = "default", size = "default", ...props }, ref) => {
         const variantClasses = {
-            default: "bg-white hover:bg-white/80 text-black",
-            outline: "border border-[#444444] bg-transparent hover:bg-[#3A3A40]",
-            ghost: "bg-transparent hover:bg-[#3A3A40]",
+            default: "bg-primary hover:bg-primary/90 text-primary-foreground",
+            outline: "border border-border bg-transparent hover:bg-accent",
+            ghost: "bg-transparent hover:bg-accent",
         };
         const sizeClasses = {
             default: "h-10 px-4 py-2",

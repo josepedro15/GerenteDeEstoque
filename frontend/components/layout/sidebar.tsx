@@ -42,7 +42,7 @@ function ThemeToggle() {
     return (
         <button
             onClick={toggleTheme}
-            className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-white"
+            className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
             {theme === "dark" ? (
                 <>
@@ -70,12 +70,12 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
                         S
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-white">
+                    <span className="text-xl font-bold tracking-tight text-foreground">
                         SmartOrders
                     </span>
                 </div>
                 {onClose && (
-                    <button onClick={onClose} className="text-muted-foreground hover:text-white md:hidden">
+                    <button onClick={onClose} className="text-muted-foreground hover:text-foreground md:hidden">
                         <X size={24} />
                     </button>
                 )}
@@ -92,14 +92,14 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
                             href={item.href}
                             onClick={onClose}
                             className={cn(
-                                "group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all hover:bg-white/5",
-                                isActive ? "text-white" : "text-muted-foreground hover:text-white"
+                                "group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all hover:bg-accent",
+                                isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             {isActive && (
                                 <motion.div
                                     layoutId="activeNav"
-                                    className="absolute inset-0 rounded-xl bg-white/5 border border-white/5"
+                                    className="absolute inset-0 rounded-xl bg-accent border border-border"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
@@ -110,7 +110,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
                                 size={20}
                                 className={cn(
                                     "relative z-10 transition-colors",
-                                    isActive ? (item.activeColor || "text-primary") : "group-hover:text-white"
+                                    isActive ? (item.activeColor || "text-primary") : "group-hover:text-foreground"
                                 )}
                             />
                             <span className="relative z-10">{item.label}</span>
@@ -127,8 +127,8 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
                     href="/settings"
                     onClick={onClose}
                     className={cn(
-                        "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors hover:bg-white/5",
-                        pathname === "/settings" ? "text-white" : "text-muted-foreground hover:text-white"
+                        "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
+                        pathname === "/settings" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                     )}
                 >
                     <Settings size={20} />
@@ -143,10 +143,10 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             </div>
 
             {/* User Mini Profile */}
-            <div className="mt-6 flex items-center gap-3 rounded-xl bg-white/5 p-3">
+            <div className="mt-6 flex items-center gap-3 rounded-xl bg-accent p-3">
                 <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500" />
                 <div className="flex flex-col">
-                    <span className="text-xs font-medium text-white">Pedro Silva</span>
+                    <span className="text-xs font-medium text-foreground">Pedro Silva</span>
                     <span className="text-[10px] text-muted-foreground">Gerente de Compras</span>
                 </div>
             </div>
@@ -156,7 +156,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
 export function Sidebar() {
     return (
-        <aside className="hidden md:flex fixed left-0 top-0 z-40 h-screen w-64 border-r border-white/5 bg-card/60 backdrop-blur-xl">
+        <aside className="hidden md:flex fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-card/80 backdrop-blur-xl">
             <SidebarContent />
         </aside>
     );
@@ -168,16 +168,16 @@ export function MobileNav() {
     return (
         <>
             {/* Mobile Header - Visible only on small screens */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-white/5 bg-black/80 backdrop-blur-xl z-30 flex items-center justify-between px-4">
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-border bg-background/80 backdrop-blur-xl z-30 flex items-center justify-between px-4">
                 <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
                         S
                     </div>
-                    <span className="font-bold text-white">SmartOrders</span>
+                    <span className="font-bold text-foreground">SmartOrders</span>
                 </div>
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="p-2 text-white hover:bg-white/10 rounded-lg"
+                    className="p-2 text-foreground hover:bg-accent rounded-lg"
                 >
                     <Menu size={24} />
                 </button>
@@ -192,14 +192,14 @@ export function MobileNav() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOpen(false)}
-                            className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden"
+                            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
                         />
                         <motion.div
                             initial={{ x: "-100%" }}
                             animate={{ x: 0 }}
                             exit={{ x: "-100%" }}
                             transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-                            className="fixed left-0 top-0 bottom-0 z-50 w-64 bg-[#0A0A0A] border-r border-white/10 md:hidden"
+                            className="fixed left-0 top-0 bottom-0 z-50 w-64 bg-card border-r border-border md:hidden"
                         >
                             <SidebarContent onClose={() => setIsOpen(false)} />
                         </motion.div>

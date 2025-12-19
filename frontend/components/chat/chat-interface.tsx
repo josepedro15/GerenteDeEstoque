@@ -336,7 +336,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     {isLoadingHistory ? (
                         <div className="flex flex-col items-center justify-center h-full gap-3">
                             <Loader2 size={24} className="animate-spin text-blue-400" />
-                            <span className="text-neutral-500 text-sm">Carregando histórico...</span>
+                            <span className="text-muted-foreground text-sm">Carregando histórico...</span>
                         </div>
                     ) : (
                         <>
@@ -350,31 +350,31 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                 >
                                     <div className={cn(
                                         "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                                        msg.role === "assistant" ? "bg-blue-500/20 text-blue-400" : "bg-white/10 text-white"
+                                        msg.role === "assistant" ? "bg-blue-500/20 text-blue-400" : "bg-accent text-foreground"
                                     )}>
                                         {msg.role === "assistant" ? <Bot size={18} /> : <User size={18} />}
                                     </div>
                                     <div className={cn(
                                         "rounded-2xl px-4 py-2 text-sm overflow-hidden",
                                         msg.role === "assistant"
-                                            ? "bg-white/5 text-slate-200 rounded-tl-none"
+                                            ? "bg-card border border-border text-foreground rounded-tl-none"
                                             : "bg-blue-600 text-white rounded-tr-none"
                                     )}>
                                         {msg.role === "assistant" ? (
                                             <ReactMarkdown
                                                 components={{
-                                                    p: ({ children }) => <p className="mb-2 last:mb-0 text-slate-300 leading-relaxed">{children}</p>,
-                                                    strong: ({ children }) => <span className="font-semibold text-blue-400">{children}</span>,
-                                                    ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1 text-slate-300">{children}</ul>,
-                                                    ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1 text-slate-300">{children}</ol>,
+                                                    p: ({ children }) => <p className="mb-2 last:mb-0 text-foreground leading-relaxed">{children}</p>,
+                                                    strong: ({ children }) => <span className="font-semibold text-blue-500">{children}</span>,
+                                                    ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1 text-foreground">{children}</ul>,
+                                                    ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1 text-foreground">{children}</ol>,
                                                     li: ({ children }) => <li>{children}</li>,
-                                                    h1: ({ children }) => <h1 className="text-xl font-bold mb-3 text-white mt-4 first:mt-0 max-w-full break-words">{children}</h1>,
-                                                    h2: ({ children }) => <h2 className="text-lg font-bold mb-2 text-white mt-3 first:mt-0 max-w-full break-words">{children}</h2>,
-                                                    h3: ({ children }) => <h3 className="text-base font-semibold mb-2 text-blue-200 mt-2 max-w-full break-words">{children}</h3>,
-                                                    h4: ({ children }) => <h4 className="text-sm font-semibold mb-1 text-blue-200 mt-2 max-w-full break-words">{children}</h4>,
-                                                    hr: () => <hr className="my-3 border-white/10" />,
-                                                    blockquote: ({ children }) => <blockquote className="border-l-2 border-blue-500/50 pl-3 my-2 italic text-slate-400 bg-blue-500/5 py-1 rounded-r">{children}</blockquote>,
-                                                    code: ({ children }) => <code className="bg-black/40 px-1.5 py-0.5 rounded text-xs font-mono text-yellow-200 border border-white/5">{children}</code>
+                                                    h1: ({ children }) => <h1 className="text-xl font-bold mb-3 text-foreground mt-4 first:mt-0 max-w-full break-words">{children}</h1>,
+                                                    h2: ({ children }) => <h2 className="text-lg font-bold mb-2 text-foreground mt-3 first:mt-0 max-w-full break-words">{children}</h2>,
+                                                    h3: ({ children }) => <h3 className="text-base font-semibold mb-2 text-blue-500 mt-2 max-w-full break-words">{children}</h3>,
+                                                    h4: ({ children }) => <h4 className="text-sm font-semibold mb-1 text-blue-500 mt-2 max-w-full break-words">{children}</h4>,
+                                                    hr: () => <hr className="my-3 border-border" />,
+                                                    blockquote: ({ children }) => <blockquote className="border-l-2 border-blue-500/50 pl-3 my-2 italic text-muted-foreground bg-blue-500/5 py-1 rounded-r">{children}</blockquote>,
+                                                    code: ({ children }) => <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-orange-500 border border-border">{children}</code>
                                                 }}
                                             >
                                                 {cleanContent(msg.content)}
@@ -390,7 +390,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                     <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
                                         <Bot size={18} />
                                     </div>
-                                    <div className="bg-white/5 rounded-2xl rounded-tl-none px-4 py-2 flex items-center gap-1">
+                                    <div className="bg-card border border-border rounded-2xl rounded-tl-none px-4 py-2 flex items-center gap-1">
                                         <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
                                         <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]" />
                                         <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]" />
