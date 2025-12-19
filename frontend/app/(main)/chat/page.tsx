@@ -53,9 +53,9 @@ export default function ChatPage() {
                 </div>
             </header>
 
-            {/* Chat Container - ocupa todo o espaço restante */}
-            <div className="flex-1 min-h-0 px-4 pb-4 md:px-6 md:pb-6">
-                <div className="mx-auto max-w-6xl h-full rounded-2xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl overflow-hidden">
+            {/* Chat Container - ocupa todo o espaço */}
+            <div className="flex-1 min-h-0">
+                <div className="h-full">
                     <ChatInterface fullPage={true} />
                 </div>
             </div>

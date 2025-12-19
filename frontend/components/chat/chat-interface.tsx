@@ -331,87 +331,90 @@ export function ChatInterface({ fullPage = false }: { fullPage?: boolean }) {
             {/* Messages Area */}
             <div
                 ref={scrollRef}
-                className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-black/20"
-            >
-                {isLoadingHistory ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-3">
-                        <Loader2 size={24} className="animate-spin text-blue-400" />
-                        <span className="text-neutral-500 text-sm">Carregando histórico...</span>
-                    </div>
-                ) : (
-                    <>
-                        {messages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={cn(
-                                    "flex gap-3 max-w-[80%]",
-                                    msg.role === "user" ? "ml-auto flex-row-reverse" : ""
-                                )}
-                            >
-                                <div className={cn(
-                                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                                    msg.role === "assistant" ? "bg-blue-500/20 text-blue-400" : "bg-white/10 text-white"
-                                )}>
-                                    {msg.role === "assistant" ? <Bot size={18} /> : <User size={18} />}
-                                </div>
-                                <div className={cn(
-                                    "rounded-2xl px-4 py-2 text-sm overflow-hidden",
-                                    msg.role === "assistant"
-                                        ? "bg-white/5 text-slate-200 rounded-tl-none"
-                                        : "bg-blue-600 text-white rounded-tr-none"
-                                )}>
-                                    {msg.role === "assistant" ? (
-                                        <ReactMarkdown
-                                            components={{
-                                                p: ({ children }) => <p className="mb-2 last:mb-0 text-slate-300 leading-relaxed">{children}</p>,
-                                                strong: ({ children }) => <span className="font-semibold text-blue-400">{children}</span>,
-                                                ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1 text-slate-300">{children}</ul>,
-                                                ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1 text-slate-300">{children}</ol>,
-                                                li: ({ children }) => <li>{children}</li>,
-                                                h1: ({ children }) => <h1 className="text-xl font-bold mb-3 text-white mt-4 first:mt-0 max-w-full break-words">{children}</h1>,
-                                                h2: ({ children }) => <h2 className="text-lg font-bold mb-2 text-white mt-3 first:mt-0 max-w-full break-words">{children}</h2>,
-                                                h3: ({ children }) => <h3 className="text-base font-semibold mb-2 text-blue-200 mt-2 max-w-full break-words">{children}</h3>,
-                                                h4: ({ children }) => <h4 className="text-sm font-semibold mb-1 text-blue-200 mt-2 max-w-full break-words">{children}</h4>,
-                                                hr: () => <hr className="my-3 border-white/10" />,
-                                                blockquote: ({ children }) => <blockquote className="border-l-2 border-blue-500/50 pl-3 my-2 italic text-slate-400 bg-blue-500/5 py-1 rounded-r">{children}</blockquote>,
-                                                code: ({ children }) => <code className="bg-black/40 px-1.5 py-0.5 rounded text-xs font-mono text-yellow-200 border border-white/5">{children}</code>
-                                            }}
-                                        >
-                                            {cleanContent(msg.content)}
-                                        </ReactMarkdown>
-                                    ) : (
-                                        msg.content
+                className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 lg:px-16 py-4 space-y-4">
+                <div className="max-w-4xl mx-auto space-y-4">
+                    {isLoadingHistory ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-3">
+                            <Loader2 size={24} className="animate-spin text-blue-400" />
+                            <span className="text-neutral-500 text-sm">Carregando histórico...</span>
+                        </div>
+                    ) : (
+                        <>
+                            {messages.map((msg) => (
+                                <div
+                                    key={msg.id}
+                                    className={cn(
+                                        "flex gap-3 max-w-[80%]",
+                                        msg.role === "user" ? "ml-auto flex-row-reverse" : ""
                                     )}
+                                >
+                                    <div className={cn(
+                                        "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                                        msg.role === "assistant" ? "bg-blue-500/20 text-blue-400" : "bg-white/10 text-white"
+                                    )}>
+                                        {msg.role === "assistant" ? <Bot size={18} /> : <User size={18} />}
+                                    </div>
+                                    <div className={cn(
+                                        "rounded-2xl px-4 py-2 text-sm overflow-hidden",
+                                        msg.role === "assistant"
+                                            ? "bg-white/5 text-slate-200 rounded-tl-none"
+                                            : "bg-blue-600 text-white rounded-tr-none"
+                                    )}>
+                                        {msg.role === "assistant" ? (
+                                            <ReactMarkdown
+                                                components={{
+                                                    p: ({ children }) => <p className="mb-2 last:mb-0 text-slate-300 leading-relaxed">{children}</p>,
+                                                    strong: ({ children }) => <span className="font-semibold text-blue-400">{children}</span>,
+                                                    ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1 text-slate-300">{children}</ul>,
+                                                    ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1 text-slate-300">{children}</ol>,
+                                                    li: ({ children }) => <li>{children}</li>,
+                                                    h1: ({ children }) => <h1 className="text-xl font-bold mb-3 text-white mt-4 first:mt-0 max-w-full break-words">{children}</h1>,
+                                                    h2: ({ children }) => <h2 className="text-lg font-bold mb-2 text-white mt-3 first:mt-0 max-w-full break-words">{children}</h2>,
+                                                    h3: ({ children }) => <h3 className="text-base font-semibold mb-2 text-blue-200 mt-2 max-w-full break-words">{children}</h3>,
+                                                    h4: ({ children }) => <h4 className="text-sm font-semibold mb-1 text-blue-200 mt-2 max-w-full break-words">{children}</h4>,
+                                                    hr: () => <hr className="my-3 border-white/10" />,
+                                                    blockquote: ({ children }) => <blockquote className="border-l-2 border-blue-500/50 pl-3 my-2 italic text-slate-400 bg-blue-500/5 py-1 rounded-r">{children}</blockquote>,
+                                                    code: ({ children }) => <code className="bg-black/40 px-1.5 py-0.5 rounded text-xs font-mono text-yellow-200 border border-white/5">{children}</code>
+                                                }}
+                                            >
+                                                {cleanContent(msg.content)}
+                                            </ReactMarkdown>
+                                        ) : (
+                                            msg.content
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                        {isLoading && (
-                            <div className="flex gap-3 max-w-[80%]">
-                                <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                                    <Bot size={18} />
+                            ))}
+                            {isLoading && (
+                                <div className="flex gap-3 max-w-[80%]">
+                                    <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                                        <Bot size={18} />
+                                    </div>
+                                    <div className="bg-white/5 rounded-2xl rounded-tl-none px-4 py-2 flex items-center gap-1">
+                                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
+                                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+                                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                                    </div>
                                 </div>
-                                <div className="bg-white/5 rounded-2xl rounded-tl-none px-4 py-2 flex items-center gap-1">
-                                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
-                                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]" />
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Input Area */}
-            <div className="shrink-0 p-4 border-t border-white/5 bg-white/5 backdrop-blur-md">
-                <PromptInputBox
-                    onSend={(message) => {
-                        if (message.trim() && !isLoading && !isLoadingHistory) {
-                            handleSendMessage(message);
-                        }
-                    }}
-                    isLoading={isLoading}
-                    placeholder="Digite sua pergunta sobre o estoque..."
-                />
+            <div className="shrink-0 px-4 md:px-8 lg:px-16 py-4">
+                <div className="max-w-4xl mx-auto">
+                    <PromptInputBox
+                        onSend={(message) => {
+                            if (message.trim() && !isLoading && !isLoadingHistory) {
+                                handleSendMessage(message);
+                            }
+                        }}
+                        isLoading={isLoading}
+                        placeholder="Digite sua pergunta sobre o estoque..."
+                    />
+                </div>
             </div>
         </div>
     );
