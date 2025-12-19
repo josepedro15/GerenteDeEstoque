@@ -18,10 +18,13 @@ import {
     Megaphone,
     Menu,
     X,
-    MessageCircle
+    MessageCircle,
+    Sun,
+    Moon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signout } from "@/app/login/actions";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
@@ -31,6 +34,30 @@ const menuItems = [
     { icon: Megaphone, label: "Marketing AI", href: "/marketing", activeColor: "text-pink-400" },
     { icon: PackageCheck, label: "Fornecedores", href: "/suppliers", activeColor: "text-orange-400" },
 ];
+
+// Theme Toggle Component
+function ThemeToggle() {
+    const { theme, toggleTheme } = useTheme();
+
+    return (
+        <button
+            onClick={toggleTheme}
+            className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/5 hover:text-white"
+        >
+            {theme === "dark" ? (
+                <>
+                    <Sun size={20} className="text-yellow-400" />
+                    <span>Modo Claro</span>
+                </>
+            ) : (
+                <>
+                    <Moon size={20} className="text-indigo-400" />
+                    <span>Modo Escuro</span>
+                </>
+            )}
+        </button>
+    );
+}
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
     const pathname = usePathname();
@@ -93,7 +120,9 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             </nav>
 
             {/* Bottom Actions */}
-            <div className="mt-auto border-t border-white/5 pt-4">
+            <div className="mt-auto border-t border-border pt-4 space-y-1">
+                {/* Theme Toggle */}
+                <ThemeToggle />
                 <NextLink
                     href="/settings"
                     onClick={onClose}
