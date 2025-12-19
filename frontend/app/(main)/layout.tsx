@@ -15,10 +15,8 @@ export default function MainLayout({
             <MobileNav />
 
             {/* Content Area - Adjusted padding for mobile (top) and desktop (left) */}
-            <main className="flex-1 transition-all duration-300 pt-16 md:pt-0 md:pl-64">
-                <div className="container mx-auto p-4 md:p-8 lg:p-10 max-w-7xl">
-                    {children}
-                </div>
+            <main className="flex-1 transition-all duration-300 pt-16 md:pt-0 md:pl-64 overflow-hidden">
+                {children}
             </main>
             <GlobalChatWidget />
         </div>
