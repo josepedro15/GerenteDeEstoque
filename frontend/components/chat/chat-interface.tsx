@@ -276,12 +276,10 @@ export function ChatInterface({ fullPage = false }: { fullPage?: boolean }) {
 
     return (
         <div className={cn(
-            "flex flex-col transition-all duration-300 ease-in-out",
+            "flex flex-col h-full",
             fullPage
-                ? "w-full h-full bg-transparent"
-                : "fixed bg-[#1a1c23] border border-white/10 rounded-xl shadow-2xl z-50",
-            !fullPage && (isOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-10 pointer-events-none"),
-            !fullPage && (isExpanded ? "bottom-4 right-4 w-[800px] h-[80vh]" : "bottom-4 right-4 w-[400px] h-[600px]")
+                ? "w-full bg-transparent"
+                : "bg-transparent"
         )}>
             {/* Header - só mostra no widget flutuante */}
             {!fullPage && (
