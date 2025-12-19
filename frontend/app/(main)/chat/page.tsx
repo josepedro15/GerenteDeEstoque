@@ -45,11 +45,6 @@ export default function ChatPage() {
                             </p>
                         </div>
                     </div>
-
-                    <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs">
-                        <Brain size={12} className="text-indigo-400" />
-                        <span className="text-white font-medium">Gemini Pro</span>
-                    </div>
                 </div>
             </header>
 
