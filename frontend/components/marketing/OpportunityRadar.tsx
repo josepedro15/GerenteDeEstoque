@@ -11,13 +11,13 @@ function StartCampaignButton({ onClick }: { onClick: () => void }) {
     return (
         <button
             onClick={onClick}
-            className="group flex w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-white/20 bg-white/5 p-12 transition-all hover:bg-white/10 hover:border-pink-500/50"
+            className="group flex w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-white/20 bg-accent p-12 transition-all hover:bg-accent hover:border-pink-500/50"
         >
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-pink-500/10 text-pink-500 group-hover:scale-110 transition-transform">
                 <Megaphone size={40} />
             </div>
             <div className="text-center">
-                <h3 className="text-xl font-semibold text-white">Criar Nova Campanha</h3>
+                <h3 className="text-xl font-semibold text-foreground">Criar Nova Campanha</h3>
                 <p className="text-sm text-muted-foreground mt-2 max-w-md">
                     Selecione manualmente os produtos com excesso de estoque e deixe a IA criar todo o material de divulgação.
                 </p>
@@ -30,7 +30,7 @@ function ProductListSkeleton() {
     return (
         <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-16 w-full rounded-xl bg-white/5 animate-pulse" />
+                <div key={i} className="h-16 w-full rounded-xl bg-accent animate-pulse" />
             ))}
         </div>
     );
@@ -107,20 +107,20 @@ export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated:
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-[#0F0F0F] shadow-2xl h-[600px] flex flex-col"
+                            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border bg-[#0F0F0F] shadow-2xl h-[600px] flex flex-col"
                         >
                             {/* Header */}
-                            <div className="shrink-0 border-b border-white/10 p-6">
+                            <div className="shrink-0 border-b border-border p-6">
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h2 className="text-xl font-bold text-white">Selecionar Produtos (Excesso)</h2>
+                                        <h2 className="text-xl font-bold text-foreground">Selecionar Produtos (Excesso)</h2>
                                         <p className="text-sm text-muted-foreground">
                                             Escolha até 10 itens para a campanha. ({selected.length}/10)
                                         </p>
                                     </div>
                                     <button
                                         onClick={() => setIsModalOpen(false)}
-                                        className="rounded-full p-2 text-muted-foreground hover:bg-white/10 hover:text-white"
+                                        className="rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
                                     >
                                         <X size={20} />
                                     </button>
@@ -132,7 +132,7 @@ export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated:
                                         placeholder="Buscar produto..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                                        className="w-full rounded-xl border border-border bg-accent py-3 pl-10 pr-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                                     />
                                 </div>
                             </div>
@@ -156,21 +156,21 @@ export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated:
                                                     onClick={() => toggleSelect(item.id)}
                                                     className={`cursor-pointer group relative flex items-center justify-between overflow-hidden rounded-xl border p-4 transition-all ${isSelected
                                                         ? "border-pink-500 bg-pink-500/10"
-                                                        : "border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                                                        : "border-border bg-accent hover:bg-accent hover:border-white/20"
                                                         }`}
                                                 >
                                                     <div className="flex items-center gap-4">
-                                                        <div className={`p-2 rounded-lg bg-white/5 text-muted-foreground group-hover:text-white`}>
+                                                        <div className={`p-2 rounded-lg bg-accent text-muted-foreground group-hover:text-foreground`}>
                                                             <TrendingDown size={18} />
                                                         </div>
                                                         <div>
-                                                            <h4 className={`font-medium ${isSelected ? 'text-white' : 'text-gray-300'}`}>{item.name}</h4>
+                                                            <h4 className={`font-medium ${isSelected ? 'text-foreground' : 'text-gray-300'}`}>{item.name}</h4>
                                                             <p className="text-xs text-muted-foreground">Cobertura: {item.coverage} dias • Estoque: {item.stock}</p>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-4">
-                                                        <span className="text-sm font-semibold text-white">R$ {item.price.toFixed(2)}</span>
-                                                        <div className={`h-6 w-6 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'border-pink-500 bg-pink-500 text-white' : 'border-white/20'
+                                                        <span className="text-sm font-semibold text-foreground">R$ {item.price.toFixed(2)}</span>
+                                                        <div className={`h-6 w-6 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'border-pink-500 bg-pink-500 text-foreground' : 'border-white/20'
                                                             }`}>
                                                             {isSelected && <CheckCircle2 size={14} />}
                                                         </div>
@@ -183,11 +183,11 @@ export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated:
                             </div>
 
                             {/* Footer */}
-                            <div className="border-t border-white/10 p-6 bg-black/20">
+                            <div className="border-t border-border p-6 bg-muted">
                                 <button
                                     onClick={handleGenerate}
                                     disabled={selected.length === 0 || generating}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-pink-600 py-4 font-bold text-white transition-all hover:bg-pink-500 hover:shadow-lg hover:shadow-pink-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-pink-600 py-4 font-bold text-foreground transition-all hover:bg-pink-500 hover:shadow-lg hover:shadow-pink-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {generating ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
                                     {generating ? "Gerando Campanha..." : `Gerar Campanha (${selected.length})`}

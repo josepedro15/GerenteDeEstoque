@@ -61,7 +61,7 @@ export function GlobalChatWidget() {
                 onClick={toggleChat}
                 className={`h-14 w-14 rounded-full shadow-lg flex items-center justify-center transition-colors ${isOpen ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
             >
-                {isOpen ? <X size={24} className="text-white" /> : <MessageCircle size={28} className="text-white" />}
+                {isOpen ? <X size={24} className="text-foreground" /> : <MessageCircle size={28} className="text-foreground" />}
             </motion.button>
         </div>
     );

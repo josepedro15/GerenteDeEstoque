@@ -6,8 +6,8 @@ import { formatCurrency } from "@/lib/formatters";
 
 export function CoverageBar({ data }: { data: DashboardMetrics['charts']['coverageDistribution'] }) {
     return (
-        <div className="h-[300px] w-full rounded-xl border border-white/5 bg-white/5 p-6 backdrop-blur-md">
-            <h3 className="text-lg font-semibold text-white mb-4">Distribuição de Valor por Cobertura</h3>
+        <div className="h-[300px] w-full rounded-xl border border-border bg-accent p-6 backdrop-blur-md">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Distribuição de Valor por Cobertura</h3>
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />

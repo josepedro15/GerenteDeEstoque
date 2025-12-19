@@ -37,24 +37,24 @@ export function ChatComponent() {
         <div className="fixed bottom-4 right-4 z-50">
             {/* Chat Window */}
             {isOpen && (
-                <div className="mb-4 h-[500px] w-[350px] overflow-hidden rounded-2xl border border-white/10 bg-black/90 shadow-2xl backdrop-blur-xl sm:w-[400px]">
+                <div className="mb-4 h-[500px] w-[350px] overflow-hidden rounded-2xl border border-border bg-black/90 shadow-2xl backdrop-blur-xl sm:w-[400px]">
                     {/* Header */}
-                    <div className="flex items-center justify-between bg-white/5 p-3 border-b border-white/5">
-                        <h3 className="font-semibold text-white flex items-center gap-2 text-sm">
+                    <div className="flex items-center justify-between bg-accent p-3 border-b border-border">
+                        <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                             Assistente IA
                         </h3>
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={handleExpand}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 hover:text-white text-xs font-medium transition-all border border-indigo-500/30"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 hover:text-foreground text-xs font-medium transition-all border border-indigo-500/30"
                             >
                                 <Maximize2 size={14} />
                                 Abrir Página
                             </button>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="rounded-lg p-1.5 text-neutral-400 hover:bg-white/10 hover:text-white transition-colors"
+                                className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                             >
                                 <X size={18} />
                             </button>
@@ -75,7 +75,7 @@ export function ChatComponent() {
                                     "max-w-[85%] rounded-xl p-3 text-sm",
                                     m.role === 'user'
                                         ? "self-end bg-primary text-primary-foreground"
-                                        : "self-start bg-white/10 text-white"
+                                        : "self-start bg-accent text-foreground"
                                 )}
                             >
                                 <span className="block font-bold text-xs opacity-50 mb-1">
@@ -85,17 +85,17 @@ export function ChatComponent() {
                             </div>
                         ))}
                         {isLoading && (
-                            <div className="self-start rounded-xl bg-white/10 p-3 text-sm text-white">
+                            <div className="self-start rounded-xl bg-accent p-3 text-sm text-foreground">
                                 <span className="animate-pulse">Digitando...</span>
                             </div>
                         )}
                     </div>
 
                     {/* Input */}
-                    <form onSubmit={handleSubmit} className="border-t border-white/5 bg-white/5 p-4">
+                    <form onSubmit={handleSubmit} className="border-t border-border bg-accent p-4">
                         <div className="flex gap-2">
                             <input
-                                className="flex-1 rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-sm text-white placeholder-white/30 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                className="flex-1 rounded-lg border border-border bg-black/50 px-3 py-2 text-sm text-foreground placeholder-white/30 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                                 value={input}
                                 onChange={handleInputChange}
                                 placeholder="Pergunte sobre o estoque..."

@@ -12,15 +12,15 @@ export function TopOpportunities({
     return (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Rupture Opportunities */}
-            <div className="rounded-xl border border-white/5 bg-white/5 p-6 backdrop-blur-md">
+            <div className="rounded-xl border border-border bg-accent p-6 backdrop-blur-md">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">🔥 Principais Rupturas (Receita Perdida)</h3>
+                    <h3 className="text-lg font-semibold text-foreground">🔥 Principais Rupturas (Receita Perdida)</h3>
                 </div>
                 <div className="space-y-4">
                     {ruptureItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                        <div key={item.id} className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0">
                             <div className="flex-1 min-w-0 pr-4">
-                                <p className="font-medium text-white truncate">{item.name}</p>
+                                <p className="font-medium text-foreground truncate">{item.name}</p>
                                 <p className="text-xs text-muted-foreground truncate">{item.id}</p>
                             </div>
                             <div className="flex items-center gap-3 shrink-0">
@@ -37,15 +37,15 @@ export function TopOpportunities({
             </div>
 
             {/* Excess Opportunities */}
-            <div className="rounded-xl border border-white/5 bg-white/5 p-6 backdrop-blur-md">
+            <div className="rounded-xl border border-border bg-accent p-6 backdrop-blur-md">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">🧊 Estoque Parado (Capital Imobilizado)</h3>
+                    <h3 className="text-lg font-semibold text-foreground">🧊 Estoque Parado (Capital Imobilizado)</h3>
                 </div>
                 <div className="space-y-4">
                     {excessItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                        <div key={item.id} className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0">
                             <div className="flex-1 min-w-0 pr-4">
-                                <p className="font-medium text-white truncate">{item.name}</p>
+                                <p className="font-medium text-foreground truncate">{item.name}</p>
                                 <p className="text-xs text-muted-foreground truncate">{item.id}</p>
                             </div>
                             <div className="flex items-center gap-3 shrink-0">

@@ -26,8 +26,8 @@ export function MorningBriefing() {
 
     if (loading) {
         return (
-            <div className="mb-8 flex h-48 w-full items-center justify-center rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md">
-                <Loader2 className="animate-spin text-white/50" />
+            <div className="mb-8 flex h-48 w-full items-center justify-center rounded-3xl border border-border bg-accent backdrop-blur-md">
+                <Loader2 className="animate-spin text-foreground/50" />
             </div>
         );
     }
@@ -55,7 +55,7 @@ export function MorningBriefing() {
         >
             <div className="mb-4 flex items-center gap-2">
                 <Zap className="text-yellow-400" size={20} fill="currentColor" />
-                <h2 className="text-lg font-semibold text-white">Briefing Matinal</h2>
+                <h2 className="text-lg font-semibold text-foreground">Briefing Matinal</h2>
                 <span className="text-xs text-muted-foreground">Atualizado hoje às 08:00</span>
             </div>
 
@@ -73,7 +73,7 @@ export function MorningBriefing() {
                             <AlertTriangle size={18} />
                             <span className="font-bold uppercase tracking-wider text-xs">Ação Imediata</span>
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-1">
+                        <h3 className="text-2xl font-bold text-foreground mb-1">
                             {stats.ruptures.count} Rupturas Críticas
                         </h3>
                         <p className="text-sm text-red-200/70 mb-4">
@@ -102,7 +102,7 @@ export function MorningBriefing() {
                             <TrendingDown size={18} />
                             <span className="font-bold uppercase tracking-wider text-xs">Oportunidade de Caixa</span>
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-1">
+                        <h3 className="text-2xl font-bold text-foreground mb-1">
                             {stats.excess.count} Itens em Excesso
                         </h3>
                         <p className="text-sm text-blue-200/70 mb-4">
@@ -131,7 +131,7 @@ export function MorningBriefing() {
                             <PackageCheck size={18} />
                             <span className="font-bold uppercase tracking-wider text-xs">Supply Chain</span>
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-1">
+                        <h3 className="text-2xl font-bold text-foreground mb-1">
                             {stats.suppliers.late_orders} Pedidos Atrasados
                         </h3>
                         <p className="text-sm text-orange-200/70 mb-4">

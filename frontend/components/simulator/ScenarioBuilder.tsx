@@ -12,7 +12,7 @@ function SubmitButton() {
         <button
             type="submit"
             disabled={pending}
-            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-4 font-bold text-white transition-all hover:bg-purple-500 hover:shadow-lg hover:shadow-purple-500/25 disabled:opacity-50"
+            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-4 font-bold text-foreground transition-all hover:bg-purple-500 hover:shadow-lg hover:shadow-purple-500/25 disabled:opacity-50"
         >
             {pending ? <Loader2 className="animate-spin" /> : <Calculator size={20} />}
             {pending ? "Calculando Cenários..." : "Simular Impacto"}
@@ -28,8 +28,8 @@ export function ScenarioBuilder({ onSimulationComplete }: { onSimulationComplete
     };
 
     return (
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <h2 className="mb-6 text-xl font-semibold text-white">Parâmetros de Compra</h2>
+        <div className="rounded-3xl border border-border bg-accent p-6 backdrop-blur-xl">
+            <h2 className="mb-6 text-xl font-semibold text-foreground">Parâmetros de Compra</h2>
 
             <form action={handleSubmit} className="space-y-6">
 
@@ -37,12 +37,12 @@ export function ScenarioBuilder({ onSimulationComplete }: { onSimulationComplete
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-300">Produto / SKU</label>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/30" size={18} />
                         <input
                             type="text"
                             name="sku"
                             placeholder="Ex: Cimento CP-II ou SKU 102030"
-                            className="w-full rounded-xl border border-white/10 bg-black/50 py-3 pl-10 pr-4 text-white placeholder-white/30 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            className="w-full rounded-xl border border-border bg-black/50 py-3 pl-10 pr-4 text-foreground placeholder-white/30 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                             required
                         />
                     </div>
@@ -55,7 +55,7 @@ export function ScenarioBuilder({ onSimulationComplete }: { onSimulationComplete
                             type="number"
                             name="quantity"
                             placeholder="Ex: 500"
-                            className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white placeholder-white/30 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            className="w-full rounded-xl border border-border bg-black/50 px-4 py-3 text-foreground placeholder-white/30 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                             required
                         />
                     </div>
@@ -66,7 +66,7 @@ export function ScenarioBuilder({ onSimulationComplete }: { onSimulationComplete
                             name="cost"
                             step="0.01"
                             placeholder="Ex: 25.90"
-                            className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white placeholder-white/30 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            className="w-full rounded-xl border border-border bg-black/50 px-4 py-3 text-foreground placeholder-white/30 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                             required
                         />
                     </div>
@@ -76,7 +76,7 @@ export function ScenarioBuilder({ onSimulationComplete }: { onSimulationComplete
                     <label className="text-sm font-medium text-gray-300">Condição de Pagamento</label>
                     <select
                         name="paymentTerms"
-                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        className="w-full rounded-xl border border-border bg-black/50 px-4 py-3 text-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
                         <option value="30">30 Dias</option>
                         <option value="30/60">30/60 Dias</option>

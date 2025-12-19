@@ -38,7 +38,7 @@ export default function CalculatorPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Calculadora Simples</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Calculadora Simples</h1>
                     <p className="text-muted-foreground mt-1">Calcule sua compra usando termos do dia a dia.</p>
                 </div>
                 <Button variant="outline" onClick={handleReset} className="gap-2">
@@ -50,8 +50,8 @@ export default function CalculatorPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Inputs */}
                 <div className="space-y-6">
-                    <div className="rounded-xl border border-white/10 bg-card/40 p-6 backdrop-blur-xl">
-                        <h3 className="font-semibold text-white flex items-center gap-2 mb-6">
+                    <div className="rounded-xl border border-border bg-card/40 p-6 backdrop-blur-xl">
+                        <h3 className="font-semibold text-foreground flex items-center gap-2 mb-6">
                             <CalcIcon className="text-blue-400" size={20} /> Dados de Entrada
                         </h3>
 
@@ -63,7 +63,7 @@ export default function CalculatorPage() {
                                         type="number"
                                         value={totalSales || ''}
                                         onChange={(e) => setTotalSales(Number(e.target.value))}
-                                        className="w-full rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                                        className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground focus:border-blue-500 focus:outline-none"
                                         placeholder="Ex: 300"
                                     />
                                 </div>
@@ -73,7 +73,7 @@ export default function CalculatorPage() {
                                         type="number"
                                         value={periodDays || ''}
                                         onChange={(e) => setPeriodDays(Number(e.target.value))}
-                                        className="w-full rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                                        className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground focus:border-blue-500 focus:outline-none"
                                         placeholder="Ex: 30"
                                     />
                                 </div>
@@ -85,7 +85,7 @@ export default function CalculatorPage() {
                                     type="number"
                                     value={currentStock || ''}
                                     onChange={(e) => setCurrentStock(Number(e.target.value))}
-                                    className="w-full rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground focus:border-blue-500 focus:outline-none"
                                     placeholder="Ex: 15"
                                     autoFocus
                                 />
@@ -97,7 +97,7 @@ export default function CalculatorPage() {
                                     type="number"
                                     value={supplierPrice || ''}
                                     onChange={(e) => setSupplierPrice(Number(e.target.value))}
-                                    className="w-full rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground focus:border-blue-500 focus:outline-none"
                                     placeholder="Ex: 25.50"
                                 />
                             </div>
@@ -109,7 +109,7 @@ export default function CalculatorPage() {
                                         type="number"
                                         value={leadTime || ''}
                                         onChange={(e) => setLeadTime(Number(e.target.value))}
-                                        className="w-full rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                                        className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground focus:border-blue-500 focus:outline-none"
                                         placeholder="Ex: 5"
                                     />
                                     <p className="text-[10px] text-muted-foreground">Tempo para o fornecedor entregar.</p>
@@ -120,7 +120,7 @@ export default function CalculatorPage() {
                                         type="number"
                                         value={safetyDays || ''}
                                         onChange={(e) => setSafetyDays(Number(e.target.value))}
-                                        className="w-full rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
+                                        className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground focus:border-blue-500 focus:outline-none"
                                         placeholder="Ex: 10"
                                     />
                                     <p className="text-[10px] text-muted-foreground">Dias extras de estoque.</p>
@@ -133,44 +133,44 @@ export default function CalculatorPage() {
                 {/* Results */}
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 gap-4">
-                        <div className="rounded-xl border border-white/10 bg-blue-500/10 p-6 backdrop-blur-xl">
+                        <div className="rounded-xl border border-border bg-blue-500/10 p-6 backdrop-blur-xl">
                             <p className="text-sm text-blue-300 mb-1">Ponto de Recompra (Minimo)</p>
-                            <p className="text-3xl font-bold text-white">{rop.toFixed(0)} <span className="text-sm font-normal text-muted-foreground">un</span></p>
+                            <p className="text-3xl font-bold text-foreground">{rop.toFixed(0)} <span className="text-sm font-normal text-muted-foreground">un</span></p>
                             <p className="text-xs text-blue-200/50 mt-2">
                                 Você deve comprar quando o estoque baixar para {rop.toFixed(0)} unidades.
                             </p>
                         </div>
 
-                        <div className={`rounded-xl border p-6 backdrop-blur-xl transition-colors ${orderQty > 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-white/5 border-white/10'}`}>
+                        <div className={`rounded-xl border p-6 backdrop-blur-xl transition-colors ${orderQty > 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-accent border-border'}`}>
                             <p className={`text-sm mb-1 ${orderQty > 0 ? 'text-green-400' : 'text-muted-foreground'}`}>Sugestão de Compra</p>
                             <div className="flex items-baseline gap-2">
-                                <p className="text-4xl font-bold text-white">{orderQty.toFixed(0)}</p>
+                                <p className="text-4xl font-bold text-foreground">{orderQty.toFixed(0)}</p>
                                 <span className="text-sm text-muted-foreground">un</span>
                             </div>
 
                             {supplierPrice > 0 && orderQty > 0 && (
-                                <div className="mt-2 pt-2 border-t border-white/5">
+                                <div className="mt-2 pt-2 border-t border-border">
                                     <p className="text-sm text-muted-foreground">Custo Estimado do Pedido:</p>
-                                    <p className="text-lg font-semibold text-white">R$ {estimatedCost.toFixed(2)}</p>
+                                    <p className="text-lg font-semibold text-foreground">R$ {estimatedCost.toFixed(2)}</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-white/5 bg-card/20 p-6 backdrop-blur-md">
-                        <h4 className="text-sm font-medium text-white mb-4">Entenda o Cálculo</h4>
+                    <div className="rounded-xl border border-border bg-card/20 p-6 backdrop-blur-md">
+                        <h4 className="text-sm font-medium text-foreground mb-4">Entenda o Cálculo</h4>
                         <div className="space-y-3 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Venda Diária Média</span>
-                                <span className="text-white font-medium">{dailyDemand.toFixed(1)} un/dia</span>
+                                <span className="text-foreground font-medium">{dailyDemand.toFixed(1)} un/dia</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Consumo na Entrega</span>
-                                <span className="text-white font-medium">{leadTimeDemand.toFixed(0)} un</span>
+                                <span className="text-foreground font-medium">{leadTimeDemand.toFixed(0)} un</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Estoque de Segurança ({safetyDays} dias)</span>
-                                <span className="text-white font-medium">{safetyStock.toFixed(0)} un</span>
+                                <span className="text-foreground font-medium">{safetyStock.toFixed(0)} un</span>
                             </div>
                         </div>
                     </div>

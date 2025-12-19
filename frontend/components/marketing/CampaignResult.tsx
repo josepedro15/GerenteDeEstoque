@@ -18,12 +18,12 @@ export function CampaignResult({ campaign }: { campaign: any }) {
     // Empty State
     if (!campaign || !campaign.channels) {
         return (
-            <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-white/5 bg-neutral-900/50 p-12 text-center backdrop-blur-sm min-h-[400px]">
+            <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-border bg-neutral-900/50 p-12 text-center backdrop-blur-sm min-h-[400px]">
                 <div className="mb-6 rounded-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 p-8 shadow-inner shadow-white/5">
                     <Megaphone className="text-pink-400" size={48} strokeWidth={1.5} />
                 </div>
-                <h3 className="text-xl font-medium text-white mb-2">Aguardando Campanha</h3>
-                <p className="text-neutral-400 max-w-sm mx-auto">
+                <h3 className="text-xl font-medium text-foreground mb-2">Aguardando Campanha</h3>
+                <p className="text-muted-foreground max-w-sm mx-auto">
                     Selecione produtos no Radar para a IA criar seus materiais de marketing.
                 </p>
             </div>
@@ -42,18 +42,18 @@ export function CampaignResult({ campaign }: { campaign: any }) {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="rounded-3xl border border-white/10 bg-gradient-to-br from-neutral-900 to-neutral-950 overflow-hidden shadow-2xl"
+                className="rounded-3xl border border-border bg-gradient-to-br from-neutral-900 to-neutral-950 overflow-hidden shadow-2xl"
             >
                 {/* Success Header */}
-                <div className="p-6 border-b border-white/5 bg-gradient-to-r from-pink-500/10 to-purple-500/10">
+                <div className="p-6 border-b border-border bg-gradient-to-r from-pink-500/10 to-purple-500/10">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg shadow-pink-500/25">
-                                <Sparkles size={24} className="text-white" />
+                                <Sparkles size={24} className="text-foreground" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Campanha Gerada!</h3>
-                                <p className="text-sm text-neutral-400">Conteúdo pronto para 3 canais</p>
+                                <h3 className="text-lg font-bold text-foreground">Campanha Gerada!</h3>
+                                <p className="text-sm text-muted-foreground">Conteúdo pronto para 3 canais</p>
                             </div>
                         </div>
                         <button
@@ -76,13 +76,13 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.1 }}
                                 onClick={() => { setActiveTab(tab.id as any); setIsModalOpen(true); }}
-                                className="group p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all text-left"
+                                className="group p-4 rounded-2xl bg-accent border border-border hover:bg-accent hover:border-border transition-all text-left"
                             >
                                 <div className={`w-10 h-10 rounded-xl ${tab.bg}/20 flex items-center justify-center mb-3`}>
                                     <tab.icon size={20} className={tab.color} />
                                 </div>
-                                <h4 className="text-sm font-medium text-white mb-1">{tab.label}</h4>
-                                <p className="text-xs text-neutral-500 line-clamp-2">
+                                <h4 className="text-sm font-medium text-foreground mb-1">{tab.label}</h4>
+                                <p className="text-xs text-muted-foreground line-clamp-2">
                                     {tab.id === 'instagram' && campaign.channels.instagram?.copy?.slice(0, 60) + '...'}
                                     {tab.id === 'whatsapp' && campaign.channels.whatsapp?.script?.slice(0, 60) + '...'}
                                     {tab.id === 'physical' && campaign.channels.physical?.headline}
@@ -114,36 +114,36 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative w-full max-w-5xl max-h-[90vh] bg-neutral-900 rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col"
+                            className="relative w-full max-w-5xl max-h-[90vh] bg-neutral-900 rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col"
                         >
                             {/* Modal Header */}
-                            <div className="flex items-center justify-between p-4 border-b border-white/5 bg-neutral-950/50 shrink-0">
+                            <div className="flex items-center justify-between p-4 border-b border-border bg-neutral-950/50 shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-purple-600">
-                                        <Sparkles size={20} className="text-white" />
+                                        <Sparkles size={20} className="text-foreground" />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-bold text-white">Resultado da Campanha</h2>
-                                        <p className="text-xs text-neutral-500">Explore o conteúdo gerado pela IA</p>
+                                        <h2 className="text-lg font-bold text-foreground">Resultado da Campanha</h2>
+                                        <p className="text-xs text-muted-foreground">Explore o conteúdo gerado pela IA</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setIsModalOpen(false)}
-                                    className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+                                    className="p-2 rounded-xl bg-accent hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <X size={20} />
                                 </button>
                             </div>
 
                             {/* Tabs */}
-                            <div className="flex items-center gap-2 p-3 bg-neutral-950/30 border-b border-white/5 shrink-0">
+                            <div className="flex items-center gap-2 p-3 bg-neutral-950/30 border-b border-border shrink-0">
                                 {tabs.map((tab) => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id as any)}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id
-                                                ? 'text-white bg-white/10'
-                                                : 'text-neutral-500 hover:text-white hover:bg-white/5'
+                                                ? 'text-foreground bg-accent'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                                             }`}
                                     >
                                         <tab.icon size={18} className={activeTab === tab.id ? tab.color : ''} />
@@ -165,7 +165,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                             className="grid lg:grid-cols-2 gap-8"
                                         >
                                             {/* Image Preview */}
-                                            <div className="bg-neutral-950 rounded-2xl border border-white/5 p-6 flex items-center justify-center">
+                                            <div className="bg-neutral-950 rounded-2xl border border-border p-6 flex items-center justify-center">
                                                 {campaign.channels.instagram.imageUrl ? (
                                                     <div className="relative rounded-xl overflow-hidden shadow-2xl max-w-sm">
                                                         <img
@@ -175,7 +175,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                                         />
                                                         {campaign.channels.instagram.sticker && (
                                                             <div className="absolute bottom-4 right-4">
-                                                                <span className="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-lg text-xs font-bold text-white uppercase">
+                                                                <span className="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-lg text-xs font-bold text-foreground uppercase">
                                                                     {campaign.channels.instagram.sticker}
                                                                 </span>
                                                             </div>
@@ -183,18 +183,18 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                                     </div>
                                                 ) : (
                                                     <div className="text-center py-12">
-                                                        <Instagram className="mx-auto text-white/20 mb-4" size={48} />
-                                                        <p className="text-sm text-neutral-500 max-w-xs mx-auto">{campaign.channels.instagram.imagePrompt}</p>
+                                                        <Instagram className="mx-auto text-foreground/20 mb-4" size={48} />
+                                                        <p className="text-sm text-muted-foreground max-w-xs mx-auto">{campaign.channels.instagram.imagePrompt}</p>
                                                     </div>
                                                 )}
                                             </div>
 
                                             {/* Caption */}
                                             <div className="space-y-4">
-                                                <div className="bg-white/5 rounded-2xl border border-white/5 p-6 relative">
+                                                <div className="bg-accent rounded-2xl border border-border p-6 relative">
                                                     <button
                                                         onClick={() => handleCopy(campaign.channels.instagram.copy, 'insta')}
-                                                        className="absolute top-4 right-4 p-2 rounded-lg bg-pink-500/20 hover:bg-pink-500 text-pink-400 hover:text-white transition-all"
+                                                        className="absolute top-4 right-4 p-2 rounded-lg bg-pink-500/20 hover:bg-pink-500 text-pink-400 hover:text-foreground transition-all"
                                                     >
                                                         {copied === 'insta' ? <Check size={16} /> : <Copy size={16} />}
                                                     </button>
@@ -208,7 +208,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
 
                                                 <div className="bg-pink-500/5 rounded-xl border border-pink-500/10 p-4">
                                                     <h5 className="text-xs font-bold text-pink-400 uppercase tracking-wider mb-2">Prompt da Imagem</h5>
-                                                    <p className="text-xs text-neutral-500">{campaign.channels.instagram.imagePrompt}</p>
+                                                    <p className="text-xs text-muted-foreground">{campaign.channels.instagram.imagePrompt}</p>
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -223,14 +223,14 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                             exit={{ opacity: 0, scale: 0.95 }}
                                             className="max-w-lg mx-auto"
                                         >
-                                            <div className="bg-[#0b141a] rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+                                            <div className="bg-[#0b141a] rounded-2xl border border-border overflow-hidden shadow-2xl">
                                                 {/* Header */}
                                                 <div className="bg-[#202c33] p-4 flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-neutral-600 flex items-center justify-center">
-                                                        <MessageCircle size={18} className="text-white" />
+                                                        <MessageCircle size={18} className="text-foreground" />
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-white font-medium">Cliente VIP</h4>
+                                                        <h4 className="text-foreground font-medium">Cliente VIP</h4>
                                                         <span className="text-[#8696a0] text-xs">online</span>
                                                     </div>
                                                 </div>
@@ -243,7 +243,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                                     <div className="bg-[#005c4b] rounded-lg rounded-tr-none p-3 max-w-[85%] ml-auto relative group">
                                                         <button
                                                             onClick={() => handleCopy(campaign.channels.whatsapp.script, 'wa')}
-                                                            className="absolute -top-2 -right-2 p-1.5 bg-[#202c33] rounded-full text-white/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            className="absolute -top-2 -right-2 p-1.5 bg-[#202c33] rounded-full text-foreground/50 hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                                                         >
                                                             {copied === 'wa' ? <Check size={12} /> : <Copy size={12} />}
                                                         </button>
@@ -256,10 +256,10 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                                 </div>
 
                                                 {/* Footer */}
-                                                <div className="bg-[#202c33] p-3 border-t border-white/5">
+                                                <div className="bg-[#202c33] p-3 border-t border-border">
                                                     <div className="flex items-center gap-2 text-xs text-[#8696a0]">
                                                         <div className="w-2 h-2 rounded-full bg-green-500" />
-                                                        Gatilho: <span className="text-white font-medium">{campaign.channels.whatsapp.trigger}</span>
+                                                        Gatilho: <span className="text-foreground font-medium">{campaign.channels.whatsapp.trigger}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -278,7 +278,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                             {/* Poster */}
                                             <div className="flex justify-center">
                                                 {campaign.channels.physical.posterUrl ? (
-                                                    <div className="relative rounded-xl overflow-hidden shadow-2xl border border-white/10 max-w-2xl">
+                                                    <div className="relative rounded-xl overflow-hidden shadow-2xl border border-border max-w-2xl">
                                                         <img
                                                             src={campaign.channels.physical.posterUrl}
                                                             alt="Poster"
@@ -300,7 +300,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                             <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                                                 <div className="bg-orange-500/10 rounded-xl border border-orange-500/20 p-4">
                                                     <h4 className="text-orange-400 text-xs font-bold uppercase mb-2">Headline</h4>
-                                                    <p className="text-white font-medium">{campaign.channels.physical.headline}</p>
+                                                    <p className="text-foreground font-medium">{campaign.channels.physical.headline}</p>
                                                 </div>
                                                 <div className="bg-orange-500/10 rounded-xl border border-orange-500/20 p-4">
                                                     <h4 className="text-orange-400 text-xs font-bold uppercase mb-2">Layout</h4>

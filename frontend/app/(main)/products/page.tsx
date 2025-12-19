@@ -28,7 +28,7 @@ export default async function ProductsPage() {
             {/* Header */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white/90">
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground/90">
                         Produtos
                     </h1>
                     <p className="mt-1 text-muted-foreground">
@@ -42,26 +42,26 @@ export default async function ProductsPage() {
             </div>
 
             {/* Filters Bar */}
-            <div className="flex flex-wrap items-center gap-4 rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur-md">
+            <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-accent p-4 backdrop-blur-md">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"
                         placeholder="Buscar produtos..."
-                        className="w-full rounded-lg border border-white/10 bg-black/20 py-2 pl-9 pr-4 text-sm text-white placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full rounded-lg border border-border bg-muted py-2 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                 </div>
-                <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-white">
+                <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-foreground">
                     <Filter className="mr-2 h-3 w-3" />
                     Filtros
                 </Button>
             </div>
 
             {/* Products Table */}
-            <div className="rounded-xl border border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
+            <div className="rounded-xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-white/5 text-xs uppercase text-muted-foreground">
+                        <thead className="bg-accent text-xs uppercase text-muted-foreground">
                             <tr>
                                 <th className="px-6 py-4 font-medium">Produto</th>
                                 <th className="px-6 py-4 font-medium">Estoque</th>
@@ -77,20 +77,20 @@ export default async function ProductsPage() {
                                 const formattedPrice = formatCurrency(preco);
 
                                 return (
-                                    <tr key={item.id_produto} className="group hover:bg-white/5 transition-colors">
+                                    <tr key={item.id_produto} className="group hover:bg-accent transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-lg bg-white/10" />
+                                                <div className="h-10 w-10 rounded-lg bg-accent" />
                                                 <div>
-                                                    <p className="font-medium text-white">{item.produto_descricao}</p>
+                                                    <p className="font-medium text-foreground">{item.produto_descricao}</p>
                                                     <p className="text-[10px] text-muted-foreground">SKU: {item.id_produto}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-white">
+                                        <td className="px-6 py-4 text-foreground">
                                             {item.estoque_atual}
                                         </td>
-                                        <td className="px-6 py-4 text-white">
+                                        <td className="px-6 py-4 text-foreground">
                                             {formattedPrice}
                                         </td>
                                         <td className="px-6 py-4">
@@ -114,10 +114,10 @@ export default async function ProductsPage() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 {/* <ExplainButton product={item} /> */}
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-white">
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-white">
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                                                     <FileEdit className="h-4 w-4" />
                                                 </Button>
                                                 <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10">
@@ -140,7 +140,7 @@ export default async function ProductsPage() {
                     </table>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-white/5 bg-white/5 px-6 py-4">
+                <div className="flex items-center justify-between border-t border-border bg-accent px-6 py-4">
                     <p className="text-xs text-muted-foreground">Mostrando {data.length} produtos</p>
                     <div className="flex gap-2">
                         <Button size="sm" variant="ghost" disabled>Anterior</Button>

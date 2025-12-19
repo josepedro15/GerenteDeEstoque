@@ -5,8 +5,8 @@ import { DashboardMetrics } from "@/types/analytics";
 
 export function StockStatusPie({ data }: { data: DashboardMetrics['charts']['statusDistribution'] }) {
     return (
-        <div className="h-[300px] w-full rounded-xl border border-white/5 bg-white/5 p-6 backdrop-blur-md">
-            <h3 className="text-lg font-semibold text-white mb-4">Saúde do Estoque</h3>
+        <div className="h-[300px] w-full rounded-xl border border-border bg-accent p-6 backdrop-blur-md">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Saúde do Estoque</h3>
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie

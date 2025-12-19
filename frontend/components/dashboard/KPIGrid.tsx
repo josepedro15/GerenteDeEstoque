@@ -41,11 +41,11 @@ export function KPIGrid({ metrics }: { metrics: DashboardMetrics['financial'] & 
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {cards.map((card, idx) => (
-                <div key={idx} className="relative overflow-hidden rounded-xl border border-white/5 bg-white/5 p-6 backdrop-blur-md">
+                <div key={idx} className="relative overflow-hidden rounded-xl border border-border bg-accent p-6 backdrop-blur-md">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
-                            <p className="mt-2 text-2xl font-bold text-white">{card.value}</p>
+                            <p className="mt-2 text-2xl font-bold text-foreground">{card.value}</p>
                             <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>
                         </div>
                         <div className={`rounded-xl p-3 ${card.bg}`}>

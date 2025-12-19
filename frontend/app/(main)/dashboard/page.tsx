@@ -35,13 +35,13 @@ export default function DashboardPage() {
     if (loading) {
         return (
             <div className="min-h-screen relative overflow-hidden">
-                <div className="absolute inset-0 -z-10 bg-[#050505]" />
+                <div className="absolute inset-0 -z-10 bg-background" />
                 <div className="flex flex-col items-center justify-center h-screen">
                     <div className="relative">
                         <div className="w-20 h-20 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
                         <LayoutDashboard className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-emerald-400" size={28} />
                     </div>
-                    <p className="mt-6 text-neutral-400">Carregando dashboard...</p>
+                    <p className="mt-6 text-muted-foreground">Carregando dashboard...</p>
                 </div>
             </div>
         );
@@ -51,7 +51,7 @@ export default function DashboardPage() {
         <div className="min-h-screen relative overflow-hidden">
             {/* Animated Background Gradient */}
             <div className="absolute inset-0 -z-10">
-                <div className="absolute inset-0 bg-[#050505]" />
+                <div className="absolute inset-0 bg-background" />
                 <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-600/10 rounded-full blur-[200px]" />
                 <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[150px]" />
             </div>
@@ -76,9 +76,9 @@ export default function DashboardPage() {
                                     className="relative"
                                 >
                                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
-                                        <LayoutDashboard size={32} className="text-white" />
+                                        <LayoutDashboard size={32} className="text-foreground" />
                                     </div>
-                                    <div className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 rounded-full bg-white border-2 border-[#050505]">
+                                    <div className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 rounded-full bg-white border-2 border-background">
                                         <TrendingUp size={10} className="text-emerald-600" />
                                     </div>
                                 </motion.div>
@@ -87,7 +87,7 @@ export default function DashboardPage() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.3 }}
-                                        className="text-3xl lg:text-4xl font-bold tracking-tight text-white"
+                                        className="text-3xl lg:text-4xl font-bold tracking-tight text-foreground"
                                     >
                                         Visão Geral
                                     </motion.h1>
@@ -95,7 +95,7 @@ export default function DashboardPage() {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.4 }}
-                                        className="mt-2 max-w-xl text-neutral-400"
+                                        className="mt-2 max-w-xl text-muted-foreground"
                                     >
                                         Monitoramento em tempo real do capital, saúde e performance do estoque.
                                     </motion.p>
@@ -110,7 +110,7 @@ export default function DashboardPage() {
                                 className="flex flex-wrap gap-3"
                             >
                                 <DashboardAnalysisButton data={metrics} />
-                                <Button variant="outline" className="border-white/10 bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10">
+                                <Button variant="outline" className="border-border bg-accent text-muted-foreground hover:text-foreground hover:bg-accent">
                                     <Calendar className="mr-2 h-4 w-4" />
                                     Hoje
                                 </Button>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
                     >
                         <div className="flex items-center gap-2 mb-4">
                             <DollarSign size={16} className="text-emerald-400" />
-                            <span className="text-sm font-medium text-neutral-400">Indicadores Financeiros</span>
+                            <span className="text-sm font-medium text-muted-foreground">Indicadores Financeiros</span>
                         </div>
                         <KPIGrid metrics={{ ...metrics.financial, ruptureShare: metrics.risk.ruptureShare }} />
                     </motion.div>
@@ -142,13 +142,13 @@ export default function DashboardPage() {
                     >
                         <div className="flex items-center gap-2 mb-4">
                             <Package size={16} className="text-blue-400" />
-                            <span className="text-sm font-medium text-neutral-400">Análise de Estoque</span>
+                            <span className="text-sm font-medium text-muted-foreground">Análise de Estoque</span>
                         </div>
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                            <div className="rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
+                            <div className="rounded-3xl border border-border bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
                                 <StockStatusPie data={metrics.charts.statusDistribution} />
                             </div>
-                            <div className="rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
+                            <div className="rounded-3xl border border-border bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
                                 <CoverageBar data={metrics.charts.coverageDistribution} />
                             </div>
                         </div>
@@ -162,9 +162,9 @@ export default function DashboardPage() {
                     >
                         <div className="flex items-center gap-2 mb-4">
                             <AlertTriangle size={16} className="text-orange-400" />
-                            <span className="text-sm font-medium text-neutral-400">Oportunidades & Riscos</span>
+                            <span className="text-sm font-medium text-muted-foreground">Oportunidades & Riscos</span>
                         </div>
-                        <div className="rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
+                        <div className="rounded-3xl border border-border bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
                             <div className="rounded-[20px] bg-neutral-950/50 p-6">
                                 <TopOpportunities
                                     ruptureItems={metrics.topMovers.rupture}

@@ -27,7 +27,7 @@ export default function SuppliersPage() {
         <div className="min-h-screen relative overflow-hidden">
             {/* Animated Background Gradient */}
             <div className="absolute inset-0 -z-10">
-                <div className="absolute inset-0 bg-[#050505]" />
+                <div className="absolute inset-0 bg-background" />
                 <div className="absolute top-0 right-1/3 w-[500px] h-[500px] bg-orange-600/15 rounded-full blur-[150px]" />
                 <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-amber-600/10 rounded-full blur-[120px]" />
             </div>
@@ -49,9 +49,9 @@ export default function SuppliersPage() {
                                     className="relative"
                                 >
                                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg shadow-orange-500/25">
-                                        <PackageCheck size={32} className="text-white" />
+                                        <PackageCheck size={32} className="text-foreground" />
                                     </div>
-                                    <div className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 rounded-full bg-white border-2 border-[#050505]">
+                                    <div className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 rounded-full bg-white border-2 border-background">
                                         <Star size={10} className="text-amber-500 fill-amber-500" />
                                     </div>
                                 </motion.div>
@@ -60,7 +60,7 @@ export default function SuppliersPage() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.3 }}
-                                        className="text-3xl lg:text-4xl font-bold tracking-tight text-white"
+                                        className="text-3xl lg:text-4xl font-bold tracking-tight text-foreground"
                                     >
                                         Scorecard de Fornecedores
                                     </motion.h1>
@@ -68,7 +68,7 @@ export default function SuppliersPage() {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.4 }}
-                                        className="mt-2 max-w-xl text-neutral-400"
+                                        className="mt-2 max-w-xl text-muted-foreground"
                                     >
                                         Monitoramento de desempenho e confiabilidade dos seus parceiros comerciais.
                                     </motion.p>
@@ -82,9 +82,9 @@ export default function SuppliersPage() {
                                 transition={{ delay: 0.5 }}
                                 className="flex flex-wrap gap-3"
                             >
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm">
+                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent border border-border text-sm">
                                     <Users size={14} className="text-orange-400" />
-                                    <span className="text-white font-medium">{suppliers.length} Fornecedores</span>
+                                    <span className="text-foreground font-medium">{suppliers.length} Fornecedores</span>
                                 </div>
                                 <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-sm">
                                     <Award size={14} className="text-emerald-400" />
@@ -118,13 +118,13 @@ export default function SuppliersPage() {
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-3">
-                                                        <h3 className="text-xl font-bold text-white group-hover:text-orange-200 transition-colors">{supplier.name}</h3>
+                                                        <h3 className="text-xl font-bold text-foreground group-hover:text-orange-200 transition-colors">{supplier.name}</h3>
                                                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles.bg} ${styles.text}`}>
                                                             <span className={`w-1.5 h-1.5 rounded-full ${styles.text.replace('text-', 'bg-')}`} />
                                                             {supplier.status}
                                                         </span>
                                                     </div>
-                                                    <div className="flex items-center gap-4 mt-1 text-sm text-neutral-500">
+                                                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                                                         <span className="flex items-center gap-1">
                                                             <Star size={12} className="text-amber-400 fill-amber-400" />
                                                             {supplier.rating}
@@ -137,13 +137,13 @@ export default function SuppliersPage() {
                                             {/* Metrics */}
                                             <div className="grid grid-cols-3 gap-6 lg:gap-12">
                                                 <div className="text-center lg:text-left">
-                                                    <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-neutral-500 mb-1">
+                                                    <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-muted-foreground mb-1">
                                                         <ShieldCheck size={14} className="text-neutral-600" />
                                                         Confiabilidade
                                                     </div>
                                                     <div className="flex items-center justify-center lg:justify-start gap-2">
-                                                        <span className="text-2xl font-bold text-white">{supplier.reliability}%</span>
-                                                        <div className="w-16 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                                        <span className="text-2xl font-bold text-foreground">{supplier.reliability}%</span>
+                                                        <div className="w-16 h-1.5 rounded-full bg-accent overflow-hidden">
                                                             <motion.div
                                                                 initial={{ width: 0 }}
                                                                 animate={{ width: `${supplier.reliability}%` }}
@@ -154,14 +154,14 @@ export default function SuppliersPage() {
                                                     </div>
                                                 </div>
                                                 <div className="text-center lg:text-left">
-                                                    <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-neutral-500 mb-1">
+                                                    <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-muted-foreground mb-1">
                                                         <Clock size={14} className="text-neutral-600" />
                                                         Lead Time
                                                     </div>
-                                                    <span className="text-2xl font-bold text-white">{supplier.avgLeadTime}</span>
+                                                    <span className="text-2xl font-bold text-foreground">{supplier.avgLeadTime}</span>
                                                 </div>
                                                 <div className="text-center lg:text-left">
-                                                    <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-neutral-500 mb-1">
+                                                    <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-muted-foreground mb-1">
                                                         <AlertTriangle size={14} className="text-neutral-600" />
                                                         Risco
                                                     </div>
@@ -170,7 +170,7 @@ export default function SuppliersPage() {
                                             </div>
 
                                             {/* Action */}
-                                            <button className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-neutral-400 hover:text-white hover:bg-white/10 transition-all group/btn">
+                                            <button className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl bg-accent border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-all group/btn">
                                                 Ver Detalhes
                                                 <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                                             </button>
@@ -193,11 +193,11 @@ export default function SuppliersPage() {
                                 <TrendingUp size={24} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-semibold text-white">Deseja adicionar um novo fornecedor?</h3>
-                                <p className="text-sm text-neutral-400">Cadastre parceiros e acompanhe métricas em tempo real.</p>
+                                <h3 className="text-lg font-semibold text-foreground">Deseja adicionar um novo fornecedor?</h3>
+                                <p className="text-sm text-muted-foreground">Cadastre parceiros e acompanhe métricas em tempo real.</p>
                             </div>
                         </div>
-                        <button className="px-6 py-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-medium transition-colors shadow-lg shadow-orange-500/20">
+                        <button className="px-6 py-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-foreground font-medium transition-colors shadow-lg shadow-orange-500/20">
                             Adicionar Fornecedor
                         </button>
                     </motion.div>

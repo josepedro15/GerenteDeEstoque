@@ -13,7 +13,7 @@ export default function MarketingPage() {
         <div className="min-h-screen relative overflow-hidden">
             {/* Animated Background Gradient */}
             <div className="absolute inset-0 -z-10">
-                <div className="absolute inset-0 bg-[#050505]" />
+                <div className="absolute inset-0 bg-background" />
                 <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-pink-600/20 rounded-full blur-[150px] animate-pulse" />
                 <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-purple-600/15 rounded-full blur-[120px]" />
             </div>
@@ -35,19 +35,19 @@ export default function MarketingPage() {
                                     className="relative"
                                 >
                                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg shadow-pink-500/25">
-                                        <Megaphone size={32} className="text-white" />
+                                        <Megaphone size={32} className="text-foreground" />
                                     </div>
-                                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-[#050505] animate-pulse" />
+                                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-background animate-pulse" />
                                 </motion.div>
                                 <div>
                                     <motion.h1
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.3 }}
-                                        className="text-3xl lg:text-4xl font-bold tracking-tight text-white"
+                                        className="text-3xl lg:text-4xl font-bold tracking-tight text-foreground"
                                     >
                                         Agente de Marketing
-                                        <span className="inline-block ml-2 px-2 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white uppercase tracking-wider">
+                                        <span className="inline-block ml-2 px-2 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-foreground uppercase tracking-wider">
                                             IA
                                         </span>
                                     </motion.h1>
@@ -55,7 +55,7 @@ export default function MarketingPage() {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.4 }}
-                                        className="mt-2 max-w-xl text-neutral-400"
+                                        className="mt-2 max-w-xl text-muted-foreground"
                                     >
                                         Transforme oportunidades de estoque em campanhas de vendas de alto impacto.
                                         Selecione os produtos e deixe a IA criar todo o conteúdo.
@@ -70,13 +70,13 @@ export default function MarketingPage() {
                                 transition={{ delay: 0.5 }}
                                 className="flex flex-wrap gap-3"
                             >
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm">
+                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent border border-border text-sm">
                                     <Zap size={14} className="text-yellow-400" />
-                                    <span className="text-white font-medium">Geração Instantânea</span>
+                                    <span className="text-foreground font-medium">Geração Instantânea</span>
                                 </div>
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm">
+                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent border border-border text-sm">
                                     <Target size={14} className="text-pink-400" />
-                                    <span className="text-white font-medium">3 Canais</span>
+                                    <span className="text-foreground font-medium">3 Canais</span>
                                 </div>
                             </motion.div>
                         </div>
@@ -95,11 +95,11 @@ export default function MarketingPage() {
                             className="lg:col-span-5"
                         >
                             <div className="sticky top-8">
-                                <div className="rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl p-1">
+                                <div className="rounded-3xl border border-border bg-neutral-900/50 backdrop-blur-xl p-1">
                                     <div className="rounded-[20px] bg-neutral-950/50 p-6">
                                         <div className="flex items-center gap-2 mb-6">
                                             <Sparkles size={16} className="text-pink-400" />
-                                            <span className="text-sm font-medium text-neutral-400">Radar de Oportunidades</span>
+                                            <span className="text-sm font-medium text-muted-foreground">Radar de Oportunidades</span>
                                         </div>
                                         <OpportunityRadar onCampaignGenerated={setCampaign} />
                                     </div>
@@ -117,8 +117,8 @@ export default function MarketingPage() {
                                             <TrendingUp size={16} />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-medium text-white mb-1">Dica Pro</h4>
-                                            <p className="text-xs text-neutral-500 leading-relaxed">
+                                            <h4 className="text-sm font-medium text-foreground mb-1">Dica Pro</h4>
+                                            <p className="text-xs text-muted-foreground leading-relaxed">
                                                 Selecione produtos com alta margem e excesso de estoque para campanhas mais eficazes.
                                             </p>
                                         </div>
@@ -136,7 +136,7 @@ export default function MarketingPage() {
                         >
                             <div className="flex items-center gap-2 mb-4">
                                 <ChevronRight size={16} className="text-neutral-600" />
-                                <span className="text-sm font-medium text-neutral-400">Resultado da Campanha</span>
+                                <span className="text-sm font-medium text-muted-foreground">Resultado da Campanha</span>
                             </div>
                             <CampaignResult campaign={campaign} />
                         </motion.div>

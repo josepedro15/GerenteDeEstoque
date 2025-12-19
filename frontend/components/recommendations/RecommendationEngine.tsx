@@ -90,20 +90,20 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
             case 'Comprar Urgente': return 'text-red-400 bg-red-500/10 border-red-500/20';
             case 'Comprar': return 'text-orange-400 bg-orange-500/10 border-orange-500/20';
             case 'Queimar Estoque': return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
-            default: return 'text-muted-foreground bg-white/5 border-white/10';
+            default: return 'text-muted-foreground bg-accent border-border';
         }
     };
 
     return (
         <div className="space-y-4">
             {/* Controls Bar */}
-            <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-4 backdrop-blur-md">
+            <div className="flex items-center justify-between rounded-xl border border-border bg-accent p-4 backdrop-blur-md">
                 <div className="flex items-center gap-4">
                     <span className="text-sm text-muted-foreground flex items-center gap-2">
                         <ArrowUpDown size={14} /> Ordenar por:
                     </span>
                     <Select value={sortCriteria} onValueChange={setSortCriteria}>
-                        <SelectTrigger className="w-[180px] bg-black/20 border-white/10 text-white">
+                        <SelectTrigger className="w-[180px] bg-muted border-border text-foreground">
                             <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -124,11 +124,11 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
                             <ShoppingCart size={20} />
                         </div>
                         <div>
-                            <p className="font-semibold text-white">{selectedIds.size} itens selecionados</p>
+                            <p className="font-semibold text-foreground">{selectedIds.size} itens selecionados</p>
                             <p className="text-sm text-blue-200">Total Previsto: {formatCurrency(totalCost)}</p>
                         </div>
                     </div>
-                    <Button onClick={handleAnalyze} className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20">
+                    <Button onClick={handleAnalyze} className="bg-blue-600 hover:bg-blue-500 text-foreground shadow-lg shadow-blue-500/20">
                         <Sparkles className="mr-2 h-4 w-4" />
                         Analisar Plano com IA
                     </Button>
@@ -136,9 +136,9 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
             )}
 
             {/* Table */}
-            <div className="rounded-xl border border-white/5 bg-white/5 backdrop-blur-sm overflow-hidden">
+            <div className="rounded-xl border border-border bg-accent backdrop-blur-sm overflow-hidden">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-white/5 text-xs uppercase text-muted-foreground">
+                    <thead className="bg-accent text-xs uppercase text-muted-foreground">
                         <tr>
                             <th className="px-6 py-4 w-[40px]">
                                 <Checkbox
@@ -156,7 +156,7 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
                     </thead>
                     <tbody className="divide-y divide-white/5">
                         {sortedSuggestions.map((item) => (
-                            <tr key={item.id} className={`group hover:bg-white/5 transition-colors ${selectedIds.has(item.id) ? 'bg-blue-500/5' : ''}`}>
+                            <tr key={item.id} className={`group hover:bg-accent transition-colors ${selectedIds.has(item.id) ? 'bg-blue-500/5' : ''}`}>
                                 <td className="px-6 py-4">
                                     <Checkbox
                                         checked={selectedIds.has(item.id)}
@@ -165,7 +165,7 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
                                 </td>
                                 <td className="px-6 py-4">
                                     <div>
-                                        <p className="font-medium text-white max-w-[250px] truncate" title={item.name}>{item.name}</p>
+                                        <p className="font-medium text-foreground max-w-[250px] truncate" title={item.name}>{item.name}</p>
                                         <div className="flex items-center gap-2 mt-1">
                                             <Badge variant="outline" className={`border text-[10px] px-1 py-0 ${getActionColor(item.suggestedAction)}`}>
                                                 {item.suggestedAction}
@@ -174,14 +174,14 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-white">
+                                <td className="px-6 py-4 text-foreground">
                                     {item.currentStock} un
                                 </td>
-                                <td className="px-6 py-4 text-white font-medium">
+                                <td className="px-6 py-4 text-foreground font-medium">
                                     {formatCurrency(item.totalValue)}
                                 </td>
-                                <td className="px-6 py-4 text-white">
-                                    <span className="font-mono bg-white/10 px-2 py-1 rounded text-xs">
+                                <td className="px-6 py-4 text-foreground">
+                                    <span className="font-mono bg-accent px-2 py-1 rounded text-xs">
                                         {item.suggestedQty > 0 ? `+${item.suggestedQty}` : '0'}
                                     </span>
                                 </td>

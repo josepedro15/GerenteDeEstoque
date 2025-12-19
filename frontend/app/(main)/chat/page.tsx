@@ -10,7 +10,7 @@ export default function ChatPage() {
         <div className="h-[calc(100vh-4rem)] md:h-screen relative overflow-hidden flex flex-col bg-background">
             {/* Animated Background - only visible in dark mode */}
             <div className="absolute inset-0 -z-10 dark:block hidden">
-                <div className="absolute inset-0 bg-[#050505]" />
+                <div className="absolute inset-0 bg-background" />
                 <div className="absolute top-1/4 left-1/3 w-[600px] h-[600px] bg-indigo-600/15 rounded-full blur-[150px] animate-pulse" />
                 <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px]" />
             </div>
@@ -27,16 +27,16 @@ export default function ChatPage() {
                         </Link>
                         <div className="relative">
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
-                                <Bot size={20} className="text-white" />
+                                <Bot size={20} className="text-foreground" />
                             </div>
                             <div className="absolute -top-0.5 -right-0.5 flex items-center justify-center h-3 w-3 rounded-full bg-green-500 border-2 border-background">
-                                <Sparkles size={6} className="text-white" />
+                                <Sparkles size={6} className="text-foreground" />
                             </div>
                         </div>
                         <div>
                             <h1 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
                                 Assistente IA
-                                <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white uppercase tracking-wider">
+                                <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-foreground uppercase tracking-wider">
                                     Online
                                 </span>
                             </h1>

@@ -289,10 +289,10 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         )}>
             {/* Header - só mostra no widget flutuante quando hideHeader é false */}
             {!fullPage && !hideHeader && (
-                <div className="flex items-center justify-between p-3 border-b border-white/5 bg-white/5">
+                <div className="flex items-center justify-between p-3 border-b border-border bg-accent">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="font-medium text-white text-sm">Assistente IA</span>
+                        <span className="font-medium text-foreground text-sm">Assistente IA</span>
                         {isLoadingHistory && (
                             <Loader2 size={12} className="animate-spin text-blue-400" />
                         )}
@@ -300,14 +300,14 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     <div className="flex items-center gap-1">
                         <button
                             onClick={handleClearChat}
-                            className="p-1.5 rounded-lg hover:bg-red-500/20 text-neutral-400 hover:text-red-400 transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-colors"
                             title="Limpar conversa"
                         >
                             <Trash2 size={14} />
                         </button>
                         <button
                             onClick={handleOpenPage}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 hover:text-white text-xs font-medium transition-all border border-blue-500/30"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 hover:text-foreground text-xs font-medium transition-all border border-blue-500/30"
                         >
                             <ExternalLink size={14} />
                             Abrir Página
@@ -315,12 +315,12 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-white"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
                             onClick={() => setIsExpanded(!isExpanded)}
                         >
                             {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-white" onClick={closeChat}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={closeChat}>
                             <span className="sr-only">Fechar</span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                         </Button>
@@ -358,7 +358,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                         "rounded-2xl px-4 py-2 text-sm overflow-hidden",
                                         msg.role === "assistant"
                                             ? "bg-card border border-border text-foreground rounded-tl-none"
-                                            : "bg-blue-600 text-white rounded-tr-none"
+                                            : "bg-blue-600 text-foreground rounded-tr-none"
                                     )}>
                                         {msg.role === "assistant" ? (
                                             <ReactMarkdown

@@ -31,7 +31,7 @@ export default function RecommendationsPage() {
         <div className="min-h-screen relative overflow-hidden">
             {/* Animated Background Gradient */}
             <div className="absolute inset-0 -z-10">
-                <div className="absolute inset-0 bg-[#050505]" />
+                <div className="absolute inset-0 bg-background" />
                 <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[150px] animate-pulse" />
                 <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-cyan-600/10 rounded-full blur-[120px]" />
             </div>
@@ -53,10 +53,10 @@ export default function RecommendationsPage() {
                                     className="relative"
                                 >
                                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 shadow-lg shadow-blue-500/25">
-                                        <PackageSearch size={32} className="text-white" />
+                                        <PackageSearch size={32} className="text-foreground" />
                                     </div>
-                                    <div className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500 border-2 border-[#050505]">
-                                        <Brain size={10} className="text-white" />
+                                    <div className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500 border-2 border-background">
+                                        <Brain size={10} className="text-foreground" />
                                     </div>
                                 </motion.div>
                                 <div>
@@ -64,10 +64,10 @@ export default function RecommendationsPage() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.3 }}
-                                        className="text-3xl lg:text-4xl font-bold tracking-tight text-white"
+                                        className="text-3xl lg:text-4xl font-bold tracking-tight text-foreground"
                                     >
                                         Sugestões de Compra
-                                        <span className="inline-block ml-2 px-2 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white uppercase tracking-wider">
+                                        <span className="inline-block ml-2 px-2 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-foreground uppercase tracking-wider">
                                             Híbrido
                                         </span>
                                     </motion.h1>
@@ -75,7 +75,7 @@ export default function RecommendationsPage() {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.4 }}
-                                        className="mt-2 max-w-xl text-neutral-400"
+                                        className="mt-2 max-w-xl text-muted-foreground"
                                     >
                                         O sistema calculou as necessidades com base em 45 dias de cobertura.
                                         Selecione os itens e peça para a IA refinar a estratégia de compra.
@@ -90,9 +90,9 @@ export default function RecommendationsPage() {
                                 transition={{ delay: 0.5 }}
                                 className="flex flex-wrap gap-3"
                             >
-                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm">
+                                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent border border-border text-sm">
                                     <Filter size={14} className="text-blue-400" />
-                                    <span className="text-white font-medium">{suggestions.length} Itens</span>
+                                    <span className="text-foreground font-medium">{suggestions.length} Itens</span>
                                 </div>
                                 <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-sm">
                                     <TrendingUp size={14} className="text-emerald-400" />
@@ -117,7 +117,7 @@ export default function RecommendationsPage() {
                                     <div className="w-16 h-16 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin" />
                                     <PackageSearch className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-400" size={24} />
                                 </div>
-                                <p className="mt-6 text-neutral-400">Carregando sugestões...</p>
+                                <p className="mt-6 text-muted-foreground">Carregando sugestões...</p>
                             </div>
                         ) : (
                             <>
@@ -133,15 +133,15 @@ export default function RecommendationsPage() {
                                             <Sparkles size={16} />
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-medium text-white mb-1">Dica: Análise com IA</h4>
-                                            <p className="text-xs text-neutral-500 leading-relaxed">
+                                            <h4 className="text-sm font-medium text-foreground mb-1">Dica: Análise com IA</h4>
+                                            <p className="text-xs text-muted-foreground leading-relaxed">
                                                 Selecione até 5 itens e clique em "Analisar Plano com IA" para receber uma análise detalhada com sugestões de negociação e otimização de compra.
                                             </p>
                                         </div>
                                     </div>
                                 </motion.div>
 
-                                <div className="rounded-3xl border border-white/10 bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
+                                <div className="rounded-3xl border border-border bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
                                     <div className="rounded-[20px] bg-neutral-950/50">
                                         <RecommendationEngine suggestions={suggestions} />
                                     </div>
