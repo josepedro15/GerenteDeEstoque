@@ -91,23 +91,23 @@ export default function SettingsPage() {
 
                         <div className="grid gap-6 md:grid-cols-2">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">Celular Principal (Prioritário)</label>
+                                <label className="text-sm font-medium text-muted-foreground">Celular Principal (Prioritário)</label>
                                 <input
                                     type="tel"
                                     name="phonePrimary"
                                     defaultValue={settings.phone_primary}
                                     placeholder="+55 11 99999-9999"
-                                    className="w-full rounded-lg border border-border bg-black/50 px-4 py-3 text-foreground placeholder-white/20 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">Celular Secundário (Sócio/Gerente)</label>
+                                <label className="text-sm font-medium text-muted-foreground">Celular Secundário (Sócio/Gerente)</label>
                                 <input
                                     type="tel"
                                     name="phoneSecondary"
                                     defaultValue={settings.phone_secondary}
                                     placeholder="+55 11 98888-8888"
-                                    className="w-full rounded-lg border border-border bg-black/50 px-4 py-3 text-foreground placeholder-white/20 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                 />
                             </div>
                         </div>
