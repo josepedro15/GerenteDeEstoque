@@ -35,14 +35,14 @@ export function ScenarioBuilder({ onSimulationComplete }: { onSimulationComplete
 
                 {/* Product Selection */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-300">Produto / SKU</label>
+                    <label className="text-sm font-medium text-muted-foreground">Produto / SKU</label>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/30" size={18} />
                         <input
                             type="text"
                             name="sku"
                             placeholder="Ex: Cimento CP-II ou SKU 102030"
-                            className="w-full rounded-xl border border-border bg-black/50 py-3 pl-10 pr-4 text-foreground placeholder-white/30 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-foreground placeholder-muted-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                             required
                         />
                     </div>
@@ -50,7 +50,7 @@ export function ScenarioBuilder({ onSimulationComplete }: { onSimulationComplete
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">Quantidade</label>
+                        <label className="text-sm font-medium text-muted-foreground">Quantidade</label>
                         <input
                             type="number"
                             name="quantity"
@@ -60,23 +60,23 @@ export function ScenarioBuilder({ onSimulationComplete }: { onSimulationComplete
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">Custo Unitário (R$)</label>
+                        <label className="text-sm font-medium text-muted-foreground">Custo Unitário (R$)</label>
                         <input
                             type="number"
                             name="cost"
                             step="0.01"
                             placeholder="Ex: 25.90"
-                            className="w-full rounded-xl border border-border bg-black/50 px-4 py-3 text-foreground placeholder-white/30 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            className="w-full rounded-xl border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                             required
                         />
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-300">Condição de Pagamento</label>
+                    <label className="text-sm font-medium text-muted-foreground">Condição de Pagamento</label>
                     <select
                         name="paymentTerms"
-                        className="w-full rounded-xl border border-border bg-black/50 px-4 py-3 text-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        className="w-full rounded-xl border border-border bg-muted px-4 py-3 text-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     >
                         <option value="30">30 Dias</option>
                         <option value="30/60">30/60 Dias</option>
@@ -86,7 +86,7 @@ export function ScenarioBuilder({ onSimulationComplete }: { onSimulationComplete
                 </div>
 
                 <div className="rounded-xl bg-yellow-500/10 p-4 border border-yellow-500/20">
-                    <p className="text-xs text-yellow-200/80">
+                    <p className="text-xs text-yellow-600 dark:text-yellow-200/80">
                         ⚠ A IA irá considerar o histórico de vendas dos últimos 90 dias para calcular a projeção de saída.
                     </p>
                 </div>

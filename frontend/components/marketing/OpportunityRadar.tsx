@@ -107,7 +107,7 @@ export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated:
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border bg-[#0F0F0F] shadow-2xl h-[600px] flex flex-col"
+                            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border bg-background shadow-2xl h-[600px] flex flex-col"
                         >
                             {/* Header */}
                             <div className="shrink-0 border-b border-border p-6">
@@ -164,7 +164,7 @@ export function OpportunityRadar({ onCampaignGenerated }: { onCampaignGenerated:
                                                             <TrendingDown size={18} />
                                                         </div>
                                                         <div>
-                                                            <h4 className={`font-medium ${isSelected ? 'text-foreground' : 'text-gray-300'}`}>{item.name}</h4>
+                                                            <h4 className={`font-medium ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>{item.name}</h4>
                                                             <p className="text-xs text-muted-foreground">Cobertura: {item.coverage} dias • Estoque: {item.stock}</p>
                                                         </div>
                                                     </div>

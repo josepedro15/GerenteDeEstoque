@@ -18,7 +18,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
     // Empty State
     if (!campaign || !campaign.channels) {
         return (
-            <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-border bg-neutral-900/50 p-12 text-center backdrop-blur-sm min-h-[400px]">
+            <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-border bg-card/50 p-12 text-center backdrop-blur-sm min-h-[400px]">
                 <div className="mb-6 rounded-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 p-8 shadow-inner shadow-white/5">
                     <Megaphone className="text-pink-400" size={48} strokeWidth={1.5} />
                 </div>
@@ -114,7 +114,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="relative w-full max-w-5xl max-h-[90vh] bg-neutral-900 rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col"
+                            className="relative w-full max-w-5xl max-h-[90vh] bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col"
                         >
                             {/* Modal Header */}
                             <div className="flex items-center justify-between p-4 border-b border-border bg-neutral-950/50 shrink-0">
@@ -142,8 +142,8 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id as any)}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id
-                                                ? 'text-foreground bg-accent'
-                                                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                                            ? 'text-foreground bg-accent'
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                                             }`}
                                     >
                                         <tab.icon size={18} className={activeTab === tab.id ? tab.color : ''} />

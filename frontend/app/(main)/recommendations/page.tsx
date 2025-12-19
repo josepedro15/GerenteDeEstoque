@@ -141,8 +141,8 @@ export default function RecommendationsPage() {
                                     </div>
                                 </motion.div>
 
-                                <div className="rounded-3xl border border-border bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
-                                    <div className="rounded-[20px] bg-neutral-950/50">
+                                <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
+                                    <div className="rounded-[20px] bg-card">
                                         <RecommendationEngine suggestions={suggestions} />
                                     </div>
                                 </div>

@@ -70,7 +70,7 @@ export default async function ProductsPage() {
                                 <th className="px-6 py-4 font-medium text-right">Ações</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-border">
                             {data.map((item) => {
                                 const statusNorm = normalizeStatus(item.status_ruptura);
                                 const preco = item.preco; // Already parsed number

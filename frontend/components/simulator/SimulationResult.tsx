@@ -28,8 +28,8 @@ export function SimulationResult({ result }: { result: any }) {
         >
             {/* Risk Card */}
             <div className={`overflow-hidden rounded-3xl border p-1 ${analysis.riskLevel === 'HIGH' ? 'border-red-500/50 bg-red-500/10' :
-                    analysis.riskLevel === 'MEDIUM' ? 'border-yellow-500/50 bg-yellow-500/10' :
-                        'border-emerald-500/50 bg-emerald-500/10'
+                analysis.riskLevel === 'MEDIUM' ? 'border-yellow-500/50 bg-yellow-500/10' :
+                    'border-emerald-500/50 bg-emerald-500/10'
                 }`}>
                 <div className="rounded-2xl bg-black/40 p-6 backdrop-blur-md">
                     <div className="flex items-start justify-between">
@@ -39,8 +39,8 @@ export function SimulationResult({ result }: { result: any }) {
                                     analysis.riskLevel === 'MEDIUM' ? <AlertTriangle className="text-yellow-400" /> :
                                         <CheckCircle2 className="text-emerald-400" />}
                                 <h3 className={`font-bold tracking-wider ${analysis.riskLevel === 'HIGH' ? 'text-red-400' :
-                                        analysis.riskLevel === 'MEDIUM' ? 'text-yellow-400' :
-                                            'text-emerald-400'
+                                    analysis.riskLevel === 'MEDIUM' ? 'text-yellow-400' :
+                                        'text-emerald-400'
                                     }`}>
                                     RISCO {analysis.riskLevel === 'HIGH' ? 'ALTO' : analysis.riskLevel === 'MEDIUM' ? 'MODERADO' : 'BAIXO'}
                                 </h3>
@@ -66,7 +66,7 @@ export function SimulationResult({ result }: { result: any }) {
                     <h3 className="text-xl font-semibold text-foreground">Veredito da IA</h3>
                 </div>
 
-                <div className="prose prose-invert max-w-none text-gray-300">
+                <div className="prose dark:prose-invert max-w-none text-muted-foreground">
                     <ReactMarkdown>{analysis.aiVerdict}</ReactMarkdown>
                 </div>
             </div>
