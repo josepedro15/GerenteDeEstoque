@@ -145,10 +145,10 @@ export default function DashboardPage() {
                             <span className="text-sm font-medium text-muted-foreground">Análise de Estoque</span>
                         </div>
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                            <div className="rounded-3xl border border-border bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
+                            <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
                                 <StockStatusPie data={metrics.charts.statusDistribution} />
                             </div>
-                            <div className="rounded-3xl border border-border bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
+                            <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
                                 <CoverageBar data={metrics.charts.coverageDistribution} />
                             </div>
                         </div>
@@ -164,8 +164,8 @@ export default function DashboardPage() {
                             <AlertTriangle size={16} className="text-orange-400" />
                             <span className="text-sm font-medium text-muted-foreground">Oportunidades & Riscos</span>
                         </div>
-                        <div className="rounded-3xl border border-border bg-neutral-900/50 backdrop-blur-xl p-1 overflow-hidden">
-                            <div className="rounded-[20px] bg-neutral-950/50 p-6">
+                        <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
+                            <div className="rounded-[20px] bg-card p-6">
                                 <TopOpportunities
                                     ruptureItems={metrics.topMovers.rupture}
                                     excessItems={metrics.topMovers.excess}
