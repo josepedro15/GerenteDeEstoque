@@ -63,7 +63,7 @@ export function MorningBriefing() {
                 {/* Card 1: Rupturas (Crítico) */}
                 <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="relative overflow-hidden rounded-2xl border border-red-500/20 bg-gradient-to-br from-red-500/10 to-black p-6 transition-colors hover:border-red-500/40"
+                    className="relative overflow-hidden rounded-2xl border border-red-500/20 bg-gradient-to-br from-red-500/10 to-background p-6 transition-colors hover:border-red-500/40"
                 >
                     <div className="absolute right-0 top-0 p-4 opacity-10">
                         <AlertTriangle size={80} />
@@ -92,7 +92,7 @@ export function MorningBriefing() {
                 {/* Card 2: Excesso (Oportunidade) */}
                 <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-black p-6 transition-colors hover:border-blue-500/40"
+                    className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-background p-6 transition-colors hover:border-blue-500/40"
                 >
                     <div className="absolute right-0 top-0 p-4 opacity-10">
                         <TrendingDown size={80} />
@@ -121,7 +121,7 @@ export function MorningBriefing() {
                 {/* Card 3: Fornecedores (Atrasos) */}
                 <motion.div
                     whileHover={{ scale: 1.02 }}
-                    className="relative overflow-hidden rounded-2xl border border-orange-500/20 bg-gradient-to-br from-orange-500/10 to-black p-6 transition-colors hover:border-orange-500/40"
+                    className="relative overflow-hidden rounded-2xl border border-orange-500/20 bg-gradient-to-br from-orange-500/10 to-background p-6 transition-colors hover:border-orange-500/40"
                 >
                     <div className="absolute right-0 top-0 p-4 opacity-10">
                         <PackageCheck size={80} />
