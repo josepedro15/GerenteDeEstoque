@@ -42,7 +42,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="rounded-3xl border border-border bg-gradient-to-br from-neutral-900 to-neutral-950 overflow-hidden shadow-2xl"
+                className="rounded-3xl border border-border bg-card overflow-hidden shadow-2xl"
             >
                 {/* Success Header */}
                 <div className="p-6 border-b border-border bg-gradient-to-r from-pink-500/10 to-purple-500/10">
@@ -58,7 +58,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                         </div>
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-sm hover:bg-neutral-200 transition-colors shadow-lg"
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-lg"
                         >
                             <Eye size={16} />
                             Ver Campanha Completa
@@ -117,7 +117,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                             className="relative w-full max-w-5xl max-h-[90vh] bg-card rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col"
                         >
                             {/* Modal Header */}
-                            <div className="flex items-center justify-between p-4 border-b border-border bg-neutral-950/50 shrink-0">
+                            <div className="flex items-center justify-between p-4 border-b border-border bg-background/50 shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-purple-600">
                                         <Sparkles size={20} className="text-foreground" />
@@ -136,7 +136,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                             </div>
 
                             {/* Tabs */}
-                            <div className="flex items-center gap-2 p-3 bg-neutral-950/30 border-b border-border shrink-0">
+                            <div className="flex items-center gap-2 p-3 bg-muted/30 border-b border-border shrink-0">
                                 {tabs.map((tab) => (
                                     <button
                                         key={tab.id}
@@ -201,7 +201,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                                     <h4 className="text-sm font-medium text-pink-400 mb-4 flex items-center gap-2">
                                                         <Instagram size={16} /> Legenda do Post
                                                     </h4>
-                                                    <p className="text-sm text-neutral-300 whitespace-pre-wrap leading-relaxed max-h-[400px] overflow-y-auto">
+                                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-[400px] overflow-y-auto">
                                                         {campaign.channels.instagram.copy}
                                                     </p>
                                                 </div>
@@ -304,7 +304,7 @@ export function CampaignResult({ campaign }: { campaign: any }) {
                                                 </div>
                                                 <div className="bg-orange-500/10 rounded-xl border border-orange-500/20 p-4">
                                                     <h4 className="text-orange-400 text-xs font-bold uppercase mb-2">Layout</h4>
-                                                    <p className="text-xs text-orange-200/80">{campaign.channels.physical.layout}</p>
+                                                    <p className="text-xs text-orange-600 dark:text-orange-200/80">{campaign.channels.physical.layout}</p>
                                                 </div>
                                             </div>
                                         </motion.div>
