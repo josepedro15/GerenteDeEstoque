@@ -253,7 +253,33 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             if (userId) {
                 console.log("🔄 Tentando salvar campanha...", { userId, productsCount: products?.length });
                 try {
-                    const result = await saveCampaign(userId, campaign, products);
+                    // Extrair APENAS dados de texto (sem imagens base64) para o payload ser leve
+                    const lightCampaign = {
+                        channels: {
+                            instagram: {
+                                copy: campaign?.channels?.instagram?.copy || '',
+                                imagePrompt: campaign?.channels?.instagram?.imagePrompt || ''
+                            },
+                            whatsapp: {
+                                script: campaign?.channels?.whatsapp?.script || '',
+                                trigger: campaign?.channels?.whatsapp?.trigger || ''
+                            },
+                            physical: {
+                                headline: campaign?.channels?.physical?.headline || '',
+                                subheadline: campaign?.channels?.physical?.subheadline || '',
+                                offer: campaign?.channels?.physical?.offer || ''
+                            }
+                        }
+                    };
+
+                    const lightProducts = (products || []).slice(0, 10).map((p: any) => ({
+                        id: p.id || '',
+                        nome: p.nome || '',
+                        preco: p.preco || 0,
+                        estoque: p.estoque || 0
+                    }));
+
+                    const result = await saveCampaign(userId, lightCampaign, lightProducts);
                     console.log("📝 Resultado saveCampaign:", result);
                     if (result.success) {
                         console.log("✅ Campanha salva com sucesso! ID:", result.id);
@@ -267,10 +293,10 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 console.warn("⚠️ userId não disponível, campanha não será salva");
             }
 
-            // Salvar no histórico do chat
+            // Salvar no histórico do chat (sem dados pesados)
             if (userId && sessionId) {
                 saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
-                saveChatMessage(userId, sessionId, 'assistant', 'Campanha gerada com sucesso!', { campaign, products }).catch(console.error);
+                saveChatMessage(userId, sessionId, 'assistant', 'Campanha gerada com sucesso!').catch(console.error);
             }
         };
 
