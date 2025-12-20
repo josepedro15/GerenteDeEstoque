@@ -1,14 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Bot, Sparkles, ArrowLeft, Menu, Package } from "lucide-react";
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import { Bot, Sparkles, ArrowLeft, Package, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { ChatInterface } from "@/components/chat/chat-interface";
-import { ProductSidebar } from "@/components/chat/ProductSidebar";
+
+// Lazy load ProductSidebar para evitar erros de hidratação
+const ProductSidebar = dynamic(
+    () => import("@/components/chat/ProductSidebar").then(mod => ({ default: mod.ProductSidebar })),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="hidden lg:flex w-80 bg-card border-r border-border items-center justify-center">
+                <Loader2 size={24} className="animate-spin text-blue-400" />
+            </div>
+        )
+    }
+);
 
 export default function ChatPage() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     return (
         <div className="h-[calc(100vh-4rem)] md:h-screen relative overflow-hidden flex bg-background">
@@ -19,11 +36,13 @@ export default function ChatPage() {
                 <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px]" />
             </div>
 
-            {/* Product Sidebar */}
-            <ProductSidebar
-                isOpen={sidebarOpen}
-                onClose={() => setSidebarOpen(false)}
-            />
+            {/* Product Sidebar - só renderiza após montar no cliente */}
+            {mounted && (
+                <ProductSidebar
+                    isOpen={sidebarOpen}
+                    onClose={() => setSidebarOpen(false)}
+                />
+            )}
 
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col min-w-0">
@@ -78,3 +97,4 @@ export default function ChatPage() {
         </div>
     );
 }
+
