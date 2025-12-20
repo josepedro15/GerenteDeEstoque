@@ -130,6 +130,36 @@ Oferta: ${campaign?.channels?.physical?.offer || 'N/A'}
                 {/* Instagram */}
                 {activeTab === 'instagram' && (
                     <div className="space-y-4">
+                        {/* Imagem do Instagram (base64 ou URL) */}
+                        {(campaign.channels.instagram?.imageUrl || campaign.channels.instagram?.imageBase64 || campaign.channels.instagram?.image) && (
+                            <div className="bg-neutral-950 rounded-xl p-4 flex items-center justify-center">
+                                <div className="relative rounded-xl overflow-hidden shadow-2xl max-w-sm">
+                                    <img
+                                        src={
+                                            campaign.channels.instagram.imageBase64?.startsWith('data:')
+                                                ? campaign.channels.instagram.imageBase64
+                                                : campaign.channels.instagram.imageBase64
+                                                    ? `data:image/png;base64,${campaign.channels.instagram.imageBase64}`
+                                                    : campaign.channels.instagram.image?.startsWith('data:')
+                                                        ? campaign.channels.instagram.image
+                                                        : campaign.channels.instagram.image
+                                                            ? `data:image/png;base64,${campaign.channels.instagram.image}`
+                                                            : campaign.channels.instagram.imageUrl
+                                        }
+                                        alt="Instagram Post"
+                                        className="w-full h-auto max-h-80 object-contain"
+                                    />
+                                    {campaign.channels.instagram.sticker && (
+                                        <div className="absolute bottom-4 right-4">
+                                            <span className="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-lg text-xs font-bold text-white uppercase">
+                                                {campaign.channels.instagram.sticker}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="bg-accent rounded-xl p-4 relative">
                             <button
                                 onClick={() => handleCopy(campaign.channels.instagram?.copy || '', 'instagram')}
@@ -195,19 +225,50 @@ Oferta: ${campaign?.channels?.physical?.offer || 'N/A'}
                 {/* PDV */}
                 {activeTab === 'physical' && (
                     <div className="space-y-4">
-                        <div className="bg-white text-black p-6 rounded-xl border-4 border-yellow-400 text-center">
-                            <h2 className="text-2xl font-black uppercase text-red-600 mb-2">
-                                {campaign.channels.physical?.headline || 'PROMOÇÃO'}
-                            </h2>
-                            <p className="text-lg font-bold border-b-2 border-black pb-2 mb-4">
-                                {campaign.channels.physical?.subheadline || 'Aproveite!'}
-                            </p>
-                            <div className="bg-yellow-400 p-4 rounded-lg border-2 border-dashed border-black">
-                                <p className="text-xl font-black">
-                                    {campaign.channels.physical?.offer || 'Oferta Especial'}
-                                </p>
+                        {/* Imagem do Poster (base64 ou URL) */}
+                        {(campaign.channels.physical?.posterUrl || campaign.channels.physical?.posterBase64 || campaign.channels.physical?.poster || campaign.channels.physical?.image) && (
+                            <div className="flex justify-center">
+                                <div className="relative rounded-xl overflow-hidden shadow-2xl border border-border max-w-md">
+                                    <img
+                                        src={
+                                            campaign.channels.physical.posterBase64?.startsWith('data:')
+                                                ? campaign.channels.physical.posterBase64
+                                                : campaign.channels.physical.posterBase64
+                                                    ? `data:image/png;base64,${campaign.channels.physical.posterBase64}`
+                                                    : campaign.channels.physical.poster?.startsWith('data:')
+                                                        ? campaign.channels.physical.poster
+                                                        : campaign.channels.physical.poster
+                                                            ? `data:image/png;base64,${campaign.channels.physical.poster}`
+                                                            : campaign.channels.physical.image?.startsWith('data:')
+                                                                ? campaign.channels.physical.image
+                                                                : campaign.channels.physical.image
+                                                                    ? `data:image/png;base64,${campaign.channels.physical.image}`
+                                                                    : campaign.channels.physical.posterUrl
+                                        }
+                                        alt="Poster PDV"
+                                        className="w-full h-auto max-h-96 object-contain"
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        )}
+
+                        {/* Fallback: Card de texto se não houver imagem */}
+                        {!campaign.channels.physical?.posterUrl && !campaign.channels.physical?.posterBase64 && !campaign.channels.physical?.poster && !campaign.channels.physical?.image && (
+                            <div className="bg-white text-black p-6 rounded-xl border-4 border-yellow-400 text-center">
+                                <h2 className="text-2xl font-black uppercase text-red-600 mb-2">
+                                    {campaign.channels.physical?.headline || 'PROMOÇÃO'}
+                                </h2>
+                                <p className="text-lg font-bold border-b-2 border-black pb-2 mb-4">
+                                    {campaign.channels.physical?.subheadline || 'Aproveite!'}
+                                </p>
+                                <div className="bg-yellow-400 p-4 rounded-lg border-2 border-dashed border-black">
+                                    <p className="text-xl font-black">
+                                        {campaign.channels.physical?.offer || 'Oferta Especial'}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         <button
                             onClick={() => handleCopy(
                                 `${campaign.channels.physical?.headline}\n${campaign.channels.physical?.subheadline}\n${campaign.channels.physical?.offer}`,
