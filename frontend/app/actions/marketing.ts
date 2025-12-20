@@ -184,37 +184,54 @@ export async function saveCampaign(
     campaign: any,
     products: any[]
 ): Promise<{ success: boolean; id?: string; error?: string }> {
+    console.log("📝 saveCampaign chamado:", { userId, productsCount: products?.length });
+
+    if (!userId) {
+        console.error("❌ userId não fornecido");
+        return { success: false, error: "userId não fornecido" };
+    }
+
+    if (!products || products.length === 0) {
+        console.error("❌ Nenhum produto fornecido");
+        return { success: false, error: "Nenhum produto fornecido" };
+    }
+
     try {
+        const insertData = {
+            user_id: userId,
+            produtos: products.map(p => ({
+                id: p.id || p.codigo_produto,
+                nome: p.nome || p.nome_produto,
+                preco: p.preco || 0,
+                estoque: p.estoque || p.estoque_atual || 0
+            })),
+            instagram_copy: campaign?.channels?.instagram?.copy || null,
+            instagram_image_prompt: campaign?.channels?.instagram?.imagePrompt || null,
+            whatsapp_script: campaign?.channels?.whatsapp?.script || null,
+            whatsapp_trigger: campaign?.channels?.whatsapp?.trigger || null,
+            physical_headline: campaign?.channels?.physical?.headline || null,
+            physical_subheadline: campaign?.channels?.physical?.subheadline || null,
+            physical_offer: campaign?.channels?.physical?.offer || null,
+            status: 'active'
+        };
+
+        console.log("📝 Dados a inserir:", JSON.stringify(insertData, null, 2));
+
         const { data, error } = await supabase
             .from('campanhas_marketing')
-            .insert({
-                user_id: userId,
-                produtos: products.map(p => ({
-                    id: p.id,
-                    nome: p.nome,
-                    preco: p.preco,
-                    estoque: p.estoque
-                })),
-                instagram_copy: campaign?.channels?.instagram?.copy || null,
-                instagram_image_prompt: campaign?.channels?.instagram?.imagePrompt || null,
-                whatsapp_script: campaign?.channels?.whatsapp?.script || null,
-                whatsapp_trigger: campaign?.channels?.whatsapp?.trigger || null,
-                physical_headline: campaign?.channels?.physical?.headline || null,
-                physical_subheadline: campaign?.channels?.physical?.subheadline || null,
-                physical_offer: campaign?.channels?.physical?.offer || null,
-                status: 'active'
-            })
+            .insert(insertData)
             .select('id')
             .single();
 
         if (error) {
-            console.error("Erro ao salvar campanha:", error);
+            console.error("❌ Erro Supabase ao salvar campanha:", error);
             return { success: false, error: error.message };
         }
 
+        console.log("✅ Campanha salva com ID:", data?.id);
         return { success: true, id: data?.id };
     } catch (e: any) {
-        console.error("Erro ao salvar campanha:", e);
+        console.error("❌ Erro ao salvar campanha:", e);
         return { success: false, error: e.message };
     }
 }

@@ -251,12 +251,20 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 
             // Salvar campanha no banco de campanhas
             if (userId) {
+                console.log("🔄 Tentando salvar campanha...", { userId, productsCount: products?.length });
                 try {
-                    await saveCampaign(userId, campaign, products);
-                    console.log("✅ Campanha salva com sucesso!");
+                    const result = await saveCampaign(userId, campaign, products);
+                    console.log("📝 Resultado saveCampaign:", result);
+                    if (result.success) {
+                        console.log("✅ Campanha salva com sucesso! ID:", result.id);
+                    } else {
+                        console.error("❌ Falha ao salvar campanha:", result.error);
+                    }
                 } catch (err) {
-                    console.error("Erro ao salvar campanha:", err);
+                    console.error("❌ Erro ao salvar campanha:", err);
                 }
+            } else {
+                console.warn("⚠️ userId não disponível, campanha não será salva");
             }
 
             // Salvar no histórico do chat
