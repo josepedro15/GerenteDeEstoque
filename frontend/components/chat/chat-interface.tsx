@@ -12,6 +12,7 @@ import { useChat } from "@/contexts/ChatContext";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { CampaignCard } from "@/components/chat/CampaignCard";
 import { saveCampaign } from "@/app/actions/marketing";
+import { uploadImageToStorage } from "@/lib/storage";
 
 interface Message {
     id: string;
@@ -280,25 +281,45 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     }));
 
                     // Extrair imagens base64 (usando nomes corretos do n8n: imageUrl e posterUrl)
-                    const instagramImage = campaign?.channels?.instagram?.imageUrl
+                    const instagramImageBase64 = campaign?.channels?.instagram?.imageUrl
                         || campaign?.channels?.instagram?.imageBase64
                         || campaign?.channels?.instagram?.image
                         || undefined;
-                    const physicalImage = campaign?.channels?.physical?.posterUrl
+                    const physicalImageBase64 = campaign?.channels?.physical?.posterUrl
                         || campaign?.channels?.physical?.posterBase64
                         || campaign?.channels?.physical?.poster
                         || campaign?.channels?.physical?.image
                         || undefined;
 
-                    console.log("🖼️ Instagram image encontrada:", instagramImage ? `${instagramImage.substring(0, 50)}... (${instagramImage.length} chars)` : 'NÃO');
-                    console.log("🖼️ Physical image encontrada:", physicalImage ? `${physicalImage.substring(0, 50)}... (${physicalImage.length} chars)` : 'NÃO');
+                    console.log("🖼️ Instagram image encontrada:", instagramImageBase64 ? `(${Math.round(instagramImageBase64.length / 1024)}KB)` : 'NÃO');
+                    console.log("🖼️ Physical image encontrada:", physicalImageBase64 ? `(${Math.round(physicalImageBase64.length / 1024)}KB)` : 'NÃO');
 
+                    // Upload imagens do CLIENTE para Storage (evita 413 no server action)
+                    const timestamp = Date.now();
+                    let instagramImageUrl: string | undefined = undefined;
+                    let physicalImageUrl: string | undefined = undefined;
+
+                    if (instagramImageBase64 && instagramImageBase64.length > 100) {
+                        console.log("📤 Uploading Instagram image do cliente...");
+                        const url = await uploadImageToStorage(instagramImageBase64, `${userId}/${timestamp}_instagram.png`);
+                        if (url) instagramImageUrl = url;
+                    }
+
+                    if (physicalImageBase64 && physicalImageBase64.length > 100) {
+                        console.log("📤 Uploading Physical image do cliente...");
+                        const url = await uploadImageToStorage(physicalImageBase64, `${userId}/${timestamp}_physical.png`);
+                        if (url) physicalImageUrl = url;
+                    }
+
+                    // Chamar saveCampaign SEM imagens base64 (apenas URLs)
                     const result = await saveCampaign(
                         userId,
                         lightCampaign,
                         lightProducts,
-                        instagramImage,
-                        physicalImage
+                        undefined, // não passa mais imagem base64
+                        undefined, // não passa mais imagem base64
+                        instagramImageUrl,
+                        physicalImageUrl
                     );
                     console.log("📝 Resultado saveCampaign:", result);
                     if (result.success) {

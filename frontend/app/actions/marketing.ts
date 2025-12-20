@@ -229,15 +229,17 @@ export interface SavedCampaign {
     status: string;
 }
 
-// Salvar campanha no banco (com suporte a upload de imagens)
+// Salvar campanha no banco (recebe URLs de imagens já upadas do cliente)
 export async function saveCampaign(
     userId: string,
     campaign: any,
     products: any[],
-    instagramImageBase64?: string,
-    physicalImageBase64?: string
+    _unused1?: string, // mantido para compatibilidade
+    _unused2?: string, // mantido para compatibilidade
+    instagramImageUrl?: string,
+    physicalImageUrl?: string
 ): Promise<{ success: boolean; id?: string; error?: string }> {
-    console.log("📝 saveCampaign chamado:", { userId, productsCount: products?.length });
+    console.log("📝 saveCampaign chamado:", { userId, productsCount: products?.length, hasInstagramImg: !!instagramImageUrl, hasPhysicalImg: !!physicalImageUrl });
 
     if (!userId) {
         console.error("❌ userId não fornecido");
@@ -250,28 +252,6 @@ export async function saveCampaign(
     }
 
     try {
-        // Upload imagens para Storage (se fornecidas)
-        let instagramImageUrl: string | null = null;
-        let physicalImageUrl: string | null = null;
-
-        const timestamp = Date.now();
-
-        if (instagramImageBase64 && instagramImageBase64.length > 100) {
-            console.log("📤 Uploading Instagram image...");
-            instagramImageUrl = await uploadBase64ToStorage(
-                instagramImageBase64,
-                `${userId}/${timestamp}_instagram.png`
-            );
-        }
-
-        if (physicalImageBase64 && physicalImageBase64.length > 100) {
-            console.log("📤 Uploading Physical image...");
-            physicalImageUrl = await uploadBase64ToStorage(
-                physicalImageBase64,
-                `${userId}/${timestamp}_physical.png`
-            );
-        }
-
         // Preparar dados para inserção
         const insertData: any = {
             user_id: userId,
@@ -299,7 +279,7 @@ export async function saveCampaign(
             insertData.physical_image_url = physicalImageUrl;
         }
 
-        console.log("📝 Salvando campanha...", { hasInstagramImg: !!instagramImageUrl, hasPhysicalImg: !!physicalImageUrl });
+        console.log("📝 Salvando campanha...");
 
         const { data, error } = await supabase
             .from('campanhas_marketing')
