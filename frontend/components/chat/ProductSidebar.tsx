@@ -54,14 +54,24 @@ export function ProductSidebar({ isOpen, onClose, className }: ProductSidebarPro
         loadProducts();
     }, []);
 
-    // Filtrar produtos
+    // Filtrar produtos - com validações de segurança
     const filteredProducts = useMemo(() => {
-        return products.filter(p => {
-            const matchesSearch = search === "" ||
-                (p.produto_descricao?.toLowerCase().includes(search.toLowerCase())) ||
-                (p.id_produto?.toLowerCase().includes(search.toLowerCase()));
+        if (!products || products.length === 0) return [];
 
-            const status = (p.status_ruptura || '').toUpperCase();
+        const searchLower = (search || '').toLowerCase().trim();
+
+        return products.filter(p => {
+            if (!p) return false;
+
+            // Busca segura
+            const descricao = (p.produto_descricao || '').toLowerCase();
+            const sku = (p.id_produto || '').toLowerCase();
+            const matchesSearch = searchLower === '' ||
+                descricao.includes(searchLower) ||
+                sku.includes(searchLower);
+
+            // Status seguro
+            const status = (p.status_ruptura || '').toUpperCase().replace(/[^A-ZÁÉÍÓÚÂÊÔ\s]/g, '').trim();
             const matchesStatus = statusFilter === "TODOS" || status.includes(statusFilter);
 
             return matchesSearch && matchesStatus;
@@ -238,7 +248,12 @@ export function ProductSidebar({ isOpen, onClose, className }: ProductSidebarPro
                                                         {status}
                                                     </span>
                                                     <span className="text-xs text-muted-foreground">
-                                                        {parseFloat(product.estoque_atual || '0').toLocaleString('pt-BR')} un
+                                                        {(() => {
+                                                            try {
+                                                                const val = parseFloat(String(product.estoque_atual || '0').replace(',', '.'));
+                                                                return isNaN(val) ? 0 : val.toLocaleString('pt-BR');
+                                                            } catch { return 0; }
+                                                        })()} un
                                                     </span>
                                                 </div>
                                             </div>
