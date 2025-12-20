@@ -36,13 +36,13 @@ export default function ChatPage() {
                 <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px]" />
             </div>
 
-            {/* Product Sidebar - só renderiza após montar no cliente */}
-            {mounted && (
+            {/* Product Sidebar - TEMPORARIAMENTE DESABILITADO PARA DEBUG */}
+            {/* {mounted && (
                 <ProductSidebar
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
                 />
-            )}
+            )} */}
 
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col min-w-0">
