@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import { useChat } from "@/contexts/ChatContext";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { CampaignCard } from "@/components/chat/CampaignCard";
+import { saveCampaign } from "@/app/actions/marketing";
 
 interface Message {
     id: string;
@@ -227,7 +228,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 
     // Listener para campanhas geradas
     useEffect(() => {
-        const handleCampaignEvent = (e: CustomEvent) => {
+        const handleCampaignEvent = async (e: CustomEvent) => {
             const { campaign, products } = e.detail;
 
             // Adiciona mensagem do usuário
@@ -248,7 +249,17 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 
             setMessages(prev => [...prev, userMsg, aiMsg]);
 
-            // Salvar no banco
+            // Salvar campanha no banco de campanhas
+            if (userId) {
+                try {
+                    await saveCampaign(userId, campaign, products);
+                    console.log("✅ Campanha salva com sucesso!");
+                } catch (err) {
+                    console.error("Erro ao salvar campanha:", err);
+                }
+            }
+
+            // Salvar no histórico do chat
             if (userId && sessionId) {
                 saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
                 saveChatMessage(userId, sessionId, 'assistant', 'Campanha gerada com sucesso!', { campaign, products }).catch(console.error);

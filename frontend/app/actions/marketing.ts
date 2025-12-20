@@ -159,3 +159,130 @@ export async function generateCampaign(productIds: string[]) {
         };
     }
 }
+
+// Interface para campanha salva
+export interface SavedCampaign {
+    id: string;
+    user_id: string;
+    created_at: string;
+    produtos: any[];
+    instagram_copy: string | null;
+    instagram_image_prompt: string | null;
+    instagram_image?: string | null;
+    whatsapp_script: string | null;
+    whatsapp_trigger: string | null;
+    physical_headline: string | null;
+    physical_subheadline: string | null;
+    physical_offer: string | null;
+    physical_image?: string | null;
+    status: string;
+}
+
+// Salvar campanha no banco
+export async function saveCampaign(
+    userId: string,
+    campaign: any,
+    products: any[]
+): Promise<{ success: boolean; id?: string; error?: string }> {
+    try {
+        const { data, error } = await supabase
+            .from('campanhas_marketing')
+            .insert({
+                user_id: userId,
+                produtos: products.map(p => ({
+                    id: p.id,
+                    nome: p.nome,
+                    preco: p.preco,
+                    estoque: p.estoque
+                })),
+                instagram_copy: campaign?.channels?.instagram?.copy || null,
+                instagram_image_prompt: campaign?.channels?.instagram?.imagePrompt || null,
+                whatsapp_script: campaign?.channels?.whatsapp?.script || null,
+                whatsapp_trigger: campaign?.channels?.whatsapp?.trigger || null,
+                physical_headline: campaign?.channels?.physical?.headline || null,
+                physical_subheadline: campaign?.channels?.physical?.subheadline || null,
+                physical_offer: campaign?.channels?.physical?.offer || null,
+                status: 'active'
+            })
+            .select('id')
+            .single();
+
+        if (error) {
+            console.error("Erro ao salvar campanha:", error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true, id: data?.id };
+    } catch (e: any) {
+        console.error("Erro ao salvar campanha:", e);
+        return { success: false, error: e.message };
+    }
+}
+
+// Buscar histórico de campanhas
+export async function getCampaignHistory(
+    userId: string,
+    limit: number = 20
+): Promise<SavedCampaign[]> {
+    try {
+        const { data, error } = await supabase
+            .from('campanhas_marketing')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            console.error("Erro ao buscar campanhas:", error);
+            return [];
+        }
+
+        return data || [];
+    } catch (e) {
+        console.error("Erro ao buscar campanhas:", e);
+        return [];
+    }
+}
+
+// Buscar todas as campanhas (para quando não tem user_id)
+export async function getAllCampaigns(limit: number = 50): Promise<SavedCampaign[]> {
+    try {
+        const { data, error } = await supabase
+            .from('campanhas_marketing')
+            .select('*')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            console.error("Erro ao buscar campanhas:", error);
+            return [];
+        }
+
+        return data || [];
+    } catch (e) {
+        console.error("Erro ao buscar campanhas:", e);
+        return [];
+    }
+}
+
+// Deletar (arquivar) campanha
+export async function deleteCampaign(campaignId: string): Promise<boolean> {
+    try {
+        const { error } = await supabase
+            .from('campanhas_marketing')
+            .update({ status: 'archived' })
+            .eq('id', campaignId);
+
+        if (error) {
+            console.error("Erro ao arquivar campanha:", error);
+            return false;
+        }
+
+        return true;
+    } catch (e) {
+        console.error("Erro ao arquivar campanha:", e);
+        return false;
+    }
+}
