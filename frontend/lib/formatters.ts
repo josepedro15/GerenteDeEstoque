@@ -22,12 +22,14 @@ export const normalizeStatus = (status: string | null | undefined): string => {
     if (!status) return 'DESCONHECIDO';
 
     const upper = status.toUpperCase();
-    if (upper.includes('CRÍTICO') || upper.includes('CRITICO') || upper.includes('RUPTURA')) return 'CRÍTICO';
+    // IMPORTANTE: Verificar RUPTURA antes de CRÍTICO para diferenciar corretamente
+    if (upper.includes('RUPTURA')) return 'RUPTURA';
+    if (upper.includes('CRÍTICO') || upper.includes('CRITICO')) return 'CRÍTICO';
     if (upper.includes('ATENÇÃO') || upper.includes('ATENCAO')) return 'ATENÇÃO';
     if (upper.includes('EXCESSO')) return 'EXCESSO';
     if (upper.includes('SAUDÁVEL') || upper.includes('SAUDAVEL') || upper.includes('NORMAL')) return 'SAUDÁVEL';
 
-    return status; // Return original if no match, stripping emojis might be good for UI logic but keeping for display
+    return status; // Return original if no match
 };
 
 export const cleanStatusText = (status: string): string => {

@@ -16,7 +16,7 @@ export default function RecommendationsPage() {
         async function load() {
             try {
                 const { detalhe } = await getStockData();
-                const data = generateSuggestions(detalhe, 45);
+                const data = generateSuggestions(detalhe, 60);
                 setSuggestions(data);
             } catch (e) {
                 console.error(e);
@@ -77,7 +77,7 @@ export default function RecommendationsPage() {
                                         transition={{ delay: 0.4 }}
                                         className="mt-2 max-w-xl text-muted-foreground"
                                     >
-                                        O sistema calculou as necessidades com base em 45 dias de cobertura.
+                                        O sistema calculou as necessidades com base em 60 dias de cobertura.
                                         Selecione os itens e peça para a IA refinar a estratégia de compra.
                                     </motion.p>
                                 </div>
@@ -96,7 +96,7 @@ export default function RecommendationsPage() {
                                 </div>
                                 <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-sm">
                                     <TrendingUp size={14} className="text-emerald-400" />
-                                    <span className="text-emerald-300 font-medium">45 Dias Cobertura</span>
+                                    <span className="text-emerald-300 font-medium">60 Dias Cobertura</span>
                                 </div>
                             </motion.div>
                         </div>

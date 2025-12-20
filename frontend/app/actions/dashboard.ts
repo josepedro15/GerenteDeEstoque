@@ -3,29 +3,35 @@
 import { supabase } from '@/lib/supabase';
 
 export async function getMorningBriefingStats() {
-    // 1. Ruptures (Critical Status)
+    // 1. Ruptures (Ruptura + Crítico)
     const { data: criticalItems, error: errorCritical } = await supabase
-        .from('dm_analise_estoque')
-        .select('custo, estoque_alvo')
-        .eq('status', 'CRÍTICO');
+        .from('dados_estoque')
+        .select('custo, estoque_atual, media_diaria_venda, preco, status_ruptura')
+        .eq('tipo_registro', 'DETALHE')
+        .or('status_ruptura.ilike.%Ruptura%,status_ruptura.ilike.%Crítico%');
 
     const ruptureCount = criticalItems?.length || 0;
-    const ruptureValue = criticalItems?.reduce((acc, item) => acc + (Number(item.custo) * Number(item.estoque_alvo)), 0) || 0; // Estimated lost revenue or needed investment? Using target stock * cost as "Risk"
+    // Calculando valor em risco: vendas diárias perdidas * preço
+    const ruptureValue = criticalItems?.reduce((acc, item) => {
+        const dailySales = parseFloat(item.media_diaria_venda) || 0;
+        const price = parseFloat(item.preco) || 0;
+        return acc + (dailySales * price * 7); // Estimativa de perda em 7 dias
+    }, 0) || 0;
 
-    // 2. Excess (Excess Status)
+    // 2. Excess (Excesso Status)
     const { data: excessItems, error: errorExcess } = await supabase
-        .from('dm_analise_estoque')
-        .select('custo, estoque_atual, estoque_seguranca')
-        .eq('status', 'EXCESSO');
+        .from('dados_estoque')
+        .select('custo, estoque_atual, valor_estoque_custo')
+        .eq('tipo_registro', 'DETALHE')
+        .ilike('status_ruptura', '%Excesso%');
 
     const excessCount = excessItems?.length || 0;
     const excessValue = excessItems?.reduce((acc, item) => {
-        const excessQty = Number(item.estoque_atual) - Number(item.estoque_seguranca);
-        return acc + (excessQty * Number(item.custo));
+        const stockValue = parseFloat(item.valor_estoque_custo) || 0;
+        return acc + stockValue;
     }, 0) || 0;
 
-    // 3. Suppliers (Mocked for now as we don't have dm_leadtime populated properly yet or just raw tables)
-    // In a real scenario, join raw_compras with raw_fornecedores where status = 'Pendente' and data_prevista_entrega < NOW()
+    // 3. Suppliers (Mocked for now)
     const suppliersStats = {
         late_orders: 3,
         worst_offender: "Fornecedor A" // Placeholder
@@ -35,7 +41,7 @@ export async function getMorningBriefingStats() {
         ruptures: {
             count: ruptureCount,
             value: ruptureValue,
-            items: criticalItems // Send full list if needed for chat context
+            items: criticalItems
         },
         excess: {
             count: excessCount,

@@ -32,7 +32,6 @@ const menuItems = [
     { icon: MessageCircle, label: "Bate-papo", href: "/chat", activeColor: "text-indigo-400" },
     { icon: BrainCircuit, label: "Simulador IA", href: "/simulator", activeColor: "text-purple-400" },
     { icon: Megaphone, label: "Marketing AI", href: "/marketing", activeColor: "text-pink-400" },
-    { icon: PackageCheck, label: "Fornecedores", href: "/suppliers", activeColor: "text-orange-400" },
 ];
 
 // Theme Toggle Component
