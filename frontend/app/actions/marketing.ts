@@ -197,25 +197,26 @@ export async function saveCampaign(
     }
 
     try {
+        // Truncar strings para evitar payload muito grande
         const insertData = {
             user_id: userId,
-            produtos: products.map(p => ({
-                id: p.id || p.codigo_produto,
-                nome: p.nome || p.nome_produto,
-                preco: p.preco || 0,
-                estoque: p.estoque || p.estoque_atual || 0
+            produtos: products.slice(0, 10).map(p => ({
+                id: String(p.id || p.codigo_produto || '').substring(0, 50),
+                nome: String(p.nome || p.nome_produto || '').substring(0, 200),
+                preco: Number(p.preco) || 0,
+                estoque: Number(p.estoque || p.estoque_atual) || 0
             })),
-            instagram_copy: campaign?.channels?.instagram?.copy || null,
-            instagram_image_prompt: campaign?.channels?.instagram?.imagePrompt || null,
-            whatsapp_script: campaign?.channels?.whatsapp?.script || null,
-            whatsapp_trigger: campaign?.channels?.whatsapp?.trigger || null,
-            physical_headline: campaign?.channels?.physical?.headline || null,
-            physical_subheadline: campaign?.channels?.physical?.subheadline || null,
-            physical_offer: campaign?.channels?.physical?.offer || null,
+            instagram_copy: (campaign?.channels?.instagram?.copy || '').substring(0, 5000) || null,
+            instagram_image_prompt: (campaign?.channels?.instagram?.imagePrompt || '').substring(0, 1000) || null,
+            whatsapp_script: (campaign?.channels?.whatsapp?.script || '').substring(0, 5000) || null,
+            whatsapp_trigger: (campaign?.channels?.whatsapp?.trigger || '').substring(0, 200) || null,
+            physical_headline: (campaign?.channels?.physical?.headline || '').substring(0, 200) || null,
+            physical_subheadline: (campaign?.channels?.physical?.subheadline || '').substring(0, 500) || null,
+            physical_offer: (campaign?.channels?.physical?.offer || '').substring(0, 500) || null,
             status: 'active'
         };
 
-        console.log("📝 Dados a inserir:", JSON.stringify(insertData, null, 2));
+        console.log("📝 Salvando campanha...");
 
         const { data, error } = await supabase
             .from('campanhas_marketing')
