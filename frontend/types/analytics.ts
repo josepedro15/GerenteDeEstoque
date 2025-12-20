@@ -5,12 +5,34 @@ export interface DashboardMetrics {
         projectedProfit: number;
         averageMargin: number;
         totalSkuCount: number;
+        averageGiro: number; // NOVO
     };
     risk: {
         ruptureCount: number;
         excessCount: number;
         ruptureShare: number; // Percentage
         healthyShare: number; // Percentage
+    };
+    // NOVO: Métricas de Alertas
+    alerts: {
+        mortos: { count: number; value: number };
+        liquidar: { count: number; value: number };
+        avaliar: { count: number; value: number };
+        atencao: { count: number; value: number };
+        ok: { count: number; value: number };
+    };
+    // NOVO: Métricas ABC
+    abc: {
+        a: { count: number; percentage: number; value: number };
+        b: { count: number; percentage: number; value: number };
+        c: { count: number; percentage: number; value: number };
+    };
+    // NOVO: Tendências
+    trends: {
+        subindo: { count: number; percentage: number };
+        estavel: { count: number; percentage: number };
+        caindo: { count: number; percentage: number };
+        novo: { count: number; percentage: number };
     };
     charts: {
         statusDistribution: { name: string; value: number; color: string }[];
@@ -20,6 +42,8 @@ export interface DashboardMetrics {
         rupture: TopMoverItem[];
         excess: TopMoverItem[];
     };
+    // NOVO: Lista de prioridades
+    priorityActions: PriorityActionItem[];
 }
 
 export interface PurchaseSuggestion {
@@ -43,4 +67,21 @@ export interface TopMoverItem {
     value: number; // Revenue lost (for rupture) or Capital tied (for excess)
     metricLabel: string; // "Venda Diária" or "Estoque"
     status: string;
+    classeAbc?: string; // NOVO
+    alerta?: string; // NOVO
+}
+
+// NOVO: Item de ação prioritária
+export interface PriorityActionItem {
+    id: string;
+    name: string;
+    prioridade: string; // '1-URGENTE', '2-ALTA', etc.
+    classeAbc: string;
+    status: string;
+    alerta: string;
+    estoqueAtual: number;
+    diasCobertura: number;
+    valorEstoque: number;
+    sugestaoCompra: number;
+    tendencia: string;
 }

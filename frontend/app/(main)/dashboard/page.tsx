@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LayoutDashboard, Calendar, Zap, TrendingUp, AlertTriangle, DollarSign, Package, ChevronRight, RefreshCw } from "lucide-react";
+import { LayoutDashboard, Calendar, TrendingUp, AlertTriangle, DollarSign, Package, BarChart3, ArrowUpDown } from "lucide-react";
 import { getStockData } from "@/app/actions/inventory";
 import { calculateDashboardMetrics } from "@/lib/analytics";
 import { KPIGrid } from "@/components/dashboard/KPIGrid";
@@ -9,7 +9,10 @@ import { StockStatusPie } from "@/components/dashboard/StockStatusPie";
 import { CoverageBar } from "@/components/dashboard/CoverageBar";
 import { TopOpportunities } from "@/components/dashboard/TopOpportunities";
 import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysisButton";
-import { MorningBriefing } from "@/components/dashboard/MorningBriefing";
+import { AlertPanel } from "@/components/dashboard/AlertPanel";
+import { ABCDistribution } from "@/components/dashboard/ABCDistribution";
+import { TrendSummary } from "@/components/dashboard/TrendSummary";
+import { PriorityActionList } from "@/components/dashboard/PriorityActionList";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
@@ -62,10 +65,10 @@ export default function DashboardPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="mx-auto max-w-7xl space-y-8"
                 >
-                    {/* Morning Briefing (Priority Section) */}
-                    <MorningBriefing />
+                    {/* SECTION 1: Alert Panel (substitui MorningBriefing) */}
+                    <AlertPanel alerts={metrics.alerts} risk={metrics.risk} />
 
-                    {/* Premium Header */}
+                    {/* SECTION 2: Header */}
                     <header>
                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                             <div className="flex items-start gap-5">
@@ -97,7 +100,7 @@ export default function DashboardPage() {
                                         transition={{ delay: 0.4 }}
                                         className="mt-2 max-w-xl text-muted-foreground"
                                     >
-                                        Monitoramento em tempo real do capital, saúde e performance do estoque.
+                                        Análise de 60 dias • {metrics.financial.totalSkuCount.toLocaleString('pt-BR')} SKUs ativos
                                     </motion.p>
                                 </div>
                             </div>
@@ -110,10 +113,6 @@ export default function DashboardPage() {
                                 className="flex flex-wrap gap-3"
                             >
                                 <DashboardAnalysisButton data={metrics} />
-                                <Button variant="outline" className="border-border bg-accent text-muted-foreground hover:text-foreground hover:bg-accent">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    Hoje
-                                </Button>
                             </motion.div>
                         </div>
 
@@ -121,7 +120,7 @@ export default function DashboardPage() {
                         <div className="mt-8 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                     </header>
 
-                    {/* Financial KPIs (Top Row) */}
+                    {/* SECTION 3: Financial KPIs */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -131,46 +130,77 @@ export default function DashboardPage() {
                             <DollarSign size={16} className="text-emerald-400" />
                             <span className="text-sm font-medium text-muted-foreground">Indicadores Financeiros</span>
                         </div>
-                        <KPIGrid metrics={{ ...metrics.financial, ruptureShare: metrics.risk.ruptureShare }} />
+                        <KPIGrid metrics={{
+                            ...metrics.financial,
+                            ruptureShare: metrics.risk.ruptureShare
+                        }} />
                     </motion.div>
 
-                    {/* Main Visuals (Middle Row) */}
+                    {/* SECTION 4: Análise ABC + Status + Tendências */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.6 }}
                     >
                         <div className="flex items-center gap-2 mb-4">
-                            <Package size={16} className="text-blue-400" />
+                            <BarChart3 size={16} className="text-blue-400" />
                             <span className="text-sm font-medium text-muted-foreground">Análise de Estoque</span>
                         </div>
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            {/* Curva ABC */}
+                            <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
+                                <ABCDistribution abc={metrics.abc} />
+                            </div>
+
+                            {/* Status Distribution (Pie) */}
                             <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
                                 <StockStatusPie data={metrics.charts.statusDistribution} />
                             </div>
+
+                            {/* Tendências */}
                             <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
-                                <CoverageBar data={metrics.charts.coverageDistribution} />
+                                <TrendSummary trends={metrics.trends} />
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* Tactical Actions (Bottom Row) */}
+                    {/* SECTION 5: Cobertura + Top Opportunities */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.7 }}
                     >
                         <div className="flex items-center gap-2 mb-4">
-                            <AlertTriangle size={16} className="text-orange-400" />
-                            <span className="text-sm font-medium text-muted-foreground">Oportunidades & Riscos</span>
+                            <Package size={16} className="text-orange-400" />
+                            <span className="text-sm font-medium text-muted-foreground">Cobertura & Oportunidades</span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
+                                <CoverageBar data={metrics.charts.coverageDistribution} />
+                            </div>
+                            <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
+                                <div className="rounded-[20px] bg-card p-6">
+                                    <TopOpportunities
+                                        ruptureItems={metrics.topMovers.rupture}
+                                        excessItems={metrics.topMovers.excess}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* SECTION 6: Lista de Ações Prioritárias */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8 }}
+                    >
+                        <div className="flex items-center gap-2 mb-4">
+                            <ArrowUpDown size={16} className="text-emerald-400" />
+                            <span className="text-sm font-medium text-muted-foreground">Ações Prioritárias</span>
                         </div>
                         <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-xl p-1 overflow-hidden">
-                            <div className="rounded-[20px] bg-card p-6">
-                                <TopOpportunities
-                                    ruptureItems={metrics.topMovers.rupture}
-                                    excessItems={metrics.topMovers.excess}
-                                />
-                            </div>
+                            <PriorityActionList actions={metrics.priorityActions} />
                         </div>
                     </motion.div>
                 </motion.div>

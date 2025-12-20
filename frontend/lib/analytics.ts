@@ -1,36 +1,42 @@
 import { EstoqueDetalhe } from "@/types/estoque";
-import { DashboardMetrics, PurchaseSuggestion } from "@/types/analytics";
+import { DashboardMetrics, PurchaseSuggestion, PriorityActionItem } from "@/types/analytics";
 import { parseNumber, normalizeStatus } from "./formatters";
 
-export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMetrics {
-    const metrics: DashboardMetrics = {
-        financial: {
-            totalInventoryValue: 0,
-            totalRevenuePotential: 0,
-            projectedProfit: 0,
-            averageMargin: 0,
-            totalSkuCount: 0,
-        },
-        risk: {
-            ruptureCount: 0,
-            excessCount: 0,
-            ruptureShare: 0,
-            healthyShare: 0,
-        },
-        charts: {
-            statusDistribution: [],
-            coverageDistribution: [],
-        },
-        topMovers: {
-            rupture: [],
-            excess: [],
-        }
-    };
+// Helper para normalizar alertas
+function normalizeAlerta(alerta: string | null | undefined): string {
+    if (!alerta) return 'OK';
+    if (alerta.includes('MORTO')) return 'MORTO';
+    if (alerta.includes('LIQUIDAR')) return 'LIQUIDAR';
+    if (alerta.includes('AVALIAR')) return 'AVALIAR';
+    if (alerta.includes('ATENÇÃO')) return 'ATENCAO';
+    return 'OK';
+}
 
-    // Helper maps for distributions
+// Helper para normalizar tendência
+function normalizeTendencia(tendencia: string | null | undefined): string {
+    if (!tendencia) return 'ESTAVEL';
+    if (tendencia.includes('Subindo') || tendencia.includes('Novo')) return 'SUBINDO';
+    if (tendencia.includes('Caindo')) return 'CAINDO';
+    return 'ESTAVEL';
+}
+
+export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMetrics {
+    // Filtrar apenas itens com id_produto válido
+    const validItems = items.filter(item => item.id_produto !== null && item.id_produto !== undefined);
+    const totalItems = validItems.length;
+
+    // Inicializar contadores
     const statusCount: Record<string, number> = {
         'RUPTURA': 0, 'CRÍTICO': 0, 'ATENÇÃO': 0, 'SAUDÁVEL': 0, 'EXCESSO': 0
     };
+
+    const alertCount = { MORTO: 0, LIQUIDAR: 0, AVALIAR: 0, ATENCAO: 0, OK: 0 };
+    const alertValue = { MORTO: 0, LIQUIDAR: 0, AVALIAR: 0, ATENCAO: 0, OK: 0 };
+
+    const abcCount = { A: 0, B: 0, C: 0 };
+    const abcValue = { A: 0, B: 0, C: 0 };
+
+    const trendCount = { SUBINDO: 0, ESTAVEL: 0, CAINDO: 0 };
 
     const coverageBuckets = {
         '0-7 dias': { count: 0, value: 0 },
@@ -40,40 +46,58 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
         '60+ dias': { count: 0, value: 0 },
     };
 
-    let totalItems = 0;
+    let totalInventoryValue = 0;
+    let totalRevenuePotential = 0;
+    let totalGiro = 0;
+    let giroCount = 0;
 
-    // Filtrar apenas itens com id_produto válido para contagem de SKUs
-    const validItems = items.filter(item => item.id_produto !== null && item.id_produto !== undefined);
-
+    // Processar cada item
     validItems.forEach(item => {
         const qty = parseNumber(item.estoque_atual);
         const cost = parseNumber(item.custo);
         const price = parseNumber(item.preco);
-        // daily sales unused here but processed below in map
         const coverage = parseNumber(item.dias_de_cobertura);
+        const giro = parseNumber(item.giro_mensal);
         const status = normalizeStatus(item.status_ruptura);
+        const alerta = normalizeAlerta(item.alerta_estoque);
+        const abc = (item.classe_abc || 'C').toUpperCase();
+        const tendencia = normalizeTendencia(item.tendencia);
 
-        // 1. Financials
         const stockValue = qty * cost;
         const revenuePotential = qty * price;
 
-        metrics.financial.totalInventoryValue += stockValue;
-        metrics.financial.totalRevenuePotential += revenuePotential;
-        totalItems++;
+        // 1. Financials
+        totalInventoryValue += stockValue;
+        totalRevenuePotential += revenuePotential;
 
-        // 2. Risk Counts
-        if (status === 'RUPTURA' || status === 'CRÍTICO') metrics.risk.ruptureCount++;
-        if (status === 'EXCESSO') metrics.risk.excessCount++;
-
-        // 3. Status Distribution
-        if (statusCount[status] !== undefined) {
-            statusCount[status]++;
-        } else {
-            // Fallback for unknown statuses, map to 'Outros' or ignore logic
-            // Ideally we map standard ones.
+        if (giro > 0) {
+            totalGiro += giro;
+            giroCount++;
         }
 
-        // 4. Coverage Distribution (Value wise)
+        // 2. Status counts
+        if (statusCount[status] !== undefined) {
+            statusCount[status]++;
+        }
+
+        // 3. Alert counts
+        if (alertCount[alerta as keyof typeof alertCount] !== undefined) {
+            alertCount[alerta as keyof typeof alertCount]++;
+            alertValue[alerta as keyof typeof alertValue] += stockValue;
+        }
+
+        // 4. ABC counts
+        if (abc === 'A' || abc === 'B' || abc === 'C') {
+            abcCount[abc as 'A' | 'B' | 'C']++;
+            abcValue[abc as 'A' | 'B' | 'C'] += stockValue;
+        }
+
+        // 5. Trend counts
+        if (trendCount[tendencia as keyof typeof trendCount] !== undefined) {
+            trendCount[tendencia as keyof typeof trendCount]++;
+        }
+
+        // 6. Coverage Distribution
         if (qty > 0) {
             if (coverage <= 7) coverageBuckets['0-7 dias'].value += stockValue;
             else if (coverage <= 15) coverageBuckets['7-15 dias'].value += stockValue;
@@ -81,70 +105,129 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
             else if (coverage <= 60) coverageBuckets['30-60 dias'].value += stockValue;
             else coverageBuckets['60+ dias'].value += stockValue;
         }
-
     });
 
-    // Final Calculations
-    metrics.financial.totalSkuCount = totalItems;
-    metrics.financial.projectedProfit = metrics.financial.totalRevenuePotential - metrics.financial.totalInventoryValue;
-    metrics.financial.averageMargin = metrics.financial.totalRevenuePotential > 0
-        ? (metrics.financial.projectedProfit / metrics.financial.totalRevenuePotential) * 100
-        : 0;
+    // Calcular métricas finais
+    const projectedProfit = totalRevenuePotential - totalInventoryValue;
+    const averageMargin = totalRevenuePotential > 0 ? (projectedProfit / totalRevenuePotential) * 100 : 0;
+    const averageGiro = giroCount > 0 ? totalGiro / giroCount : 0;
+    const ruptureCount = statusCount['RUPTURA'] + statusCount['CRÍTICO'];
+    const excessCount = statusCount['EXCESSO'];
+    const healthyCount = statusCount['SAUDÁVEL'];
 
-    metrics.risk.ruptureShare = totalItems > 0 ? (metrics.risk.ruptureCount / totalItems) * 100 : 0;
-
-    // Healthy share includes Healthy + Attention? Let's say strictly SAUDÁVEL for now
-    const healthyCount = statusCount['SAUDÁVEL'] || 0;
-    metrics.risk.healthyShare = totalItems > 0 ? (healthyCount / totalItems) * 100 : 0;
-
-    // Charts Data Construction
-    metrics.charts.statusDistribution = [
-        { name: 'Crítico/Ruptura', value: statusCount['RUPTURA'] + statusCount['CRÍTICO'], color: '#ef4444' }, // Red
-        { name: 'Atenção', value: statusCount['ATENÇÃO'], color: '#f97316' }, // Orange
-        { name: 'Saudável', value: statusCount['SAUDÁVEL'], color: '#22c55e' }, // Green
-        { name: 'Excesso', value: statusCount['EXCESSO'], color: '#3b82f6' }, // Blue
-    ].filter(d => d.value > 0);
-
-    metrics.charts.coverageDistribution = Object.entries(coverageBuckets).map(([range, data]) => ({
-        range,
-        count: 0, // We tracked value, but logic above used value. Let's stick to Value Distribution which is more impactful financial wise
-        value: data.value
-    }));
-
-    // Top Movers Logic
-    // Sort array copies - filtrar apenas itens com id_produto válido
-    const ruptureItems = items
+    // Top Movers com ABC e Alerta
+    const ruptureItems = validItems
         .filter(i => {
-            if (!i.id_produto) return false;
             const s = normalizeStatus(i.status_ruptura);
             return s === 'RUPTURA' || s === 'CRÍTICO';
         })
         .map(i => ({
             id: i.id_produto as string,
             name: i.produto_descricao || 'Sem descrição',
-            value: parseNumber(i.media_diaria_venda) * parseNumber(i.preco), // Daily Loss Potential
+            value: parseNumber(i.media_diaria_venda) * parseNumber(i.preco),
             metricLabel: 'Perda Diária Est.',
-            status: i.status_ruptura
+            status: i.status_ruptura,
+            classeAbc: i.classe_abc || 'C',
+            alerta: i.alerta_estoque || '✅ OK'
         }))
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
-    const excessItems = items
-        .filter(i => i.id_produto && normalizeStatus(i.status_ruptura) === 'EXCESSO')
+    const excessItems = validItems
+        .filter(i => normalizeStatus(i.status_ruptura) === 'EXCESSO')
         .map(i => ({
             id: i.id_produto as string,
             name: i.produto_descricao || 'Sem descrição',
-            value: parseNumber(i.estoque_atual) * parseNumber(i.custo), // Capital Tied
+            value: parseNumber(i.estoque_atual) * parseNumber(i.custo),
             metricLabel: 'Capital Parado',
-            status: i.status_ruptura
+            status: i.status_ruptura,
+            classeAbc: i.classe_abc || 'C',
+            alerta: i.alerta_estoque || '✅ OK'
         }))
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
-    metrics.topMovers.rupture = ruptureItems;
-    metrics.topMovers.excess = excessItems;
+    // Priority Actions - ordenado por prioridade
+    const priorityOrder: Record<string, number> = {
+        '1-URGENTE': 1, '2-ALTA': 2, '3-MEDIA': 3, '4-BAIXA': 4, '5-NENHUMA': 5
+    };
 
-    return metrics;
+    const priorityActions: PriorityActionItem[] = validItems
+        .filter(i => i.prioridade_compra && i.prioridade_compra !== '5-NENHUMA')
+        .map(i => ({
+            id: i.id_produto as string,
+            name: i.produto_descricao || 'Sem descrição',
+            prioridade: i.prioridade_compra || '5-NENHUMA',
+            classeAbc: i.classe_abc || 'C',
+            status: i.status_ruptura,
+            alerta: i.alerta_estoque || '✅ OK',
+            estoqueAtual: parseNumber(i.estoque_atual),
+            diasCobertura: parseNumber(i.dias_de_cobertura),
+            valorEstoque: parseNumber(i.valor_estoque_custo),
+            sugestaoCompra: parseNumber(i.sugestao_compra_60d),
+            tendencia: i.tendencia || '➡️ Estável'
+        }))
+        .sort((a, b) => {
+            const prioA = priorityOrder[a.prioridade] || 5;
+            const prioB = priorityOrder[b.prioridade] || 5;
+            if (prioA !== prioB) return prioA - prioB;
+            // Se mesma prioridade, ordenar por valor
+            return b.valorEstoque - a.valorEstoque;
+        })
+        .slice(0, 50);
+
+    return {
+        financial: {
+            totalInventoryValue,
+            totalRevenuePotential,
+            projectedProfit,
+            averageMargin,
+            totalSkuCount: totalItems,
+            averageGiro,
+        },
+        risk: {
+            ruptureCount,
+            excessCount,
+            ruptureShare: totalItems > 0 ? (ruptureCount / totalItems) * 100 : 0,
+            healthyShare: totalItems > 0 ? (healthyCount / totalItems) * 100 : 0,
+        },
+        alerts: {
+            mortos: { count: alertCount.MORTO, value: alertValue.MORTO },
+            liquidar: { count: alertCount.LIQUIDAR, value: alertValue.LIQUIDAR },
+            avaliar: { count: alertCount.AVALIAR, value: alertValue.AVALIAR },
+            atencao: { count: alertCount.ATENCAO, value: alertValue.ATENCAO },
+            ok: { count: alertCount.OK, value: alertValue.OK },
+        },
+        abc: {
+            a: { count: abcCount.A, percentage: totalItems > 0 ? (abcCount.A / totalItems) * 100 : 0, value: abcValue.A },
+            b: { count: abcCount.B, percentage: totalItems > 0 ? (abcCount.B / totalItems) * 100 : 0, value: abcValue.B },
+            c: { count: abcCount.C, percentage: totalItems > 0 ? (abcCount.C / totalItems) * 100 : 0, value: abcValue.C },
+        },
+        trends: {
+            subindo: { count: trendCount.SUBINDO, percentage: totalItems > 0 ? (trendCount.SUBINDO / totalItems) * 100 : 0 },
+            estavel: { count: trendCount.ESTAVEL, percentage: totalItems > 0 ? (trendCount.ESTAVEL / totalItems) * 100 : 0 },
+            caindo: { count: trendCount.CAINDO, percentage: totalItems > 0 ? (trendCount.CAINDO / totalItems) * 100 : 0 },
+            novo: { count: 0, percentage: 0 }, // Calculado separadamente se necessário
+        },
+        charts: {
+            statusDistribution: [
+                { name: 'Crítico/Ruptura', value: statusCount['RUPTURA'] + statusCount['CRÍTICO'], color: '#ef4444' },
+                { name: 'Atenção', value: statusCount['ATENÇÃO'], color: '#f97316' },
+                { name: 'Saudável', value: statusCount['SAUDÁVEL'], color: '#22c55e' },
+                { name: 'Excesso', value: statusCount['EXCESSO'], color: '#3b82f6' },
+            ].filter(d => d.value > 0),
+            coverageDistribution: Object.entries(coverageBuckets).map(([range, data]) => ({
+                range,
+                count: 0,
+                value: data.value
+            })),
+        },
+        topMovers: {
+            rupture: ruptureItems,
+            excess: excessItems,
+        },
+        priorityActions,
+    };
 }
 
 export function generateSuggestions(items: EstoqueDetalhe[], targetDays = 60): PurchaseSuggestion[] {
