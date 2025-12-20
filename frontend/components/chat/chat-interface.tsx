@@ -10,12 +10,15 @@ import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { useChat } from "@/contexts/ChatContext";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
+import { CampaignCard } from "@/components/chat/CampaignCard";
 
 interface Message {
     id: string;
     role: "user" | "assistant";
     content: string;
     timestamp?: string;
+    type?: 'text' | 'campaign';
+    campaignData?: any;
 }
 
 // Gera ou recupera sessionId do localStorage
@@ -222,6 +225,40 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         return () => window.removeEventListener("chat:send-product", handleProductEvent as unknown as EventListener);
     }, [userId, sessionId]);
 
+    // Listener para campanhas geradas
+    useEffect(() => {
+        const handleCampaignEvent = (e: CustomEvent) => {
+            const { campaign, products } = e.detail;
+
+            // Adiciona mensagem do usuário
+            const userMsg: Message = {
+                id: Date.now().toString(),
+                role: "user",
+                content: `Gere uma campanha de marketing para ${products?.length || 0} produto(s) com excesso de estoque.`
+            };
+
+            // Adiciona mensagem da IA com a campanha
+            const aiMsg: Message = {
+                id: (Date.now() + 1).toString(),
+                role: "assistant",
+                content: "Campanha gerada com sucesso! Veja os materiais abaixo:",
+                type: 'campaign',
+                campaignData: { campaign, products }
+            };
+
+            setMessages(prev => [...prev, userMsg, aiMsg]);
+
+            // Salvar no banco
+            if (userId && sessionId) {
+                saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
+                saveChatMessage(userId, sessionId, 'assistant', 'Campanha gerada com sucesso!', { campaign, products }).catch(console.error);
+            }
+        };
+
+        window.addEventListener("chat:campaign-generated", handleCampaignEvent as unknown as EventListener);
+        return () => window.removeEventListener("chat:campaign-generated", handleCampaignEvent as unknown as EventListener);
+    }, [userId, sessionId]);
+
     // Auto-scroll quando mensagens mudam
     useEffect(() => {
         if (scrollRef.current) {
@@ -361,24 +398,34 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                             : "bg-blue-600 text-foreground rounded-tr-none"
                                     )}>
                                         {msg.role === "assistant" ? (
-                                            <ReactMarkdown
-                                                components={{
-                                                    p: ({ children }) => <p className="mb-2 last:mb-0 text-foreground leading-relaxed">{children}</p>,
-                                                    strong: ({ children }) => <span className="font-semibold text-blue-500">{children}</span>,
-                                                    ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1 text-foreground">{children}</ul>,
-                                                    ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1 text-foreground">{children}</ol>,
-                                                    li: ({ children }) => <li>{children}</li>,
-                                                    h1: ({ children }) => <h1 className="text-xl font-bold mb-3 text-foreground mt-4 first:mt-0 max-w-full break-words">{children}</h1>,
-                                                    h2: ({ children }) => <h2 className="text-lg font-bold mb-2 text-foreground mt-3 first:mt-0 max-w-full break-words">{children}</h2>,
-                                                    h3: ({ children }) => <h3 className="text-base font-semibold mb-2 text-blue-500 mt-2 max-w-full break-words">{children}</h3>,
-                                                    h4: ({ children }) => <h4 className="text-sm font-semibold mb-1 text-blue-500 mt-2 max-w-full break-words">{children}</h4>,
-                                                    hr: () => <hr className="my-3 border-border" />,
-                                                    blockquote: ({ children }) => <blockquote className="border-l-2 border-blue-500/50 pl-3 my-2 italic text-muted-foreground bg-blue-500/5 py-1 rounded-r">{children}</blockquote>,
-                                                    code: ({ children }) => <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-orange-500 border border-border">{children}</code>
-                                                }}
-                                            >
-                                                {cleanContent(msg.content)}
-                                            </ReactMarkdown>
+                                            <>
+                                                <ReactMarkdown
+                                                    components={{
+                                                        p: ({ children }) => <p className="mb-2 last:mb-0 text-foreground leading-relaxed">{children}</p>,
+                                                        strong: ({ children }) => <span className="font-semibold text-blue-500">{children}</span>,
+                                                        ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1 text-foreground">{children}</ul>,
+                                                        ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1 text-foreground">{children}</ol>,
+                                                        li: ({ children }) => <li>{children}</li>,
+                                                        h1: ({ children }) => <h1 className="text-xl font-bold mb-3 text-foreground mt-4 first:mt-0 max-w-full break-words">{children}</h1>,
+                                                        h2: ({ children }) => <h2 className="text-lg font-bold mb-2 text-foreground mt-3 first:mt-0 max-w-full break-words">{children}</h2>,
+                                                        h3: ({ children }) => <h3 className="text-base font-semibold mb-2 text-blue-500 mt-2 max-w-full break-words">{children}</h3>,
+                                                        h4: ({ children }) => <h4 className="text-sm font-semibold mb-1 text-blue-500 mt-2 max-w-full break-words">{children}</h4>,
+                                                        hr: () => <hr className="my-3 border-border" />,
+                                                        blockquote: ({ children }) => <blockquote className="border-l-2 border-blue-500/50 pl-3 my-2 italic text-muted-foreground bg-blue-500/5 py-1 rounded-r">{children}</blockquote>,
+                                                        code: ({ children }) => <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-orange-500 border border-border">{children}</code>
+                                                    }}
+                                                >
+                                                    {cleanContent(msg.content)}
+                                                </ReactMarkdown>
+                                                {msg.type === 'campaign' && msg.campaignData && (
+                                                    <div className="mt-4">
+                                                        <CampaignCard
+                                                            campaign={msg.campaignData.campaign}
+                                                            products={msg.campaignData.products}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
                                             msg.content
                                         )}
