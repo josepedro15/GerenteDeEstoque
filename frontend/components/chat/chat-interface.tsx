@@ -288,6 +288,9 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         || campaign?.channels?.physical?.image
                         || undefined;
 
+                    console.log("🖼️ Instagram image encontrada:", instagramImage ? `${instagramImage.substring(0, 50)}... (${instagramImage.length} chars)` : 'NÃO');
+                    console.log("🖼️ Physical image encontrada:", physicalImage ? `${physicalImage.substring(0, 50)}... (${physicalImage.length} chars)` : 'NÃO');
+
                     const result = await saveCampaign(
                         userId,
                         lightCampaign,
