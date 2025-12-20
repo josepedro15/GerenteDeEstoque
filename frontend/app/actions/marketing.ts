@@ -345,6 +345,7 @@ export async function getCampaignHistory(
 
 // Buscar todas as campanhas (para quando não tem user_id)
 export async function getAllCampaigns(limit: number = 50): Promise<SavedCampaign[]> {
+    console.log("📋 getAllCampaigns chamado, limit:", limit);
     try {
         const { data, error } = await supabase
             .from('campanhas_marketing')
@@ -354,13 +355,14 @@ export async function getAllCampaigns(limit: number = 50): Promise<SavedCampaign
             .limit(limit);
 
         if (error) {
-            console.error("Erro ao buscar campanhas:", error);
+            console.error("❌ Erro ao buscar campanhas:", error);
             return [];
         }
 
+        console.log("✅ Campanhas encontradas:", data?.length || 0);
         return data || [];
     } catch (e) {
-        console.error("Erro ao buscar campanhas:", e);
+        console.error("❌ Erro ao buscar campanhas:", e);
         return [];
     }
 }
