@@ -253,7 +253,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             if (userId) {
                 console.log("🔄 Tentando salvar campanha...", { userId, productsCount: products?.length });
                 try {
-                    // Extrair APENAS dados de texto (sem imagens base64) para o payload ser leve
+                    // Extrair dados de texto
                     const lightCampaign = {
                         channels: {
                             instagram: {
@@ -279,7 +279,22 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         estoque: p.estoque || 0
                     }));
 
-                    const result = await saveCampaign(userId, lightCampaign, lightProducts);
+                    // Extrair imagens base64 (se existirem)
+                    const instagramImage = campaign?.channels?.instagram?.imageBase64
+                        || campaign?.channels?.instagram?.image
+                        || undefined;
+                    const physicalImage = campaign?.channels?.physical?.posterBase64
+                        || campaign?.channels?.physical?.poster
+                        || campaign?.channels?.physical?.image
+                        || undefined;
+
+                    const result = await saveCampaign(
+                        userId,
+                        lightCampaign,
+                        lightProducts,
+                        instagramImage,
+                        physicalImage
+                    );
                     console.log("📝 Resultado saveCampaign:", result);
                     if (result.success) {
                         console.log("✅ Campanha salva com sucesso! ID:", result.id);

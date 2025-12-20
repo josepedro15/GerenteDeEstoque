@@ -45,6 +45,54 @@ export async function getExcessStockProducts(): Promise<ProductCandidate[]> {
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+// Bucket name for campaign images
+const STORAGE_BUCKET = 'campaign-images';
+
+// Upload base64 image to Supabase Storage
+async function uploadBase64ToStorage(
+    base64Data: string,
+    fileName: string
+): Promise<string | null> {
+    try {
+        // Remove data URL prefix if present
+        let base64Content = base64Data;
+        if (base64Data.includes(',')) {
+            base64Content = base64Data.split(',')[1];
+        }
+
+        // Convert base64 to Uint8Array
+        const binaryString = atob(base64Content);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .upload(fileName, bytes, {
+                contentType: 'image/png',
+                upsert: true
+            });
+
+        if (error) {
+            console.error("❌ Erro upload Storage:", error);
+            return null;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+            .from(STORAGE_BUCKET)
+            .getPublicUrl(fileName);
+
+        console.log("✅ Imagem uploaded:", urlData.publicUrl);
+        return urlData.publicUrl;
+    } catch (e) {
+        console.error("❌ Erro ao processar imagem:", e);
+        return null;
+    }
+}
+
 // ... keep interfaces ...
 
 export async function generateCampaign(productIds: string[]) {
@@ -168,21 +216,23 @@ export interface SavedCampaign {
     produtos: any[];
     instagram_copy: string | null;
     instagram_image_prompt: string | null;
-    instagram_image?: string | null;
+    instagram_image_url?: string | null;
     whatsapp_script: string | null;
     whatsapp_trigger: string | null;
     physical_headline: string | null;
     physical_subheadline: string | null;
     physical_offer: string | null;
-    physical_image?: string | null;
+    physical_image_url?: string | null;
     status: string;
 }
 
-// Salvar campanha no banco
+// Salvar campanha no banco (com suporte a upload de imagens)
 export async function saveCampaign(
     userId: string,
     campaign: any,
-    products: any[]
+    products: any[],
+    instagramImageBase64?: string,
+    physicalImageBase64?: string
 ): Promise<{ success: boolean; id?: string; error?: string }> {
     console.log("📝 saveCampaign chamado:", { userId, productsCount: products?.length });
 
@@ -197,10 +247,32 @@ export async function saveCampaign(
     }
 
     try {
-        // Truncar strings para evitar payload muito grande
-        const insertData = {
+        // Upload imagens para Storage (se fornecidas)
+        let instagramImageUrl: string | null = null;
+        let physicalImageUrl: string | null = null;
+
+        const timestamp = Date.now();
+
+        if (instagramImageBase64 && instagramImageBase64.length > 100) {
+            console.log("📤 Uploading Instagram image...");
+            instagramImageUrl = await uploadBase64ToStorage(
+                instagramImageBase64,
+                `${userId}/${timestamp}_instagram.png`
+            );
+        }
+
+        if (physicalImageBase64 && physicalImageBase64.length > 100) {
+            console.log("📤 Uploading Physical image...");
+            physicalImageUrl = await uploadBase64ToStorage(
+                physicalImageBase64,
+                `${userId}/${timestamp}_physical.png`
+            );
+        }
+
+        // Preparar dados para inserção
+        const insertData: any = {
             user_id: userId,
-            produtos: products.slice(0, 10).map(p => ({
+            produtos: products.slice(0, 10).map((p: any) => ({
                 id: String(p.id || p.codigo_produto || '').substring(0, 50),
                 nome: String(p.nome || p.nome_produto || '').substring(0, 200),
                 preco: Number(p.preco) || 0,
@@ -216,7 +288,15 @@ export async function saveCampaign(
             status: 'active'
         };
 
-        console.log("📝 Salvando campanha...");
+        // Adicionar URLs de imagens se existirem
+        if (instagramImageUrl) {
+            insertData.instagram_image_url = instagramImageUrl;
+        }
+        if (physicalImageUrl) {
+            insertData.physical_image_url = physicalImageUrl;
+        }
+
+        console.log("📝 Salvando campanha...", { hasInstagramImg: !!instagramImageUrl, hasPhysicalImg: !!physicalImageUrl });
 
         const { data, error } = await supabase
             .from('campanhas_marketing')
