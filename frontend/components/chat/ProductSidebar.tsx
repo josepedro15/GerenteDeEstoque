@@ -33,20 +33,32 @@ export function ProductSidebar({ isOpen, onClose, className }: ProductSidebarPro
         async function loadProducts() {
             setLoading(true);
             try {
-                const { detalhe } = await getStockData();
+                const result = await getStockData();
+
+                // Validar resultado
+                if (!result || !result.detalhe || !Array.isArray(result.detalhe)) {
+                    console.warn("getStockData retornou dados inválidos:", result);
+                    setProducts([]);
+                    setLoading(false);
+                    return;
+                }
+
+                const detalhe = result.detalhe;
+
                 // Ordenar por curva ABC (A primeiro) e depois por nome
                 const sorted = detalhe
-                    .filter(p => p.id_produto)
+                    .filter(p => p && p.id_produto)
                     .sort((a, b) => {
-                        const abcOrder = { 'A': 1, 'B': 2, 'C': 3 };
-                        const abcA = abcOrder[(a.classe_abc || 'C').toUpperCase() as 'A' | 'B' | 'C'] || 3;
-                        const abcB = abcOrder[(b.classe_abc || 'C').toUpperCase() as 'A' | 'B' | 'C'] || 3;
+                        const abcOrder: Record<string, number> = { 'A': 1, 'B': 2, 'C': 3 };
+                        const abcA = abcOrder[String(a.classe_abc || 'C').toUpperCase()] || 3;
+                        const abcB = abcOrder[String(b.classe_abc || 'C').toUpperCase()] || 3;
                         if (abcA !== abcB) return abcA - abcB;
-                        return (a.produto_descricao || '').localeCompare(b.produto_descricao || '');
+                        return String(a.produto_descricao || '').localeCompare(String(b.produto_descricao || ''));
                     });
                 setProducts(sorted);
             } catch (error) {
                 console.error("Erro ao carregar produtos:", error);
+                setProducts([]);
             } finally {
                 setLoading(false);
             }
