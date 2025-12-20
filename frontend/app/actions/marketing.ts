@@ -191,6 +191,9 @@ export async function generateCampaign(productIds: string[]) {
 
         // 4. Return formatted result
         if (aiResult.channels) {
+            console.log("🔑 Keys do Instagram:", Object.keys(aiResult.channels.instagram || {}));
+            console.log("🔑 Keys do Physical:", Object.keys(aiResult.channels.physical || {}));
+            console.log("🖼️ Instagram tem imagem?", !!(aiResult.channels.instagram?.image || aiResult.channels.instagram?.imageBase64));
             return aiResult;
         } else {
             return {
