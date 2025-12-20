@@ -279,11 +279,13 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         estoque: p.estoque || 0
                     }));
 
-                    // Extrair imagens base64 (se existirem)
-                    const instagramImage = campaign?.channels?.instagram?.imageBase64
+                    // Extrair imagens base64 (usando nomes corretos do n8n: imageUrl e posterUrl)
+                    const instagramImage = campaign?.channels?.instagram?.imageUrl
+                        || campaign?.channels?.instagram?.imageBase64
                         || campaign?.channels?.instagram?.image
                         || undefined;
-                    const physicalImage = campaign?.channels?.physical?.posterBase64
+                    const physicalImage = campaign?.channels?.physical?.posterUrl
+                        || campaign?.channels?.physical?.posterBase64
                         || campaign?.channels?.physical?.poster
                         || campaign?.channels?.physical?.image
                         || undefined;
