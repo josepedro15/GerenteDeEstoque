@@ -19,6 +19,7 @@ interface SimpleProduct {
     status: string;
     cobertura: number;
     preco: number;
+    rawData: any; // Dados originais completos da row
 }
 
 const statusColors: Record<string, string> = {
@@ -80,6 +81,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                             .trim() || 'SAUDÁVEL',
                         cobertura: Number(String(p.dias_de_cobertura || '0').replace(',', '.')) || 0,
                         preco: Number(String(p.preco || '0').replace(',', '.')) || 0,
+                        rawData: p, // Dados originais completos
                     }));
 
                 simpleProducts.sort((a, b) => {
@@ -134,16 +136,21 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         }
     };
 
-    // Enviar para análise individual
+    // Enviar para análise individual - envia todos os dados da row
     const handleAnalyze = (product: SimpleProduct) => {
         try {
             window.dispatchEvent(new CustomEvent('chat:send-product', {
                 detail: {
+                    // Dados da visualização
                     codigo_produto: product.id,
                     nome_produto: product.nome,
                     estoque_atual: product.estoque,
                     classe_abc: product.abc,
                     status: product.status,
+                    cobertura: product.cobertura,
+                    preco: product.preco,
+                    // Dados originais completos da row do banco
+                    ...product.rawData
                 }
             }));
             if (window.innerWidth < 1024) onClose();
