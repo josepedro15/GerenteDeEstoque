@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Bot, Sparkles, ArrowLeft, Package, Loader2 } from "lucide-react";
+import { Bot, Sparkles, ArrowLeft, Package, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ChatInterface } from "@/components/chat/chat-interface";
 
@@ -81,11 +81,22 @@ export default function ChatPage() {
                                         Online
                                     </span>
                                 </h1>
-                                <p className="text-[11px] text-muted-foreground hidden sm:block">
-                                    Selecione um produto na barra lateral para análise
-                                </p>
                             </div>
                         </div>
+
+                        {/* Botão de limpar histórico */}
+                        <button
+                            onClick={() => {
+                                if (window.confirm("Tem certeza que deseja limpar o histórico de conversa?")) {
+                                    window.dispatchEvent(new CustomEvent('chat:clear-history'));
+                                }
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 hover:text-red-400 transition-colors border border-red-500/20"
+                            title="Limpar histórico de conversa"
+                        >
+                            <Trash2 size={16} />
+                            <span className="text-sm font-medium hidden sm:inline">Limpar histórico</span>
+                        </button>
                     </div>
                 </header>
 

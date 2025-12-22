@@ -11,7 +11,8 @@ import ReactMarkdown from "react-markdown";
 import { useChat } from "@/contexts/ChatContext";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { CampaignCard } from "@/components/chat/CampaignCard";
-import { saveCampaign } from "@/app/actions/marketing";
+import { StrategicPlanCard } from "@/components/chat/StrategicPlanCard";
+import { saveCampaign, generateCampaign } from "@/app/actions/marketing";
 import { uploadImageToStorage } from "@/lib/storage";
 
 interface Message {
@@ -19,8 +20,9 @@ interface Message {
     role: "user" | "assistant";
     content: string;
     timestamp?: string;
-    type?: 'text' | 'campaign';
+    type?: 'text' | 'campaign' | 'campaign_plan';
     campaignData?: any;
+    planData?: any;
 }
 
 // Gera ou recupera sessionId do localStorage
@@ -57,6 +59,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+    const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
     const [sessionId, setSessionId] = useState<string>("");
     const [userId, setUserId] = useState<string>("");
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -173,6 +176,16 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             console.error("Erro ao limpar histórico:", error);
         }
     }, [userId, sessionId]);
+
+    // Listener para limpar histórico via evento customizado (do header da página)
+    useEffect(() => {
+        const handleClearEvent = () => {
+            handleClearChat();
+        };
+
+        window.addEventListener('chat:clear-history', handleClearEvent);
+        return () => window.removeEventListener('chat:clear-history', handleClearEvent);
+    }, [handleClearChat]);
 
     // Listen to "Explain Product" events
     useEffect(() => {
@@ -372,6 +385,30 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 
         try {
             const response = await sendMessage(userContent.trim());
+
+            // Tenta detectar se é uma resposta de plano estratégico (JSON)
+            try {
+                const parsed = JSON.parse(response);
+                if (parsed.type === 'campaign_plan' && parsed.plan) {
+                    const aiMsg: Message = {
+                        id: (Date.now() + 1).toString(),
+                        role: "assistant",
+                        content: "Analisei os produtos e preparei um plano estratégico para sua campanha:",
+                        type: 'campaign_plan',
+                        planData: parsed.plan
+                    };
+                    setMessages(prev => [...prev, aiMsg]);
+
+                    if (userId && sessionId) {
+                        saveChatMessage(userId, sessionId, 'assistant', 'Plano estratégico gerado').catch(console.error);
+                    }
+                    setIsLoading(false);
+                    return;
+                }
+            } catch (e) {
+                // Não é JSON, continua como texto normal
+            }
+
             const aiMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
@@ -401,6 +438,52 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         if (!input.trim() || isLoading) return;
         handleSendMessage(input.trim());
         setInput("");
+    };
+
+    // Função para aprovar plano estratégico e gerar ativos
+    const handleApproveAndGenerate = async (products: any[]) => {
+        setIsGeneratingAssets(true);
+
+        // Adiciona mensagem do usuário
+        const userMsg: Message = {
+            id: Date.now().toString(),
+            role: "user",
+            content: "✅ Plano aprovado! Gere os ativos da campanha."
+        };
+        setMessages(prev => [...prev, userMsg]);
+
+        try {
+            // Extrai IDs dos produtos
+            const productIds = products.map(p => String(p.id));
+            console.log("🚀 Gerando ativos para produtos:", productIds);
+
+            // Chama generateCampaign com os produtos do plano
+            const result = await generateCampaign(productIds);
+            console.log("📦 Resultado generateCampaign:", result);
+
+            // Dispara evento para handleCampaignEvent processar
+            window.dispatchEvent(new CustomEvent('chat:campaign-generated', {
+                detail: {
+                    campaign: result,
+                    products: products.map(p => ({
+                        id: p.id,
+                        nome: p.nome,
+                        preco: p.preco || 0,
+                        estoque: p.estoque || 0
+                    }))
+                }
+            }));
+        } catch (error) {
+            console.error("❌ Erro ao gerar campanha:", error);
+            const errorMsg: Message = {
+                id: 'error-' + Date.now(),
+                role: 'assistant',
+                content: 'Desculpe, ocorreu um erro ao gerar os ativos da campanha. Tente novamente.'
+            };
+            setMessages(prev => [...prev, errorMsg]);
+        } finally {
+            setIsGeneratingAssets(false);
+        }
     };
 
     return (
@@ -508,6 +591,15 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                                         <CampaignCard
                                                             campaign={msg.campaignData.campaign}
                                                             products={msg.campaignData.products}
+                                                        />
+                                                    </div>
+                                                )}
+                                                {msg.type === 'campaign_plan' && msg.planData && (
+                                                    <div className="mt-4">
+                                                        <StrategicPlanCard
+                                                            plan={msg.planData}
+                                                            onApprove={handleApproveAndGenerate}
+                                                            isLoading={isGeneratingAssets}
                                                         />
                                                     </div>
                                                 )}
