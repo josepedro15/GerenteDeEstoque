@@ -10,29 +10,45 @@ export interface StockData {
 
 export async function getStockData(): Promise<StockData> {
     try {
-        const { data, error } = await supabase
-            .from('dados_estoque')
-            .select('*');
+        // Supabase has a default limit of 1000 rows per query
+        // We need to paginate to get all records
+        const PAGE_SIZE = 1000;
+        let allData: any[] = [];
+        let from = 0;
+        let hasMore = true;
 
-        if (error) {
-            console.error("Supabase Error:", error);
-            throw error;
+        while (hasMore) {
+            const { data, error } = await supabase
+                .from('dados_estoque')
+                .select('*')
+                .range(from, from + PAGE_SIZE - 1)
+                .order('id', { ascending: true });
+
+            if (error) {
+                console.error("Supabase Error:", error);
+                throw error;
+            }
+
+            if (!data || data.length === 0) {
+                hasMore = false;
+            } else {
+                allData = [...allData, ...data];
+                from += PAGE_SIZE;
+                // If we got less than PAGE_SIZE, we've reached the end
+                if (data.length < PAGE_SIZE) {
+                    hasMore = false;
+                }
+            }
         }
 
-        if (!data) {
+        if (allData.length === 0) {
             return { sumario: [], detalhe: [] };
         }
 
-        const rawData = data as any[];
+        const rawData = allData;
 
         // Filter SUMARIO: tipo_registro is 'SUMARIO'
-        // CASTING note: The database returns everything as strings usually, but our interface expects numbers.
-        // We will pass the raw strings to the frontend and let the frontend formatters handle parsing
-        // OR we map them here. Since we made `formatters.ts`, let's keep raw data flowing to components 
-        // essentially, or loosely cast.
-
         const sumario = rawData.filter(item => item.tipo_registro === 'SUMARIO') as EstoqueSumario[];
-
         const detalhe = rawData.filter(item => item.tipo_registro === 'DETALHE') as EstoqueDetalhe[];
 
         return { sumario, detalhe };
