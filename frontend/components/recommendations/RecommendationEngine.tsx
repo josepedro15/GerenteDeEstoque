@@ -19,11 +19,22 @@ import { ShoppingCart, Sparkles, AlertCircle, ArrowUpDown } from "lucide-react";
 export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSuggestion[] }) {
     const { sendProductMessage } = useChat();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [sortCriteria, setSortCriteria] = useState<string>("impacto");
+    const [sortCriteria, setSortCriteria] = useState<string>("prioridade");
 
     const sortedSuggestions = useMemo(() => {
         return [...suggestions].sort((a, b) => {
             switch (sortCriteria) {
+                case "prioridade": {
+                    const priorities: Record<string, number> = {
+                        'Comprar Urgente': 4, 'Comprar': 3, 'Aguardar': 2, 'Queimar Estoque': 1
+                    };
+                    const prioA = priorities[a.suggestedAction] || 0;
+                    const prioB = priorities[b.suggestedAction] || 0;
+                    if (prioA !== prioB) return prioB - prioA;
+                    // Mesma prioridade: menor cobertura primeiro (mais urgente)
+                    return a.coverageDays - b.coverageDays;
+                }
+                case "cobertura": return a.coverageDays - b.coverageDays; // Menor cobertura primeiro
                 case "impacto": return b.totalValue - a.totalValue; // Capital tied
                 case "quantidade": return b.currentStock - a.currentStock;
                 case "valor": return b.price - a.price;
@@ -107,6 +118,8 @@ export function RecommendationEngine({ suggestions }: { suggestions: PurchaseSug
                             <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="prioridade">Prioridade de Compra</SelectItem>
+                            <SelectItem value="cobertura">Menor Cobertura (Urgente)</SelectItem>
                             <SelectItem value="impacto">Maior Valor em Estoque</SelectItem>
                             <SelectItem value="quantidade">Maior Quantidade</SelectItem>
                             <SelectItem value="valor">Maior Preço (Venda)</SelectItem>
