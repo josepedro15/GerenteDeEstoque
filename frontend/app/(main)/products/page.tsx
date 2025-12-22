@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import { parseNumber, normalizeStatus, cleanStatusText, formatCurrency } from "@/lib/formatters";
 
+// Force dynamic rendering to avoid ISR oversized page error (8000+ products)
+export const dynamic = 'force-dynamic';
+
 export default async function ProductsPage() {
     const { detalhe } = await getStockData();
 
