@@ -93,6 +93,57 @@ export function StrategicPlanCard({ plan, onApprove, onAdjust, isLoading }: Stra
     const status = statusConfig[plan.status] || statusConfig.ajuste_necessario;
     const StatusIcon = status.icon;
 
+    // Validação do mix ABC
+    const validateMix = () => {
+        const { A, B, C, total } = plan.mix_atual;
+
+        // Bloqueio: Apenas uma curva
+        if (total > 0 && A === 0 && B === 0 && C > 0) {
+            return {
+                canApprove: false,
+                blockReason: 'Campanha apenas com Curva C não é recomendada. Produtos C têm baixa atratividade - adicione itens A (chamariz) para atrair clientes.',
+                severity: 'error' as const
+            };
+        }
+        if (total > 0 && A > 0 && B === 0 && C === 0) {
+            return {
+                canApprove: false,
+                blockReason: 'Campanha apenas com Curva A não é uma liquidação. Adicione itens C para queimar estoque.',
+                severity: 'error' as const
+            };
+        }
+        if (total > 0 && A === 0 && B > 0 && C === 0) {
+            return {
+                canApprove: false,
+                blockReason: 'Campanha apenas com Curva B não é efetiva. Adicione itens A (chamariz) e C (queima).',
+                severity: 'error' as const
+            };
+        }
+
+        // Alerta: Sem chamariz (sem A)
+        if (total >= 3 && A === 0 && C > 0) {
+            return {
+                canApprove: true,
+                blockReason: 'Recomendação: Adicione pelo menos 1 produto Curva A como chamariz para atrair mais clientes.',
+                severity: 'warning' as const
+            };
+        }
+
+        // Alerta: Muito pouco C (não é liquidação de verdade)
+        const cPercent = total > 0 ? (C / total) * 100 : 0;
+        if (cPercent < 40 && total >= 4) {
+            return {
+                canApprove: true,
+                blockReason: 'O mix tem poucos itens C. Para uma liquidação efetiva, aumente a proporção de produtos C.',
+                severity: 'warning' as const
+            };
+        }
+
+        return { canApprove: true, blockReason: null, severity: null };
+    };
+
+    const mixValidation = validateMix();
+
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
@@ -274,14 +325,46 @@ export function StrategicPlanCard({ plan, onApprove, onAdjust, isLoading }: Stra
                 )}
             </div>
 
+            {/* Validation Alert */}
+            {mixValidation.blockReason && (
+                <div className={cn(
+                    "flex items-start gap-2 p-3 rounded-lg",
+                    mixValidation.severity === 'error'
+                        ? "bg-red-500/10 border border-red-500/30"
+                        : "bg-yellow-500/10 border border-yellow-500/30"
+                )}>
+                    {mixValidation.severity === 'error' ? (
+                        <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                    ) : (
+                        <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                        <span className={cn(
+                            "text-sm font-medium",
+                            mixValidation.severity === 'error' ? "text-red-400" : "text-yellow-400"
+                        )}>
+                            {mixValidation.severity === 'error' ? 'Bloqueado' : 'Atenção'}
+                        </span>
+                        <p className={cn(
+                            "text-sm mt-0.5",
+                            mixValidation.severity === 'error' ? "text-red-300" : "text-yellow-300"
+                        )}>
+                            {mixValidation.blockReason}
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Actions */}
             <div className="flex items-center gap-2 pt-2 border-t border-border">
                 <button
                     onClick={() => onApprove(plan.produtos)}
-                    disabled={isLoading}
+                    disabled={isLoading || !mixValidation.canApprove}
                     className={cn(
                         "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all",
-                        "bg-green-600 hover:bg-green-500 text-white",
+                        mixValidation.canApprove
+                            ? "bg-green-600 hover:bg-green-500 text-white"
+                            : "bg-gray-600 cursor-not-allowed text-gray-400",
                         "disabled:opacity-50 disabled:cursor-not-allowed"
                     )}
                 >
@@ -289,6 +372,11 @@ export function StrategicPlanCard({ plan, onApprove, onAdjust, isLoading }: Stra
                         <>
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             Gerando...
+                        </>
+                    ) : !mixValidation.canApprove ? (
+                        <>
+                            <XCircle className="w-4 h-4" />
+                            Ajuste o Mix para Continuar
                         </>
                     ) : (
                         <>
