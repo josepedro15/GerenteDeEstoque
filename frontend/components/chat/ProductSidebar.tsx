@@ -108,7 +108,6 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
 
                 const simpleProducts: SimpleProduct[] = result.detalhe
                     .filter((p: any) => p?.id_produto)
-                    .slice(0, 500)
                     .map((p: any) => ({
                         id: String(p.id_produto || ''),
                         nome: String(p.produto_descricao || 'Sem nome'),
@@ -123,12 +122,24 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                         rawData: p, // Dados originais completos
                     }));
 
+                // Ordenar por prioridade de status (urgentes primeiro) e depois por ABC
+                const statusOrder: Record<string, number> = {
+                    'RUPTURA': 1,
+                    'CRÍTICO': 2,
+                    'ATENÇÃO': 3,
+                    'SAUDÁVEL': 4,
+                    'EXCESSO': 5,
+                };
+                const abcOrder: Record<string, number> = { 'A': 1, 'B': 2, 'C': 3 };
+
                 simpleProducts.sort((a, b) => {
-                    const order: Record<string, number> = { 'A': 1, 'B': 2, 'C': 3 };
-                    return (order[a.abc] || 3) - (order[b.abc] || 3);
+                    const statusDiff = (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
+                    if (statusDiff !== 0) return statusDiff;
+                    return (abcOrder[a.abc] || 3) - (abcOrder[b.abc] || 3);
                 });
 
-                setProducts(simpleProducts);
+                // Limitar a 1000 produtos para performance
+                setProducts(simpleProducts.slice(0, 1000));
             } catch (err: any) {
                 console.error("Erro ProductSidebar:", err);
                 if (mounted) {
