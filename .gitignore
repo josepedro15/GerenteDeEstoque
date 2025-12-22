@@ -34,3 +34,10 @@ pnpm-debug.log*
 # IDEs
 .vscode/
 .idea/
+dados_estoque_rows.csv
+Estoque
+Estoque2
+Produtos
+Compras itens
+RESULTADO DE CALCULOS DO BANCO .json
+itens_suspeitos.txt
