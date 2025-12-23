@@ -5,6 +5,7 @@ import { Search, Send, Package, X, Loader2, Flame, Check, Sparkles, Filter, Chev
 import { getStockData } from "@/app/actions/inventory";
 import { generateCampaign } from "@/app/actions/marketing";
 import { cn } from "@/lib/utils";
+import { MixValidationPanel, validateAbcMix } from "./MixValidationPanel";
 
 interface ProductSidebarProps {
     isOpen: boolean;
@@ -58,6 +59,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
     // Nova: seleção múltipla para campanhas
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [generating, setGenerating] = useState(false);
+    const [showMixPanel, setShowMixPanel] = useState(false);
 
     // Filtros
     const [showFilters, setShowFilters] = useState(false);
@@ -230,9 +232,23 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         }
     };
 
-    // Gerar campanha
+    // Validar mix ABC dos produtos selecionados
+    const mixValidation = useMemo(() => {
+        const selected = products.filter(p => selectedIds.includes(p.id));
+        return validateAbcMix(selected);
+    }, [selectedIds, products]);
+
+    // Gerar campanha (com validação)
     const handleGenerateCampaign = async () => {
         if (selectedIds.length === 0 || generating) return;
+
+        // Verificar se mix está bloqueado
+        if (!mixValidation.canGenerate) {
+            setShowMixPanel(true);
+            return;
+        }
+        // Fechar painel se estava aberto
+        setShowMixPanel(false);
 
         setGenerating(true);
         try {
@@ -529,14 +545,58 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
 
                 {/* Footer: botão gerar campanha */}
                 {activeTab === 'campaigns' && (
-                    <div className="p-4 border-t border-border bg-muted/50">
+                    <div className="relative p-4 border-t border-border bg-muted/50">
+                        {/* Mix Validation Panel */}
+                        {showMixPanel && mixValidation && (
+                            <MixValidationPanel
+                                validation={mixValidation}
+                                onFilterCurve={(abc) => {
+                                    setAbcFilter([abc]);
+                                    setShowMixPanel(false);
+                                }}
+                                onClose={() => setShowMixPanel(false)}
+                            />
+                        )}
+
+                        {/* Mix Status Indicator */}
+                        {selectedIds.length > 0 && (
+                            <div className="mb-3">
+                                <div className="flex items-center justify-between text-xs mb-1">
+                                    <span className="text-muted-foreground">Mix ABC</span>
+                                    <span className={cn(
+                                        "font-medium",
+                                        mixValidation.status === 'ideal' && "text-green-400",
+                                        mixValidation.status === 'warning' && "text-yellow-400",
+                                        mixValidation.status === 'blocked' && "text-red-400"
+                                    )}>
+                                        {mixValidation.status === 'ideal' && '✓ Ideal'}
+                                        {mixValidation.status === 'warning' && '⚠ Atenção'}
+                                        {mixValidation.status === 'blocked' && '✗ Bloqueado'}
+                                    </span>
+                                </div>
+                                <div className="flex h-2 rounded-full overflow-hidden bg-muted/50">
+                                    {mixValidation.mixPercent.A > 0 && (
+                                        <div className="bg-blue-500" style={{ width: `${mixValidation.mixPercent.A}%` }} />
+                                    )}
+                                    {mixValidation.mixPercent.B > 0 && (
+                                        <div className="bg-purple-500" style={{ width: `${mixValidation.mixPercent.B}%` }} />
+                                    )}
+                                    {mixValidation.mixPercent.C > 0 && (
+                                        <div className="bg-orange-500" style={{ width: `${mixValidation.mixPercent.C}%` }} />
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         <button
                             onClick={handleGenerateCampaign}
                             disabled={selectedIds.length === 0 || generating}
                             className={cn(
                                 "w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all",
                                 selectedIds.length > 0
-                                    ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:opacity-90"
+                                    ? mixValidation.canGenerate
+                                        ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:opacity-90"
+                                        : "bg-gradient-to-r from-red-600 to-red-700 text-white hover:opacity-90"
                                     : "bg-accent text-muted-foreground cursor-not-allowed"
                             )}
                         >
@@ -544,6 +604,11 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                                 <>
                                     <Loader2 size={18} className="animate-spin" />
                                     Gerando...
+                                </>
+                            ) : !mixValidation.canGenerate && selectedIds.length > 0 ? (
+                                <>
+                                    <Sparkles size={18} />
+                                    Ajustar Mix ({selectedIds.length})
                                 </>
                             ) : (
                                 <>
