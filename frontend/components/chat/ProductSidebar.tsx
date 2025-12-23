@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, Send, Package, X, Loader2, Flame, Check, Sparkles, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Send, Package, X, Loader2, Flame, Check, Sparkles, Filter, ChevronDown, ChevronUp, ShoppingCart } from "lucide-react";
 import { getStockData } from "@/app/actions/inventory";
 import { generateCampaign } from "@/app/actions/marketing";
 import { cn } from "@/lib/utils";
@@ -290,6 +290,30 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         }
     };
 
+
+
+    // Ação em lote para produtos (Analisar ou Comprar)
+    const handleBatchAction = (action: 'analyze' | 'buy') => {
+        const selectedProducts = products.filter(p => selectedIds.includes(p.id));
+
+        window.dispatchEvent(new CustomEvent('chat:analyze-batch', {
+            detail: {
+                mode: action === 'analyze' ? 'analysis' : 'purchase',
+                products: selectedProducts.map(p => ({
+                    codigo_produto: p.id,
+                    nome_produto: p.nome,
+                    estoque_atual: p.estoque,
+                    preco: p.preco,
+                    abc: p.abc,
+                    status: p.status,
+                    ...p.rawData
+                }))
+            }
+        }));
+
+        if (window.innerWidth < 1024) onClose();
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -492,17 +516,36 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                                 return (
                                     <div
                                         key={product.id}
-                                        onClick={() => activeTab === 'campaigns' ? toggleSelection(product.id) : null}
+                                        onClick={() => toggleSelection(product.id)}
                                         className={cn(
-                                            "p-3 transition-colors",
-                                            activeTab === 'campaigns'
-                                                ? "cursor-pointer hover:bg-accent/50"
-                                                : "hover:bg-accent/50",
-                                            isSelected && "bg-pink-500/10 border-l-2 border-pink-500"
+                                            "p-3 transition-colors cursor-pointer hover:bg-accent/50 border-l-4",
+                                            isSelected
+                                                ? activeTab === 'campaigns'
+                                                    ? "bg-pink-500/10 border-pink-500"
+                                                    : "bg-blue-500/10 border-blue-500"
+                                                : "border-transparent"
                                         )}
                                     >
                                         <div className="flex items-start justify-between gap-2">
-                                            <div className="flex-1 min-w-0">
+                                            {/* Checkbox Visual Unificado */}
+                                            <div className="flex items-center h-full pt-1">
+                                                <div className={cn(
+                                                    "w-5 h-5 rounded flex items-center justify-center border-2 transition-all duration-150",
+                                                    isSelected
+                                                        ? activeTab === 'campaigns'
+                                                            ? "bg-pink-500 border-pink-500"
+                                                            : "bg-blue-500 border-blue-500"
+                                                        : "border-gray-400 bg-transparent"
+                                                )}>
+                                                    {isSelected && (
+                                                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex-1 min-w-0 ml-2">
                                                 <p className="font-medium text-foreground text-sm truncate" title={product.nome}>
                                                     {product.nome}
                                                 </p>
@@ -534,25 +577,6 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                                                     )}
                                                 </div>
                                             </div>
-
-                                            {activeTab === 'products' ? (
-                                                <button
-                                                    onClick={() => handleAnalyze(product)}
-                                                    className="shrink-0 p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 transition-colors"
-                                                    title="Analisar produto"
-                                                >
-                                                    <Send size={14} />
-                                                </button>
-                                            ) : (
-                                                <div className={cn(
-                                                    "shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
-                                                    isSelected
-                                                        ? "border-pink-500 bg-pink-500 text-white"
-                                                        : "border-border"
-                                                )}>
-                                                    {isSelected && <Check size={12} />}
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 );
@@ -634,6 +658,25 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                                     Gerar Campanha ({selectedIds.length})
                                 </>
                             )}
+                        </button>
+                    </div>
+                )}
+                {/* Footer: acoes em lote para produtos */}
+                {activeTab === 'products' && selectedIds.length > 0 && (
+                    <div className="p-4 border-t border-border bg-muted/50 grid grid-cols-2 gap-3">
+                        <button
+                            onClick={() => handleBatchAction('analyze')}
+                            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                        >
+                            <Sparkles size={18} />
+                            Analisar ({selectedIds.length})
+                        </button>
+                        <button
+                            onClick={() => handleBatchAction('buy')}
+                            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                        >
+                            <ShoppingCart size={18} />
+                            Comprar ({selectedIds.length})
                         </button>
                     </div>
                 )}
