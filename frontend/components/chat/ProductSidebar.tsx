@@ -110,19 +110,34 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
 
                 const simpleProducts: SimpleProduct[] = result.detalhe
                     .filter((p: any) => p?.id_produto)
-                    .map((p: any) => ({
-                        id: String(p.id_produto || ''),
-                        nome: String(p.produto_descricao || 'Sem nome'),
-                        estoque: Number(String(p.estoque_atual || '0').replace(',', '.')) || 0,
-                        abc: String(p.classe_abc || 'C').toUpperCase(),
-                        status: String(p.status_ruptura || 'SAUDÁVEL')
-                            .toUpperCase()
-                            .replace(/[^A-ZÁÉÍÓÚÂÊÔ\s]/g, '')
-                            .trim() || 'SAUDÁVEL',
-                        cobertura: Number(String(p.dias_de_cobertura || '0').replace(',', '.')) || 0,
-                        preco: Number(String(p.preco || '0').replace(',', '.')) || 0,
-                        rawData: p, // Dados originais completos
-                    }));
+                    .map((p: any) => {
+                        // Normalizar status - garantir matching correto
+                        let rawStatus = String(p.status_ruptura || 'SAUDÁVEL').toUpperCase().trim();
+                        // Remover acentos e caracteres especiais para comparação
+                        const normalizedStatus = rawStatus
+                            .normalize('NFD')
+                            .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+                            .replace(/[^A-Z\s]/g, '')
+                            .trim();
+                        // Mapear para status padronizado
+                        let status = 'SAUDÁVEL';
+                        if (normalizedStatus.includes('RUPTURA')) status = 'RUPTURA';
+                        else if (normalizedStatus.includes('CRITICO')) status = 'CRÍTICO';
+                        else if (normalizedStatus.includes('ATENCAO')) status = 'ATENÇÃO';
+                        else if (normalizedStatus.includes('SAUDAVEL')) status = 'SAUDÁVEL';
+                        else if (normalizedStatus.includes('EXCESSO')) status = 'EXCESSO';
+
+                        return {
+                            id: String(p.id_produto || ''),
+                            nome: String(p.produto_descricao || 'Sem nome'),
+                            estoque: Number(String(p.estoque_atual || '0').replace(',', '.')) || 0,
+                            abc: String(p.classe_abc || 'C').toUpperCase(),
+                            status: status,
+                            cobertura: Number(String(p.dias_de_cobertura || '0').replace(',', '.')) || 0,
+                            preco: Number(String(p.preco || '0').replace(',', '.')) || 0,
+                            rawData: p, // Dados originais completos
+                        };
+                    });
 
                 // Ordenar por prioridade de status (urgentes primeiro) e depois por ABC
                 const statusOrder: Record<string, number> = {
