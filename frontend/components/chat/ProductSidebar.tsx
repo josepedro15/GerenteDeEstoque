@@ -67,6 +67,18 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
     const [abcFilter, setAbcFilter] = useState<string[]>([]);
     const [coberturaFilter, setCoberturaFilter] = useState<string[]>([]);
 
+    // Ordenação
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+
+    // Toggle Ordenação Estoque
+    const toggleSort = () => {
+        setSortOrder(prev => {
+            if (prev === null) return 'desc';
+            if (prev === 'desc') return 'asc';
+            return null;
+        });
+    };
+
     // Toggle de filtros
     const toggleStatusFilter = (status: string) => {
         setStatusFilter(prev =>
@@ -87,8 +99,9 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         setStatusFilter([]);
         setAbcFilter([]);
         setCoberturaFilter([]);
+        setSortOrder(null);
     };
-    const hasActiveFilters = statusFilter.length > 0 || abcFilter.length > 0 || coberturaFilter.length > 0;
+    const hasActiveFilters = statusFilter.length > 0 || abcFilter.length > 0 || coberturaFilter.length > 0 || sortOrder !== null;
 
 
 
@@ -198,8 +211,16 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
             );
         }
 
+        // Ordenação por estoque
+        if (sortOrder) {
+            filtered = [...filtered].sort((a, b) => { // Create a copy to avoid mutating state
+                if (sortOrder === 'asc') return a.estoque - b.estoque;
+                return b.estoque - a.estoque;
+            });
+        }
+
         return filtered;
-    }, [products, search, statusFilter, abcFilter, coberturaFilter]);
+    }, [products, search, statusFilter, abcFilter, coberturaFilter, sortOrder]);
 
     // Toggle seleção para campanhas
     const toggleSelection = (id: string) => {
@@ -453,11 +474,30 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                                 </div>
                             </div>
 
+                            {/* Ordenação */}
+                            <div>
+                                <span className="text-xs font-medium text-muted-foreground block mb-2">Ordenação</span>
+                                <button
+                                    onClick={toggleSort}
+                                    className={cn(
+                                        "flex items-center gap-2 text-[10px] px-3 py-1 rounded-full border transition-colors",
+                                        sortOrder
+                                            ? "bg-blue-500/20 text-blue-400 border-blue-500"
+                                            : "bg-accent border-border text-muted-foreground hover:text-foreground"
+                                    )}
+                                >
+                                    <Package size={12} />
+                                    Estoque
+                                    {sortOrder === 'asc' && <ChevronUp size={12} />}
+                                    {sortOrder === 'desc' && <ChevronDown size={12} />}
+                                </button>
+                            </div>
+
                             {/* Limpar filtros */}
                             {hasActiveFilters && (
                                 <button
                                     onClick={clearFilters}
-                                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors w-full text-left pt-2 border-t border-border mt-2"
                                 >
                                     Limpar filtros
                                 </button>
