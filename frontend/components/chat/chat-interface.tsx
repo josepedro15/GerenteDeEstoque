@@ -530,9 +530,39 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         try {
             const response = await sendMessage(userContent.trim());
 
-            // Tenta detectar se é uma resposta de plano estratégico (JSON)
+            // Tenta detectar se é uma resposta de plano estratégico ou campanha (JSON)
             try {
-                const parsed = JSON.parse(response);
+                // Limpar resposta - extrair JSON válido
+                let jsonString = response;
+
+                // Encontrar primeiro { ou [ que indica início de JSON
+                const jsonStartBrace = response.indexOf('{');
+                const jsonStartBracket = response.indexOf('[');
+                let jsonStart = -1;
+
+                if (jsonStartBrace !== -1 && jsonStartBracket !== -1) {
+                    jsonStart = Math.min(jsonStartBrace, jsonStartBracket);
+                } else if (jsonStartBrace !== -1) {
+                    jsonStart = jsonStartBrace;
+                } else if (jsonStartBracket !== -1) {
+                    jsonStart = jsonStartBracket;
+                }
+
+                if (jsonStart > 0) {
+                    jsonString = response.substring(jsonStart);
+                }
+
+                // Remover caracteres após o último } ou ]
+                const lastBrace = jsonString.lastIndexOf('}');
+                const lastBracket = jsonString.lastIndexOf(']');
+                const jsonEnd = Math.max(lastBrace, lastBracket);
+
+                if (jsonEnd !== -1 && jsonEnd < jsonString.length - 1) {
+                    jsonString = jsonString.substring(0, jsonEnd + 1);
+                }
+
+                console.log("🔍 Tentando parse de JSON:", jsonString.substring(0, 100) + "...");
+                const parsed = JSON.parse(jsonString);
 
                 // VERIFICAR SE É RESPOSTA DE AJUDA (exibir como texto simples)
                 const isHelpResponse = parsed?.plan?.type === 'ajuda' ||
