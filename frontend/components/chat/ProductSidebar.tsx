@@ -571,10 +571,12 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                 {/* Footer: botão gerar campanha */}
                 {activeTab === 'campaigns' && (
                     <div className="relative p-4 border-t border-border bg-muted/50">
-                        <MixValidationPanel
-                            validation={mixValidation}
-                            onClose={() => setShowMixPanel(false)}
-                        />
+                        {showMixPanel && (
+                            <MixValidationPanel
+                                validation={mixValidation}
+                                onClose={() => setShowMixPanel(false)}
+                            />
+                        )}
 
                         {/* Mix Status Indicator */}
                         {selectedIds.length > 0 && (
