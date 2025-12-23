@@ -361,7 +361,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                 </div>
 
                 {/* Header da aba */}
-                <div className="p-4 border-b border-border">
+                <div className="p-4 border-b border-border relative z-20 bg-background">
                     {activeTab === 'products' ? (
                         <div className="text-xs text-muted-foreground mb-3">
                             Selecione um produto para análise individual
@@ -491,7 +491,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                 </div>
 
                 {/* Product List */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto relative z-10">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center h-48 gap-3">
                             <Loader2 size={24} className="animate-spin text-blue-400" />
