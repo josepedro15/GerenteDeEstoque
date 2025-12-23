@@ -255,9 +255,36 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             // VERIFICAR TIPO DE RESPOSTA:
             // - Agente Estratégico: { type: "campaign_plan", ... } ou { success: true, campaign: { type: "campaign_plan", ... } }
             // - Agente de Ativos: { channels: {...} } ou { success: true, channels: {...} }
+            // - Resposta de Ajuda: { plan: { type: "ajuda", mensagem: "..." } }
 
             // Normalizar: a resposta pode vir direta ou aninhada em "campaign"
             const actualCampaign = campaign?.campaign || campaign;
+
+            // VERIFICAR SE É RESPOSTA DE AJUDA (exibir como texto simples)
+            const isHelpResponse = actualCampaign?.plan?.type === 'ajuda' ||
+                actualCampaign?.plan?.status === 'instrucao' ||
+                actualCampaign?.type === 'ajuda';
+
+            if (isHelpResponse) {
+                const helpMessage = actualCampaign?.plan?.mensagem ||
+                    actualCampaign?.mensagem ||
+                    'Para criar uma campanha eficaz, selecione produtos das 3 curvas (A, B e C) e clique em Gerar Campanha.';
+
+                const aiMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: "assistant",
+                    content: `💡 **Dica:**\n\n${helpMessage}`,
+                    type: 'text'
+                };
+
+                setMessages(prev => [...prev, userMsg, aiMsg]);
+
+                if (userId && sessionId) {
+                    saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
+                    saveChatMessage(userId, sessionId, 'assistant', helpMessage).catch(console.error);
+                }
+                return;
+            }
 
             const isPlan = actualCampaign?.type === 'campaign_plan' || actualCampaign?.requires_approval === true;
             const hasChannels = actualCampaign?.channels && Object.keys(actualCampaign.channels).length > 0;
