@@ -252,105 +252,201 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 content: `Gere uma campanha de marketing para ${products?.length || 0} produto(s) com excesso de estoque.`
             };
 
-            // Adiciona mensagem da IA com a campanha
-            const aiMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                role: "assistant",
-                content: "Campanha gerada com sucesso! Veja os materiais abaixo:",
-                type: 'campaign',
-                campaignData: { campaign, products }
-            };
+            // VERIFICAR TIPO DE RESPOSTA:
+            // - Agente Estratégico: { type: "campaign_plan", requires_approval: true, plan: {...} }
+            // - Agente de Ativos: { channels: {...} } ou { success: true, channels: {...} }
 
-            setMessages(prev => [...prev, userMsg, aiMsg]);
+            const isPlan = campaign?.type === 'campaign_plan' || campaign?.requires_approval === true;
+            const hasChannels = campaign?.channels && Object.keys(campaign.channels).length > 0;
 
-            // Salvar campanha no banco de campanhas
-            if (userId) {
-                console.log("🔄 Tentando salvar campanha...", { userId, productsCount: products?.length });
-                try {
-                    // Extrair dados de texto
-                    const lightCampaign = {
-                        channels: {
-                            instagram: {
-                                copy: campaign?.channels?.instagram?.copy || '',
-                                imagePrompt: campaign?.channels?.instagram?.imagePrompt || ''
-                            },
-                            whatsapp: {
-                                script: campaign?.channels?.whatsapp?.script || '',
-                                trigger: campaign?.channels?.whatsapp?.trigger || ''
-                            },
-                            physical: {
-                                headline: campaign?.channels?.physical?.headline || '',
-                                subheadline: campaign?.channels?.physical?.subheadline || '',
-                                offer: campaign?.channels?.physical?.offer || ''
+            console.log("📊 Tipo de resposta:", { isPlan, hasChannels, campaignType: campaign?.type });
+
+            if (isPlan) {
+                // PLANO ESTRATÉGICO - exibir como texto no chat
+                const planStatus = campaign?.plan?.status || 'ajuste_recomendado';
+                const planAlerts = campaign?.alertas || [];
+                const planProducts = campaign?.produtos || [];
+
+                // Formatar mensagem do plano
+                let planMessage = "📋 **Plano Estratégico de Campanha**\n\n";
+
+                if (planStatus === 'ajuste_recomendado') {
+                    planMessage += "⚠️ **Ajuste Recomendado**\n\n";
+                } else if (planStatus === 'aprovado') {
+                    planMessage += "✅ **Plano Aprovado**\n\n";
+                }
+
+                // Adicionar alertas
+                if (planAlerts.length > 0) {
+                    planMessage += "**Alertas:**\n";
+                    planAlerts.forEach((alert: string) => {
+                        planMessage += `• ${alert}\n`;
+                    });
+                    planMessage += "\n";
+                }
+
+                // Adicionar produtos analisados
+                if (planProducts.length > 0) {
+                    planMessage += "**Produtos analisados:**\n";
+                    planProducts.slice(0, 5).forEach((p: any) => {
+                        const curva = p.curva || p.abc_curve || '?';
+                        const papel = p.papel || 'Queima';
+                        const desconto = p.desconto_sugerido || 0;
+                        planMessage += `• ${p.nome || p.name} (Curva ${curva}) - ${papel} - ${desconto}% OFF\n`;
+                    });
+                    if (planProducts.length > 5) {
+                        planMessage += `  ... e mais ${planProducts.length - 5} produtos\n`;
+                    }
+                    planMessage += "\n";
+                }
+
+                // Adicionar mix e sugestões
+                const mix = campaign?.plan?.mix_atual || campaign?.mix_percentual;
+                if (mix) {
+                    planMessage += `**Mix ABC:** A: ${mix.A || 0}% | B: ${mix.B || 0}% | C: ${mix.C || 0}%\n\n`;
+                }
+
+                // Adicionar nome sugerido e duração
+                if (campaign?.nome_sugerido) {
+                    planMessage += `**Nome sugerido:** ${campaign.nome_sugerido}\n`;
+                }
+                if (campaign?.duracao_sugerida) {
+                    planMessage += `**Duração:** ${campaign.duracao_sugerida}\n`;
+                }
+
+                const aiMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: "assistant",
+                    content: planMessage,
+                    type: 'campaign_plan',
+                    planData: { campaign, products }
+                };
+
+                setMessages(prev => [...prev, userMsg, aiMsg]);
+
+                // Salvar no histórico do chat
+                if (userId && sessionId) {
+                    saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
+                    saveChatMessage(userId, sessionId, 'assistant', planMessage).catch(console.error);
+                }
+
+            } else if (hasChannels) {
+                // ATIVOS FINAIS - exibir como materiais de campanha
+                const aiMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: "assistant",
+                    content: "Campanha gerada com sucesso! Veja os materiais abaixo:",
+                    type: 'campaign',
+                    campaignData: { campaign, products }
+                };
+
+                setMessages(prev => [...prev, userMsg, aiMsg]);
+
+                // Salvar campanha no banco de campanhas
+                if (userId) {
+                    console.log("🔄 Tentando salvar campanha...", { userId, productsCount: products?.length });
+                    try {
+                        // Extrair dados de texto
+                        const lightCampaign = {
+                            channels: {
+                                instagram: {
+                                    copy: campaign?.channels?.instagram?.copy || '',
+                                    imagePrompt: campaign?.channels?.instagram?.imagePrompt || ''
+                                },
+                                whatsapp: {
+                                    script: campaign?.channels?.whatsapp?.script || '',
+                                    trigger: campaign?.channels?.whatsapp?.trigger || ''
+                                },
+                                physical: {
+                                    headline: campaign?.channels?.physical?.headline || '',
+                                    subheadline: campaign?.channels?.physical?.subheadline || '',
+                                    offer: campaign?.channels?.physical?.offer || ''
+                                }
                             }
+                        };
+
+                        const lightProducts = (products || []).slice(0, 10).map((p: any) => ({
+                            id: p.id || '',
+                            nome: p.nome || '',
+                            preco: p.preco || 0,
+                            estoque: p.estoque || 0
+                        }));
+
+                        // Extrair imagens base64
+                        const instagramImageBase64 = campaign?.channels?.instagram?.imageUrl
+                            || campaign?.channels?.instagram?.imageBase64
+                            || campaign?.channels?.instagram?.image
+                            || undefined;
+                        const physicalImageBase64 = campaign?.channels?.physical?.posterUrl
+                            || campaign?.channels?.physical?.posterBase64
+                            || campaign?.channels?.physical?.poster
+                            || campaign?.channels?.physical?.image
+                            || undefined;
+
+                        console.log("🖼️ Instagram image encontrada:", instagramImageBase64 ? `(${Math.round(instagramImageBase64.length / 1024)}KB)` : 'NÃO');
+                        console.log("🖼️ Physical image encontrada:", physicalImageBase64 ? `(${Math.round(physicalImageBase64.length / 1024)}KB)` : 'NÃO');
+
+                        // Upload imagens do CLIENTE para Storage
+                        const timestamp = Date.now();
+                        let instagramImageUrl: string | undefined = undefined;
+                        let physicalImageUrl: string | undefined = undefined;
+
+                        if (instagramImageBase64 && instagramImageBase64.length > 100) {
+                            console.log("📤 Uploading Instagram image do cliente...");
+                            const url = await uploadImageToStorage(instagramImageBase64, `${userId}/${timestamp}_instagram.png`);
+                            if (url) instagramImageUrl = url;
                         }
-                    };
 
-                    const lightProducts = (products || []).slice(0, 10).map((p: any) => ({
-                        id: p.id || '',
-                        nome: p.nome || '',
-                        preco: p.preco || 0,
-                        estoque: p.estoque || 0
-                    }));
+                        if (physicalImageBase64 && physicalImageBase64.length > 100) {
+                            console.log("📤 Uploading Physical image do cliente...");
+                            const url = await uploadImageToStorage(physicalImageBase64, `${userId}/${timestamp}_physical.png`);
+                            if (url) physicalImageUrl = url;
+                        }
 
-                    // Extrair imagens base64 (usando nomes corretos do n8n: imageUrl e posterUrl)
-                    const instagramImageBase64 = campaign?.channels?.instagram?.imageUrl
-                        || campaign?.channels?.instagram?.imageBase64
-                        || campaign?.channels?.instagram?.image
-                        || undefined;
-                    const physicalImageBase64 = campaign?.channels?.physical?.posterUrl
-                        || campaign?.channels?.physical?.posterBase64
-                        || campaign?.channels?.physical?.poster
-                        || campaign?.channels?.physical?.image
-                        || undefined;
-
-                    console.log("🖼️ Instagram image encontrada:", instagramImageBase64 ? `(${Math.round(instagramImageBase64.length / 1024)}KB)` : 'NÃO');
-                    console.log("🖼️ Physical image encontrada:", physicalImageBase64 ? `(${Math.round(physicalImageBase64.length / 1024)}KB)` : 'NÃO');
-
-                    // Upload imagens do CLIENTE para Storage (evita 413 no server action)
-                    const timestamp = Date.now();
-                    let instagramImageUrl: string | undefined = undefined;
-                    let physicalImageUrl: string | undefined = undefined;
-
-                    if (instagramImageBase64 && instagramImageBase64.length > 100) {
-                        console.log("📤 Uploading Instagram image do cliente...");
-                        const url = await uploadImageToStorage(instagramImageBase64, `${userId}/${timestamp}_instagram.png`);
-                        if (url) instagramImageUrl = url;
+                        // Chamar saveCampaign
+                        const result = await saveCampaign(
+                            userId,
+                            lightCampaign,
+                            lightProducts,
+                            undefined,
+                            undefined,
+                            instagramImageUrl,
+                            physicalImageUrl
+                        );
+                        console.log("📝 Resultado saveCampaign:", result);
+                        if (result.success) {
+                            console.log("✅ Campanha salva com sucesso! ID:", result.id);
+                        } else {
+                            console.error("❌ Falha ao salvar campanha:", result.error);
+                        }
+                    } catch (err) {
+                        console.error("❌ Erro ao salvar campanha:", err);
                     }
+                } else {
+                    console.warn("⚠️ userId não disponível, campanha não será salva");
+                }
 
-                    if (physicalImageBase64 && physicalImageBase64.length > 100) {
-                        console.log("📤 Uploading Physical image do cliente...");
-                        const url = await uploadImageToStorage(physicalImageBase64, `${userId}/${timestamp}_physical.png`);
-                        if (url) physicalImageUrl = url;
-                    }
-
-                    // Chamar saveCampaign SEM imagens base64 (apenas URLs)
-                    const result = await saveCampaign(
-                        userId,
-                        lightCampaign,
-                        lightProducts,
-                        undefined, // não passa mais imagem base64
-                        undefined, // não passa mais imagem base64
-                        instagramImageUrl,
-                        physicalImageUrl
-                    );
-                    console.log("📝 Resultado saveCampaign:", result);
-                    if (result.success) {
-                        console.log("✅ Campanha salva com sucesso! ID:", result.id);
-                    } else {
-                        console.error("❌ Falha ao salvar campanha:", result.error);
-                    }
-                } catch (err) {
-                    console.error("❌ Erro ao salvar campanha:", err);
+                // Salvar no histórico do chat
+                if (userId && sessionId) {
+                    saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
+                    saveChatMessage(userId, sessionId, 'assistant', 'Campanha gerada com sucesso!').catch(console.error);
                 }
             } else {
-                console.warn("⚠️ userId não disponível, campanha não será salva");
-            }
+                // RESPOSTA DESCONHECIDA ou ERRO - exibir como texto
+                const errorContent = campaign?.error || campaign?.message || JSON.stringify(campaign, null, 2);
+                const aiMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: "assistant",
+                    content: `Resposta recebida:\n\n${errorContent}`,
+                    type: 'text'
+                };
 
-            // Salvar no histórico do chat (sem dados pesados)
-            if (userId && sessionId) {
-                saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
-                saveChatMessage(userId, sessionId, 'assistant', 'Campanha gerada com sucesso!').catch(console.error);
+                setMessages(prev => [...prev, userMsg, aiMsg]);
+
+                if (userId && sessionId) {
+                    saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
+                    saveChatMessage(userId, sessionId, 'assistant', errorContent).catch(console.error);
+                }
             }
         };
 
