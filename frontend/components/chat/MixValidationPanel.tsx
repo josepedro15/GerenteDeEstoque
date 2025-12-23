@@ -10,9 +10,11 @@ interface MixValidation {
     title: string;
     description: string;
     suggestions: string[];
+    warnings: string[];  // Alertas adicionais (ex: Curva A em estoque crítico)
     missingCurves: ('A' | 'B' | 'C')[];
     mixCount: { A: number; B: number; C: number; total: number };
     mixPercent: { A: number; B: number; C: number };
+    riskProducts: Array<{ name: string; abc: string; status: string }>;  // Produtos em risco
 }
 
 interface MixValidationPanelProps {
@@ -104,6 +106,21 @@ export function MixValidationPanel({ validation, onFilterCurve, onClose }: MixVa
                     {description}
                 </p>
 
+                {/* Warnings (produtos Curva A em risco) */}
+                {validation.warnings.length > 0 && (
+                    <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/30">
+                        {validation.warnings.map((w, i) => (
+                            <p key={i} className="text-xs text-red-300">{w}</p>
+                        ))}
+                        {validation.riskProducts.length > 0 && (
+                            <div className="mt-2 text-[10px] text-red-400">
+                                Produtos em risco: {validation.riskProducts.map(p => p.name).slice(0, 3).join(', ')}
+                                {validation.riskProducts.length > 3 && ` +${validation.riskProducts.length - 3} mais`}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Suggestions */}
                 {suggestions.length > 0 && (
                     <div className="mb-3">
@@ -159,11 +176,23 @@ export function MixValidationPanel({ validation, onFilterCurve, onClose }: MixVa
 }
 
 // Helper function to validate mix
-export function validateAbcMix(products: Array<{ abc: string }>): MixValidation {
+export function validateAbcMix(products: Array<{ abc: string; status?: string; nome?: string }>): MixValidation {
     const count = { A: 0, B: 0, C: 0 };
+    const riskProducts: Array<{ name: string; abc: string; status: string }> = [];
+
     products.forEach(p => {
         const abc = p.abc?.toUpperCase() as 'A' | 'B' | 'C';
         if (count[abc] !== undefined) count[abc]++;
+
+        // Detectar produtos CURVA A com estoque crítico/ruptura
+        const status = (p.status || '').toUpperCase();
+        if (abc === 'A' && (status.includes('CRÍTICO') || status.includes('RUPTURA') || status.includes('CRITICO'))) {
+            riskProducts.push({
+                name: p.nome || 'Produto',
+                abc: 'A',
+                status: status
+            });
+        }
     });
 
     const total = count.A + count.B + count.C;
@@ -172,6 +201,12 @@ export function validateAbcMix(products: Array<{ abc: string }>): MixValidation 
         B: total > 0 ? (count.B / total) * 100 : 0,
         C: total > 0 ? (count.C / total) * 100 : 0,
     };
+
+    // Gerar warnings para produtos em risco
+    const warnings: string[] = [];
+    if (riskProducts.length > 0) {
+        warnings.push(`⚠️ ${riskProducts.length} produto(s) Curva A com estoque baixo! Esses são campeões de venda - colocá-los em promoção pode causar ruptura.`);
+    }
 
     // Determinar status e mensagens
     const hasA = count.A > 0;
@@ -189,9 +224,11 @@ export function validateAbcMix(products: Array<{ abc: string }>): MixValidation 
                 title: 'Isso não é uma liquidação',
                 description: 'Produtos Curva A são seus best-sellers. Para liquidar estoque, adicione produtos B (suporte) e C (queima).',
                 suggestions: ['2-3 produtos Curva B (suporte)', '4-6 produtos Curva C (queima principal)'],
+                warnings,
                 missingCurves: ['B', 'C'],
                 mixCount: { ...count, total },
                 mixPercent: percent,
+                riskProducts,
             };
         }
         if (hasB) {
@@ -202,9 +239,11 @@ export function validateAbcMix(products: Array<{ abc: string }>): MixValidation 
                 title: 'Mix incompleto',
                 description: 'Campanhas só com Curva B não têm chamariz nem objetivo de queima.',
                 suggestions: ['1-2 produtos Curva A (chamariz)', '4-6 produtos Curva C (queima)'],
+                warnings,
                 missingCurves: ['A', 'C'],
                 mixCount: { ...count, total },
                 mixPercent: percent,
+                riskProducts,
             };
         }
         if (hasC) {
@@ -215,9 +254,11 @@ export function validateAbcMix(products: Array<{ abc: string }>): MixValidation 
                 title: 'Falta atratividade',
                 description: 'Campanhas só com Curva C têm baixa conversão. Adicione produtos A como chamariz para atrair clientes.',
                 suggestions: ['1-2 produtos Curva A (chamariz)', '2-3 produtos Curva B (suporte)'],
+                warnings,
                 missingCurves: ['A', 'B'],
                 mixCount: { ...count, total },
                 mixPercent: percent,
+                riskProducts,
             };
         }
     }
@@ -232,9 +273,11 @@ export function validateAbcMix(products: Array<{ abc: string }>): MixValidation 
                 title: 'Falta o chamariz',
                 description: 'Produtos Curva A atraem clientes. Adicione pelo menos 1 para aumentar a conversão.',
                 suggestions: ['1-2 produtos Curva A (chamariz)'],
+                warnings,
                 missingCurves: ['A'],
                 mixCount: { ...count, total },
                 mixPercent: percent,
+                riskProducts,
             };
         }
         if (!hasB) {
@@ -245,9 +288,11 @@ export function validateAbcMix(products: Array<{ abc: string }>): MixValidation 
                 title: 'Considere adicionar suporte',
                 description: 'Produtos Curva B ajudam a equilibrar margem e volume.',
                 suggestions: ['2-3 produtos Curva B (suporte)'],
+                warnings,
                 missingCurves: ['B'],
                 mixCount: { ...count, total },
                 mixPercent: percent,
+                riskProducts,
             };
         }
         if (!hasC) {
@@ -258,23 +303,32 @@ export function validateAbcMix(products: Array<{ abc: string }>): MixValidation 
                 title: 'Onde está a queima?',
                 description: 'Para uma liquidação efetiva, adicione produtos C com estoque alto.',
                 suggestions: ['4-6 produtos Curva C (queima)'],
+                warnings,
                 missingCurves: ['C'],
                 mixCount: { ...count, total },
                 mixPercent: percent,
+                riskProducts,
             };
         }
     }
 
-    // Três curvas - IDEAL
+    // Três curvas - IDEAL (mas pode ter warnings de produtos em risco)
     return {
         canGenerate: true,
-        status: 'ideal',
-        reason: 'ideal',
-        title: 'Mix equilibrado!',
-        description: 'Seu mix tem as três curvas. Campanha pronta para gerar.',
-        suggestions: [],
+        status: riskProducts.length > 0 ? 'warning' : 'ideal',
+        reason: riskProducts.length > 0 ? 'risk_products' : 'ideal',
+        title: riskProducts.length > 0 ? 'Atenção: Produtos em risco!' : 'Mix equilibrado!',
+        description: riskProducts.length > 0
+            ? 'Seu mix tem as três curvas, mas há produtos Curva A com estoque crítico. Considere removê-los da campanha.'
+            : 'Seu mix tem as três curvas. Campanha pronta para gerar.',
+        suggestions: riskProducts.length > 0
+            ? ['Remova produtos Curva A com estoque baixo', 'Substitua por produtos Curva A com estoque saudável']
+            : [],
+        warnings,
         missingCurves: [],
         mixCount: { ...count, total },
         mixPercent: percent,
+        riskProducts,
     };
 }
+
