@@ -210,6 +210,11 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
             );
         }
 
+        // Aba Campanhas: ordenar por quantidade de estoque (maior primeiro)
+        if (activeTab === 'campaigns') {
+            filtered = [...filtered].sort((a, b) => b.estoque - a.estoque);
+        }
+
         return filtered;
     }, [products, search, activeTab, statusFilter, abcFilter, coberturaFilter]);
 
