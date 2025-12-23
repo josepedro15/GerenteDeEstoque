@@ -253,19 +253,22 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             };
 
             // VERIFICAR TIPO DE RESPOSTA:
-            // - Agente Estratégico: { type: "campaign_plan", requires_approval: true, plan: {...} }
+            // - Agente Estratégico: { type: "campaign_plan", ... } ou { success: true, campaign: { type: "campaign_plan", ... } }
             // - Agente de Ativos: { channels: {...} } ou { success: true, channels: {...} }
 
-            const isPlan = campaign?.type === 'campaign_plan' || campaign?.requires_approval === true;
-            const hasChannels = campaign?.channels && Object.keys(campaign.channels).length > 0;
+            // Normalizar: a resposta pode vir direta ou aninhada em "campaign"
+            const actualCampaign = campaign?.campaign || campaign;
 
-            console.log("📊 Tipo de resposta:", { isPlan, hasChannels, campaignType: campaign?.type });
+            const isPlan = actualCampaign?.type === 'campaign_plan' || actualCampaign?.requires_approval === true;
+            const hasChannels = actualCampaign?.channels && Object.keys(actualCampaign.channels).length > 0;
+
+            console.log("📊 Tipo de resposta:", { isPlan, hasChannels, campaignType: actualCampaign?.type });
 
             if (isPlan) {
                 // PLANO ESTRATÉGICO - exibir como texto no chat
-                const planStatus = campaign?.plan?.status || 'ajuste_recomendado';
-                const planAlerts = campaign?.alertas || [];
-                const planProducts = campaign?.produtos || [];
+                const planStatus = actualCampaign?.plan?.status || 'ajuste_recomendado';
+                const planAlerts = actualCampaign?.alertas || actualCampaign?.plan?.alertas || [];
+                const planProducts = actualCampaign?.produtos || actualCampaign?.plan?.produtos || [];
 
                 // Formatar mensagem do plano
                 let planMessage = "📋 **Plano Estratégico de Campanha**\n\n";
@@ -301,17 +304,17 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 }
 
                 // Adicionar mix e sugestões
-                const mix = campaign?.plan?.mix_atual || campaign?.mix_percentual;
+                const mix = actualCampaign?.plan?.mix_atual || actualCampaign?.mix_percentual || actualCampaign?.plan?.mix_percentual;
                 if (mix) {
                     planMessage += `**Mix ABC:** A: ${mix.A || 0}% | B: ${mix.B || 0}% | C: ${mix.C || 0}%\n\n`;
                 }
 
                 // Adicionar nome sugerido e duração
-                if (campaign?.nome_sugerido) {
-                    planMessage += `**Nome sugerido:** ${campaign.nome_sugerido}\n`;
+                if (actualCampaign?.nome_sugerido) {
+                    planMessage += `**Nome sugerido:** ${actualCampaign.nome_sugerido}\n`;
                 }
-                if (campaign?.duracao_sugerida) {
-                    planMessage += `**Duração:** ${campaign.duracao_sugerida}\n`;
+                if (actualCampaign?.duracao_sugerida) {
+                    planMessage += `**Duração:** ${actualCampaign.duracao_sugerida}\n`;
                 }
 
                 const aiMsg: Message = {
@@ -337,7 +340,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     role: "assistant",
                     content: "Campanha gerada com sucesso! Veja os materiais abaixo:",
                     type: 'campaign',
-                    campaignData: { campaign, products }
+                    campaignData: { campaign: actualCampaign, products }
                 };
 
                 setMessages(prev => [...prev, userMsg, aiMsg]);
@@ -350,17 +353,17 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         const lightCampaign = {
                             channels: {
                                 instagram: {
-                                    copy: campaign?.channels?.instagram?.copy || '',
-                                    imagePrompt: campaign?.channels?.instagram?.imagePrompt || ''
+                                    copy: actualCampaign?.channels?.instagram?.copy || '',
+                                    imagePrompt: actualCampaign?.channels?.instagram?.imagePrompt || ''
                                 },
                                 whatsapp: {
-                                    script: campaign?.channels?.whatsapp?.script || '',
-                                    trigger: campaign?.channels?.whatsapp?.trigger || ''
+                                    script: actualCampaign?.channels?.whatsapp?.script || '',
+                                    trigger: actualCampaign?.channels?.whatsapp?.trigger || ''
                                 },
                                 physical: {
-                                    headline: campaign?.channels?.physical?.headline || '',
-                                    subheadline: campaign?.channels?.physical?.subheadline || '',
-                                    offer: campaign?.channels?.physical?.offer || ''
+                                    headline: actualCampaign?.channels?.physical?.headline || '',
+                                    subheadline: actualCampaign?.channels?.physical?.subheadline || '',
+                                    offer: actualCampaign?.channels?.physical?.offer || ''
                                 }
                             }
                         };
@@ -373,14 +376,14 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         }));
 
                         // Extrair imagens base64
-                        const instagramImageBase64 = campaign?.channels?.instagram?.imageUrl
-                            || campaign?.channels?.instagram?.imageBase64
-                            || campaign?.channels?.instagram?.image
+                        const instagramImageBase64 = actualCampaign?.channels?.instagram?.imageUrl
+                            || actualCampaign?.channels?.instagram?.imageBase64
+                            || actualCampaign?.channels?.instagram?.image
                             || undefined;
-                        const physicalImageBase64 = campaign?.channels?.physical?.posterUrl
-                            || campaign?.channels?.physical?.posterBase64
-                            || campaign?.channels?.physical?.poster
-                            || campaign?.channels?.physical?.image
+                        const physicalImageBase64 = actualCampaign?.channels?.physical?.posterUrl
+                            || actualCampaign?.channels?.physical?.posterBase64
+                            || actualCampaign?.channels?.physical?.poster
+                            || actualCampaign?.channels?.physical?.image
                             || undefined;
 
                         console.log("🖼️ Instagram image encontrada:", instagramImageBase64 ? `(${Math.round(instagramImageBase64.length / 1024)}KB)` : 'NÃO');
