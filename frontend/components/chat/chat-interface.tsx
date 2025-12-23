@@ -889,6 +889,27 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             {/* Input Area */}
             <div className="shrink-0 px-4 md:px-8 lg:px-16 py-4">
                 <div className="max-w-4xl mx-auto">
+                    {/* Quick Actions */}
+                    {messages.length <= 1 && !isLoading && (
+                        <div className="flex flex-wrap gap-2 mb-3 justify-center">
+                            {[
+                                { emoji: "📦", text: "Qual o estoque de cimento?" },
+                                { emoji: "💰", text: "Qual o valor da argamassa?" },
+                                { emoji: "🎯", text: "Como criar uma campanha?" },
+                                { emoji: "🛒", text: "Ajuda com pedido de compras" },
+                                { emoji: "🔥", text: "Como fazer queima de estoque?" },
+                            ].map((action, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleSendMessage(`${action.text}`)}
+                                    className="px-3 py-1.5 text-xs rounded-full border border-border bg-accent hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                                >
+                                    <span>{action.emoji}</span>
+                                    <span>{action.text}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                     <PromptInputBox
                         onSend={(message) => {
                             if (message.trim() && !isLoading && !isLoadingHistory) {
