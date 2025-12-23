@@ -278,7 +278,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             ).join('\n');
 
             if (mode === 'analysis') {
-                prompt = `Atue como um Gestor de Compras Sênior. Gere uma sugestão de pedido de compra estratégica para os seguintes ${products.length} produtos:\n\n${productsList}\n\nREGRAS:\n1. Calcule a reposição ideal para cobrir 30 dias de vendas, considerando o estoque atual e a curva ABC de cada item.\n2. LEAD TIME (CRÍTICO): Aponte que esta sugestão assume entrega imediata. ALERTE explicitamente que é necessário somar o prazo de entrega do fornecedor para definir o Ponto de Pedido exato.\n3. Pergunte ao usuário: "Qual o prazo de entrega médio destes fornecedores?" para ajustar a sugestão.\n4. Apresente os cálculos de forma clara e profissional.`;
+                prompt = `Atue como um Especialista em Estoque. Realize uma análise técnica detalhada dos seguintes ${products.length} produtos:\n\n${productsList}\n\nREGRAS:\n1. Diagnóstico: Analise o nível de cobertura atual e identifique riscos iminentes (ruptura ou excesso).\n2. Classificação: Verifique se a curva ABC informada condiz com a movimentação recente (se houver dados).\n3. Ação Sugerida: Para cada item, sugira "Manter", "Promover" (se excesso) ou "Repor" (se ruptura).\n4. ALERTA: Não gere pedido de compra agora. Apenas apresente o cenário para tomada de decisão.\nUse tabelas para apresentar os dados.`;
             } else if (mode === 'purchase') {
                 prompt = `Gere ordens de compra para os seguintes produtos:\n\n${productsList}\n\nConsidere reposição para 30 dias.`;
             }
