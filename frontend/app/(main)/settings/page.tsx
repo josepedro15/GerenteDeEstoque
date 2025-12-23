@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Save, Phone, Bell, ShieldAlert, Calendar, Flame, Loader2, User } from "lucide-react";
+import { Save, Phone, Bell, ShieldAlert, Calendar, Flame, Loader2, User, Camera } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { getUserSettings, saveUserSettings } from "@/app/actions/settings";
 
@@ -24,19 +24,50 @@ function SubmitButton() {
 }
 
 export default function SettingsPage() {
-    const [state, formAction] = useState<any>(null); // useActionState in React 19, but sticking to simple state for now compatible with Next 14/15 patterns if needed
+    const [state, formAction] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState<any>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         async function load() {
             setLoading(true);
             const data = await getUserSettings(MOCK_USER_ID);
             setSettings(data || {});
+
+            // Carregar avatar do localStorage
+            const stored = localStorage.getItem("user_profile");
+            if (stored) {
+                const profile = JSON.parse(stored);
+                if (profile.avatar) {
+                    setAvatarPreview(profile.avatar);
+                }
+            }
+
             setLoading(false);
         }
         load();
     }, []);
+
+    // Handler para upload de avatar
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validar tamanho (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Imagem muito grande. Máximo 2MB.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+                setAvatarPreview(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     // Custom form action wrapper
     const handleSubmit = async (formData: FormData) => {
@@ -44,7 +75,11 @@ export default function SettingsPage() {
         const name = formData.get('userName') as string;
         const role = formData.get('userRole') as string;
         if (name && role) {
-            localStorage.setItem("user_profile", JSON.stringify({ name, role }));
+            localStorage.setItem("user_profile", JSON.stringify({
+                name,
+                role,
+                avatar: avatarPreview || null
+            }));
             window.dispatchEvent(new Event("user-profile-updated"));
         }
 
@@ -92,6 +127,49 @@ export default function SettingsPage() {
                             <div>
                                 <h2 className="text-xl font-semibold">Perfil de Usuário</h2>
                                 <p className="text-sm text-muted-foreground">Informações visíveis no seu cartão de perfil.</p>
+                            </div>
+                        </div>
+
+                        {/* Avatar Upload */}
+                        <div className="mb-6 flex items-center gap-6">
+                            <div className="relative">
+                                <div
+                                    className="h-24 w-24 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold overflow-hidden cursor-pointer"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    {avatarPreview ? (
+                                        <img
+                                            src={avatarPreview}
+                                            alt="Avatar"
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <span>
+                                            {typeof window !== 'undefined'
+                                                ? (JSON.parse(localStorage.getItem("user_profile") || '{}').name || "U").charAt(0).toUpperCase()
+                                                : "U"
+                                            }
+                                        </span>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-500 transition-colors"
+                                >
+                                    <Camera size={14} />
+                                </button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleAvatarChange}
+                                    className="hidden"
+                                />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-foreground">Foto de Perfil</p>
+                                <p className="text-xs text-muted-foreground">Clique para alterar. JPG, PNG até 2MB.</p>
                             </div>
                         </div>
 

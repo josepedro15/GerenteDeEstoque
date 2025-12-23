@@ -62,6 +62,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
     const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
     const [sessionId, setSessionId] = useState<string>("");
     const [userId, setUserId] = useState<string>("");
+    const [userAvatar, setUserAvatar] = useState<string | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const hasLoadedHistory = useRef(false);
@@ -70,6 +71,27 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
     useEffect(() => {
         setSessionId(getOrCreateSessionId());
         setUserId(getUserId());
+
+        // Carregar avatar do localStorage
+        const stored = localStorage.getItem("user_profile");
+        if (stored) {
+            const profile = JSON.parse(stored);
+            if (profile.avatar) {
+                setUserAvatar(profile.avatar);
+            }
+        }
+
+        // Listener para atualizações de perfil
+        const handleProfileUpdate = () => {
+            const stored = localStorage.getItem("user_profile");
+            if (stored) {
+                const profile = JSON.parse(stored);
+                setUserAvatar(profile.avatar || null);
+            }
+        };
+
+        window.addEventListener("user-profile-updated", handleProfileUpdate);
+        return () => window.removeEventListener("user-profile-updated", handleProfileUpdate);
     }, []);
 
     // Carrega histórico do banco de dados (com timeout)
@@ -782,10 +804,20 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                     )}
                                 >
                                     <div className={cn(
-                                        "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                                        "w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden",
                                         msg.role === "assistant" ? "bg-blue-500/20 text-blue-400" : "bg-accent text-foreground"
                                     )}>
-                                        {msg.role === "assistant" ? <Bot size={18} /> : <User size={18} />}
+                                        {msg.role === "assistant" ? (
+                                            <Bot size={18} />
+                                        ) : userAvatar ? (
+                                            <img
+                                                src={userAvatar}
+                                                alt="Avatar"
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <User size={18} />
+                                        )}
                                     </div>
                                     <div className={cn(
                                         "rounded-2xl px-4 py-2 text-sm overflow-hidden",

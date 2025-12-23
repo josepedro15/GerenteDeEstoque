@@ -148,7 +148,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 }
 
 function UserProfile() {
-    const [user, setUser] = useState({ name: "Pedro Silva", role: "Gerente de Compras" });
+    const [user, setUser] = useState({ name: "Pedro Silva", role: "Gerente de Compras", avatar: null as string | null });
 
     useEffect(() => {
         // Load initial
@@ -171,8 +171,16 @@ function UserProfile() {
 
     return (
         <div className="mt-6 flex items-center gap-3 rounded-xl bg-accent p-3">
-            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
-                {user.name.charAt(0)}
+            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
+                {user.avatar ? (
+                    <img
+                        src={user.avatar}
+                        alt="Avatar"
+                        className="h-full w-full object-cover"
+                    />
+                ) : (
+                    user.name.charAt(0)
+                )}
             </div>
             <div className="flex flex-col">
                 <span className="text-xs font-medium text-foreground">{user.name}</span>
