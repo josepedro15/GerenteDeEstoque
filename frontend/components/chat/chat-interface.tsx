@@ -648,7 +648,12 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 }
 
                 console.log("🔍 Tentando parse de JSON:", jsonString.substring(0, 100) + "...");
-                const parsed = JSON.parse(jsonString);
+                let parsed = JSON.parse(jsonString);
+
+                // Se n8n retornar um array (comum em 'All Incoming Items'), pega o primeiro item
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    parsed = parsed[0];
+                }
 
                 // VERIFICAR SE É RESPOSTA DE AJUDA (exibir como texto simples)
                 const isHelpResponse = parsed?.plan?.type === 'ajuda' ||
