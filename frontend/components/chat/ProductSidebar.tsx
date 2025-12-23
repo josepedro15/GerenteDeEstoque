@@ -162,10 +162,8 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
     const filteredProducts = useMemo(() => {
         let filtered = products;
 
-        // Aba campanhas: só produtos com excesso (cobertura > 50 dias)
-        if (activeTab === 'campaigns') {
-            filtered = filtered.filter(p => p.cobertura > 50);
-        }
+        // Aba campanhas: ordenar por cobertura (excesso primeiro) mas NÃO filtrar automaticamente
+        // Deixar usuário filtrar manualmente se quiser
 
         // Filtro por status
         if (statusFilter.length > 0) {
@@ -326,7 +324,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                         </div>
                     ) : (
                         <div className="text-xs text-muted-foreground mb-3">
-                            Selecione até 10 produtos com excesso para gerar campanha
+                            Selecione até 10 produtos para gerar campanha
                             <span className="ml-1 text-pink-400">({selectedIds.length}/10)</span>
                         </div>
                     )}
