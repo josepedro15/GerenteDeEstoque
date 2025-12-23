@@ -1,45 +1,117 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, Filter, ChevronLeft, ChevronRight, Package, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import {
+    Search, ChevronLeft, ChevronRight, Package, ArrowUpDown, ArrowUp, ArrowDown,
+    TrendingUp, TrendingDown, Minus, AlertTriangle, ShoppingCart, DollarSign,
+    Calendar, BarChart2, Percent, Layers
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/formatters";
 
-// Types derived from what page.tsx was using, but more strict
+// Tipo completo com todos os campos
 export interface Product {
     id: string;
     nome: string;
     estoque: number;
+    cobertura: number;
+    mediaVenda: number;
     preco: number;
     custo: number;
+    margemUnitaria: number;
+    margemPercentual: number;
+    qtdVendida60d: number;
+    faturamento60d: number;
+    lucro60d: number;
     abc: string;
     status: string;
-    cobertura: number;
-    // Keeping raw data if needed for simple display
+    giroMensal: number;
+    valorEstoqueCusto: number;
+    valorEstoqueVenda: number;
+    sugestaoCompra: number;
+    tendencia: string;
+    variacaoPercentual: number;
+    ultimaVenda: string | null;
+    diasSemVenda: number;
+    prioridadeCompra: string;
+    alertaEstoque: string;
 }
 
 interface ProductsClientProps {
     initialProducts: Product[];
 }
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 25;
 
-const statusColors: Record<string, string> = {
-    'RUPTURA': 'bg-red-500/20 text-red-400 hover:bg-red-500/30',
-    'CRÍTICO': 'bg-red-500/20 text-red-400 hover:bg-red-500/30',
-    'ATENÇÃO': 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30',
-    'SAUDÁVEL': 'bg-green-500/20 text-green-400 hover:bg-green-500/30',
-    'EXCESSO': 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30',
+// Helpers de formatação
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-const abcColors: Record<string, string> = {
-    'A': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50',
-    'B': 'bg-blue-500/20 text-blue-400 border-blue-500/50',
-    'C': 'bg-gray-500/20 text-gray-400 border-gray-500/50',
+const formatNumber = (value: number, decimals = 0) => {
+    return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: decimals }).format(value);
 };
+
+const formatPercent = (value: number) => {
+    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+};
+
+// Cores por status
+const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
+    'RUPTURA': { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/30' },
+    'CRÍTICO': { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/30' },
+    'ATENÇÃO': { bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/30' },
+    'SAUDÁVEL': { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+    'EXCESSO': { bg: 'bg-blue-500/15', text: 'text-blue-400', border: 'border-blue-500/30' },
+};
+
+const abcConfig: Record<string, { bg: string; text: string }> = {
+    'A': { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+    'B': { bg: 'bg-blue-500/20', text: 'text-blue-400' },
+    'C': { bg: 'bg-zinc-500/20', text: 'text-zinc-400' },
+};
+
+// Componente de Tendência
+function TrendBadge({ tendencia, variacao }: { tendencia: string; variacao: number }) {
+    if (!tendencia) return <span className="text-muted-foreground">-</span>;
+
+    const isUp = tendencia.includes('Subindo') || variacao > 0;
+    const isDown = tendencia.includes('Caindo') || variacao < 0;
+
+    return (
+        <div className={cn(
+            "flex items-center gap-1 text-xs font-medium",
+            isUp && "text-emerald-400",
+            isDown && "text-red-400",
+            !isUp && !isDown && "text-muted-foreground"
+        )}>
+            {isUp && <TrendingUp size={14} />}
+            {isDown && <TrendingDown size={14} />}
+            {!isUp && !isDown && <Minus size={14} />}
+            <span>{formatPercent(variacao)}</span>
+        </div>
+    );
+}
+
+// Componente de Prioridade
+function PriorityBadge({ priority }: { priority: string }) {
+    if (!priority) return <span className="text-muted-foreground">-</span>;
+
+    const isUrgent = priority.includes('URGENTE');
+    const isHigh = priority.includes('ALTA');
+
+    return (
+        <span className={cn(
+            "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+            isUrgent && "bg-red-500/20 text-red-400",
+            isHigh && !isUrgent && "bg-amber-500/20 text-amber-400",
+            !isUrgent && !isHigh && "bg-zinc-500/20 text-zinc-400"
+        )}>
+            {priority.replace(/^\d+-/, '')}
+        </span>
+    );
+}
 
 export function ProductsClient({ initialProducts }: ProductsClientProps) {
     const [search, setSearch] = useState("");
@@ -48,11 +120,10 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [sortConfig, setSortConfig] = useState<{ key: keyof Product; direction: 'asc' | 'desc' } | null>(null);
 
-    // Filter Options
     const allStatuses = ['RUPTURA', 'CRÍTICO', 'ATENÇÃO', 'SAUDÁVEL', 'EXCESSO'];
     const allAbc = ['A', 'B', 'C'];
 
-    // Handle Sort
+    // Sort handler
     const handleSort = (key: keyof Product) => {
         setSortConfig(current => {
             if (current?.key === key) {
@@ -63,11 +134,16 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
         });
     };
 
-    // Filter Logic
+    // Sorting icon
+    const SortIcon = ({ field }: { field: keyof Product }) => {
+        if (sortConfig?.key !== field) return <ArrowUpDown size={12} className="opacity-30" />;
+        return sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
+    };
+
+    // Filter logic
     const filteredProducts = useMemo(() => {
         let result = initialProducts;
 
-        // Search
         if (search.trim()) {
             const term = search.toLowerCase();
             result = result.filter(p =>
@@ -76,22 +152,18 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
             );
         }
 
-        // Status Filter
         if (statusFilter.length > 0) {
             result = result.filter(p => statusFilter.includes(p.status));
         }
 
-        // ABC Filter
         if (abcFilter.length > 0) {
             result = result.filter(p => abcFilter.includes(p.abc));
         }
 
-        // Sorting
         if (sortConfig) {
             result = [...result].sort((a, b) => {
                 const aValue = a[sortConfig.key];
                 const bValue = b[sortConfig.key];
-
                 if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
                 if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
                 return 0;
@@ -101,15 +173,15 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
         return result;
     }, [initialProducts, search, statusFilter, abcFilter, sortConfig]);
 
-    // Pagination Logic
+    // Pagination
     const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
     const paginatedProducts = filteredProducts.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
         currentPage * ITEMS_PER_PAGE
     );
 
-    // Reset page when filters change
-    useMemo(() => {
+    // Reset page on filter change
+    useEffect(() => {
         setCurrentPage(1);
     }, [search, statusFilter, abcFilter]);
 
@@ -126,206 +198,344 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Header Area */}
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-4 animate-in fade-in duration-300">
+            {/* Header */}
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                        <Layers className="text-primary" size={24} />
                         Gestão de Estoque
                     </h1>
-                    <p className="mt-1 text-muted-foreground">
-                        Visualize e gerencie métricas de {initialProducts.length} produtos.
+                    <p className="text-sm text-muted-foreground">
+                        {formatNumber(initialProducts.length)} produtos no catálogo
                     </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                        <DollarSign size={14} className="text-emerald-400" />
+                        Valor Total: {formatCurrency(initialProducts.reduce((acc, p) => acc + p.valorEstoqueVenda, 0))}
+                    </span>
                 </div>
             </div>
 
-            {/* Controls Bar */}
-            <div className="flex flex-col gap-4 p-4 rounded-xl border border-border bg-card/50 backdrop-blur-sm shadow-sm">
-                <div className="flex flex-col md:flex-row gap-4 items-center">
-                    {/* Search */}
-                    <div className="relative flex-1 w-full">
+            {/* Search + Filters */}
+            <div className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-card/50 backdrop-blur-sm">
+                <div className="flex flex-col md:flex-row gap-3 items-stretch">
+                    <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Buscar por nome, SKU..."
+                            placeholder="Buscar por nome ou SKU..."
                             className="w-full h-10 rounded-lg border border-border bg-background py-2 pl-9 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
                         />
                     </div>
                 </div>
 
-                {/* Filters Row */}
-                <div className="flex flex-wrap items-center gap-6 pt-2 border-t border-border/50">
-                    {/* Status Filter */}
-                    <div className="space-y-1.5">
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</span>
-                        <div className="flex flex-wrap gap-2">
-                            {allStatuses.map(status => (
-                                <button
-                                    key={status}
-                                    onClick={() => toggleStatus(status)}
-                                    className={cn(
-                                        "text-[10px] px-2.5 py-1 rounded-full border transition-all font-medium",
-                                        statusFilter.includes(status)
-                                            ? statusColors[status] + " border-transparent shadow-sm"
-                                            : "bg-background border-border text-muted-foreground hover:border-foreground/20"
-                                    )}
-                                >
-                                    {status}
-                                </button>
-                            ))}
+                <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Status:</span>
+                        <div className="flex flex-wrap gap-1">
+                            {allStatuses.map(status => {
+                                const config = statusConfig[status] || statusConfig['SAUDÁVEL'];
+                                return (
+                                    <button
+                                        key={status}
+                                        onClick={() => toggleStatus(status)}
+                                        className={cn(
+                                            "text-[10px] px-2 py-0.5 rounded-full border transition-all font-medium",
+                                            statusFilter.includes(status)
+                                                ? `${config.bg} ${config.text} ${config.border}`
+                                                : "bg-background border-border text-muted-foreground hover:border-foreground/30"
+                                        )}
+                                    >
+                                        {status}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* ABC Filter */}
-                    <div className="space-y-1.5">
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Curva ABC</span>
-                        <div className="flex flex-wrap gap-2">
-                            {allAbc.map(abc => (
-                                <button
-                                    key={abc}
-                                    onClick={() => toggleAbc(abc)}
-                                    className={cn(
-                                        "h-6 w-8 flex items-center justify-center text-[10px] rounded border transition-all font-bold",
-                                        abcFilter.includes(abc)
-                                            ? abcColors[abc]
-                                            : "bg-background border-border text-muted-foreground hover:border-foreground/20"
-                                    )}
-                                >
-                                    {abc}
-                                </button>
-                            ))}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">ABC:</span>
+                        <div className="flex gap-1">
+                            {allAbc.map(abc => {
+                                const config = abcConfig[abc] || abcConfig['C'];
+                                return (
+                                    <button
+                                        key={abc}
+                                        onClick={() => toggleAbc(abc)}
+                                        className={cn(
+                                            "h-6 w-7 flex items-center justify-center text-[10px] rounded border transition-all font-bold",
+                                            abcFilter.includes(abc)
+                                                ? `${config.bg} ${config.text} border-transparent`
+                                                : "bg-background border-border text-muted-foreground hover:border-foreground/30"
+                                        )}
+                                    >
+                                        {abc}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
+
+                    {(statusFilter.length > 0 || abcFilter.length > 0 || search) && (
+                        <button
+                            onClick={() => { setStatusFilter([]); setAbcFilter([]); setSearch(''); }}
+                            className="text-[10px] text-red-400 hover:text-red-300 underline"
+                        >
+                            Limpar filtros
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Table Area */}
+            {/* Table */}
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-muted/50 text-xs uppercase text-muted-foreground border-b border-border">
+                    <table className="w-full text-left text-xs">
+                        <thead className="bg-muted/50 text-[10px] uppercase text-muted-foreground border-b border-border sticky top-0">
                             <tr>
-                                <th className="px-6 py-4 font-medium w-[40%]">Produto</th>
+                                <th className="px-4 py-3 font-semibold whitespace-nowrap min-w-[250px]">Produto</th>
+                                <th className="px-3 py-3 font-semibold text-center">Status</th>
+                                <th className="px-3 py-3 font-semibold text-center">ABC</th>
                                 <th
-                                    className="px-6 py-4 font-medium cursor-pointer hover:bg-muted/50 transition-colors"
+                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('estoque')}
                                 >
-                                    <div className="flex items-center gap-2">
-                                        Estoque
-                                        {sortConfig?.key === 'estoque' && (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        )}
-                                        {sortConfig?.key !== 'estoque' && <ArrowUpDown size={12} className="opacity-30" />}
-                                    </div>
+                                    <div className="flex items-center gap-1">Estoque <SortIcon field="estoque" /></div>
                                 </th>
                                 <th
-                                    className="px-6 py-4 font-medium cursor-pointer hover:bg-muted/50 transition-colors"
+                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    onClick={() => handleSort('cobertura')}
+                                >
+                                    <div className="flex items-center gap-1">Cobertura <SortIcon field="cobertura" /></div>
+                                </th>
+                                <th
+                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('preco')}
                                 >
-                                    <div className="flex items-center gap-2">
-                                        Preço
-                                        {sortConfig?.key === 'preco' && (
-                                            sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                                        )}
-                                        {sortConfig?.key !== 'preco' && <ArrowUpDown size={12} className="opacity-30" />}
-                                    </div>
+                                    <div className="flex items-center gap-1">Preço <SortIcon field="preco" /></div>
                                 </th>
-                                <th className="px-6 py-4 font-medium text-center">Status</th>
-                                <th className="px-6 py-4 font-medium text-center">ABC</th>
+                                <th
+                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    onClick={() => handleSort('custo')}
+                                >
+                                    <div className="flex items-center gap-1">Custo <SortIcon field="custo" /></div>
+                                </th>
+                                <th
+                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    onClick={() => handleSort('margemPercentual')}
+                                >
+                                    <div className="flex items-center gap-1">Margem % <SortIcon field="margemPercentual" /></div>
+                                </th>
+                                <th
+                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    onClick={() => handleSort('qtdVendida60d')}
+                                >
+                                    <div className="flex items-center gap-1">Vendas 60d <SortIcon field="qtdVendida60d" /></div>
+                                </th>
+                                <th
+                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    onClick={() => handleSort('faturamento60d')}
+                                >
+                                    <div className="flex items-center gap-1">Fat. 60d <SortIcon field="faturamento60d" /></div>
+                                </th>
+                                <th
+                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    onClick={() => handleSort('giroMensal')}
+                                >
+                                    <div className="flex items-center gap-1">Giro <SortIcon field="giroMensal" /></div>
+                                </th>
+                                <th className="px-3 py-3 font-semibold whitespace-nowrap">Tendência</th>
+                                <th
+                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    onClick={() => handleSort('sugestaoCompra')}
+                                >
+                                    <div className="flex items-center gap-1">Sug. Compra <SortIcon field="sugestaoCompra" /></div>
+                                </th>
+                                <th className="px-3 py-3 font-semibold whitespace-nowrap">Prioridade</th>
+                                <th className="px-3 py-3 font-semibold whitespace-nowrap">Alerta</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-border/50">
                             {paginatedProducts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-muted-foreground">
-                                        <Package className="mx-auto h-8 w-8 mb-3 opacity-20" />
-                                        Nenhum produto encontrado com os filtros atuais.
+                                    <td colSpan={15} className="py-16 text-center text-muted-foreground">
+                                        <Package className="mx-auto h-10 w-10 mb-3 opacity-20" />
+                                        <p>Nenhum produto encontrado.</p>
                                     </td>
                                 </tr>
                             ) : (
-                                paginatedProducts.map((product) => (
-                                    <tr key={product.id} className="group hover:bg-muted/30 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-lg bg-accent/50 flex items-center justify-center text-muted-foreground/50">
-                                                    <Package size={20} />
+                                paginatedProducts.map((product) => {
+                                    const statusCfg = statusConfig[product.status] || statusConfig['SAUDÁVEL'];
+                                    const abcCfg = abcConfig[product.abc] || abcConfig['C'];
+
+                                    return (
+                                        <tr key={product.id} className="group hover:bg-muted/30 transition-colors">
+                                            {/* Produto */}
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="h-8 w-8 rounded bg-muted/50 flex items-center justify-center text-muted-foreground/50 shrink-0">
+                                                        <Package size={16} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-foreground truncate max-w-[200px]" title={product.nome}>
+                                                            {product.nome}
+                                                        </p>
+                                                        <p className="text-[10px] text-muted-foreground font-mono">
+                                                            {product.id}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-medium text-foreground truncate max-w-[300px]" title={product.nome}>
-                                                        {product.nome}
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground flex items-center gap-2">
-                                                        SKU: <span className="font-mono bg-muted px-1 rounded">{product.id}</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="font-medium">{product.estoque.toLocaleString('pt-BR')} un</span>
-                                                <span className="text-[10px] text-muted-foreground">
-                                                    Cobertura: {product.cobertura.toFixed(0)} dias
+                                            </td>
+
+                                            {/* Status */}
+                                            <td className="px-3 py-3 text-center">
+                                                <span className={cn(
+                                                    "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                                                    statusCfg.bg, statusCfg.text
+                                                )}>
+                                                    {product.status}
                                                 </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 font-medium text-muted-foreground">
-                                            {formatCurrency(product.preco)}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <Badge
-                                                variant="outline"
-                                                className={cn(
-                                                    "border-0 font-medium px-2.5",
-                                                    statusColors[product.status] || "bg-secondary text-secondary-foreground"
+                                            </td>
+
+                                            {/* ABC */}
+                                            <td className="px-3 py-3 text-center">
+                                                <span className={cn(
+                                                    "inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold",
+                                                    abcCfg.bg, abcCfg.text
+                                                )}>
+                                                    {product.abc}
+                                                </span>
+                                            </td>
+
+                                            {/* Estoque */}
+                                            <td className="px-3 py-3 text-right font-medium">
+                                                {formatNumber(product.estoque)} un
+                                            </td>
+
+                                            {/* Cobertura */}
+                                            <td className="px-3 py-3 text-right">
+                                                <span className={cn(
+                                                    "font-medium",
+                                                    product.cobertura <= 7 && "text-red-400",
+                                                    product.cobertura > 7 && product.cobertura <= 30 && "text-amber-400",
+                                                    product.cobertura > 30 && "text-emerald-400"
+                                                )}>
+                                                    {formatNumber(product.cobertura, 0)} dias
+                                                </span>
+                                            </td>
+
+                                            {/* Preço */}
+                                            <td className="px-3 py-3 text-right font-medium">
+                                                {formatCurrency(product.preco)}
+                                            </td>
+
+                                            {/* Custo */}
+                                            <td className="px-3 py-3 text-right text-muted-foreground">
+                                                {formatCurrency(product.custo)}
+                                            </td>
+
+                                            {/* Margem % */}
+                                            <td className="px-3 py-3 text-right">
+                                                <span className={cn(
+                                                    "font-medium",
+                                                    product.margemPercentual >= 30 && "text-emerald-400",
+                                                    product.margemPercentual >= 15 && product.margemPercentual < 30 && "text-amber-400",
+                                                    product.margemPercentual < 15 && "text-red-400"
+                                                )}>
+                                                    {product.margemPercentual.toFixed(1)}%
+                                                </span>
+                                            </td>
+
+                                            {/* Vendas 60d */}
+                                            <td className="px-3 py-3 text-right font-medium">
+                                                {formatNumber(product.qtdVendida60d)} un
+                                            </td>
+
+                                            {/* Faturamento 60d */}
+                                            <td className="px-3 py-3 text-right text-muted-foreground">
+                                                {formatCurrency(product.faturamento60d)}
+                                            </td>
+
+                                            {/* Giro */}
+                                            <td className="px-3 py-3 text-right">
+                                                <span className={cn(
+                                                    product.giroMensal >= 1 ? "text-emerald-400" : "text-muted-foreground"
+                                                )}>
+                                                    {product.giroMensal.toFixed(2)}x
+                                                </span>
+                                            </td>
+
+                                            {/* Tendência */}
+                                            <td className="px-3 py-3">
+                                                <TrendBadge tendencia={product.tendencia} variacao={product.variacaoPercentual} />
+                                            </td>
+
+                                            {/* Sugestão Compra */}
+                                            <td className="px-3 py-3 text-right">
+                                                {product.sugestaoCompra > 0 ? (
+                                                    <span className="flex items-center justify-end gap-1 text-amber-400 font-medium">
+                                                        <ShoppingCart size={12} />
+                                                        {formatNumber(product.sugestaoCompra)}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted-foreground">-</span>
                                                 )}
-                                            >
-                                                {product.status}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={cn(
-                                                "inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold border",
-                                                abcColors[product.abc] || "border-border text-muted-foreground"
-                                            )}>
-                                                {product.abc}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))
+                                            </td>
+
+                                            {/* Prioridade */}
+                                            <td className="px-3 py-3 text-center">
+                                                <PriorityBadge priority={product.prioridadeCompra} />
+                                            </td>
+
+                                            {/* Alerta */}
+                                            <td className="px-3 py-3 text-center">
+                                                {product.alertaEstoque ? (
+                                                    <span className="text-[10px] whitespace-nowrap">
+                                                        {product.alertaEstoque}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted-foreground">-</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
                 </div>
 
-                {/* Footer / Pagination */}
-                <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
-                    <div className="text-xs text-muted-foreground">
-                        Mostrando <strong>{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</strong> a <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)}</strong> de <strong>{filteredProducts.length}</strong> produtos
+                {/* Pagination */}
+                <div className="flex items-center justify-between border-t border-border bg-muted/20 px-4 py-3">
+                    <div className="text-[11px] text-muted-foreground">
+                        <strong>{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</strong> - <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)}</strong> de <strong>{filteredProducts.length}</strong>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                         <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7 p-0"
                         >
-                            <ChevronLeft className="h-4 w-4" />
+                            <ChevronLeft size={16} />
                         </Button>
-                        <div className="flex items-center gap-1 text-sm font-medium px-2">
-                            Pagina {currentPage} de {totalPages || 1}
-                        </div>
+                        <span className="text-xs font-medium px-2 min-w-[80px] text-center">
+                            {currentPage} / {totalPages || 1}
+                        </span>
                         <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages || totalPages === 0}
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7 p-0"
                         >
-                            <ChevronRight className="h-4 w-4" />
+                            <ChevronRight size={16} />
                         </Button>
                     </div>
                 </div>
