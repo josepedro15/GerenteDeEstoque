@@ -322,12 +322,25 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     planMessage += `**Duração:** ${actualCampaign.duracao_sugerida}\n`;
                 }
 
+                // Formatar planData na estrutura esperada pelo StrategicPlanCard
+                const formattedPlan = {
+                    status: planStatus as 'aprovado' | 'ajuste_recomendado' | 'ajuste_necessario',
+                    mix_atual: actualCampaign?.plan?.mix_atual || { A: 0, B: 0, C: 0, total: 0 },
+                    mix_percentual: actualCampaign?.plan?.mix_percentual || actualCampaign?.mix_percentual || { A: '0%', B: '0%', C: '0%' },
+                    alertas: planAlerts,
+                    produtos: planProducts,
+                    estimativas: actualCampaign?.estimativas || actualCampaign?.plan?.estimativas || { faturamento_potencial: 0, desconto_medio: 0 },
+                    tipo_campanha_sugerido: actualCampaign?.tipo_campanha_sugerido || actualCampaign?.plan?.tipo_campanha_sugerido || 'queimao',
+                    duracao_sugerida: actualCampaign?.duracao_sugerida || actualCampaign?.plan?.duracao_sugerida || '7 dias',
+                    nome_sugerido: actualCampaign?.nome_sugerido || actualCampaign?.plan?.nome_sugerido || 'Promoção Especial'
+                };
+
                 const aiMsg: Message = {
                     id: (Date.now() + 1).toString(),
                     role: "assistant",
                     content: planMessage,
                     type: 'campaign_plan',
-                    planData: { campaign, products }
+                    planData: formattedPlan
                 };
 
                 setMessages(prev => [...prev, userMsg, aiMsg]);
