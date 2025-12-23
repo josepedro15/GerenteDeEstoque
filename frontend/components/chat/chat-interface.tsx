@@ -633,8 +633,11 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             const productIds = products.map(p => String(p.id));
             console.log("🚀 Gerando ativos para produtos:", productIds);
 
-            // Chama generateCampaign com os produtos do plano
-            const result = await generateCampaign(productIds);
+            // Chama generateCampaign com os produtos do plano e contexto de aprovação
+            const result = await generateCampaign(productIds, {
+                action: 'generate',
+                context: 'aprovado'
+            });
             console.log("📦 Resultado generateCampaign:", result);
 
             // Dispara evento para handleCampaignEvent processar

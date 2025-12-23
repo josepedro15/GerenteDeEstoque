@@ -95,8 +95,16 @@ async function uploadBase64ToStorage(
 
 // ... keep interfaces ...
 
-export async function generateCampaign(productIds: string[]) {
-    console.log("🚀 Starting Campaign Generation for IDs:", productIds);
+interface GenerateCampaignOptions {
+    action?: string;
+    context?: string;
+}
+
+export async function generateCampaign(productIds: string[], options?: GenerateCampaignOptions) {
+    const action = options?.action || 'generate_campaign';
+    const context = options?.context || 'Gerar campanha focada em conversão imediata (Excess Stock).';
+
+    console.log("🚀 Starting Campaign Generation for IDs:", productIds, { action, context });
 
     try {
         // 0. Initialize Server Client for Auth
@@ -150,7 +158,7 @@ export async function generateCampaign(productIds: string[]) {
 
         // 2. Prepare Payload for AI - Enviar TODOS os dados do produto para análise completa
         const payload = {
-            action: "generate_campaign",
+            action: action,
             user_id: userId,
             products: products.map(p => ({
                 // Identificadores
@@ -173,7 +181,7 @@ export async function generateCampaign(productIds: string[]) {
                 category: p.categoria
             })),
             date: new Date().toISOString().split('T')[0],
-            context: "Gerar campanha focada em conversão imediata (Excess Stock)."
+            context: context
         };
 
         console.log("📡 Sending Payload to N8N:", JSON.stringify(payload, null, 2));
