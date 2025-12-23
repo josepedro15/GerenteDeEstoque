@@ -19,7 +19,6 @@ interface MixValidation {
 
 interface MixValidationPanelProps {
     validation: MixValidation;
-    onFilterCurve: (abc: 'A' | 'B' | 'C') => void;
     onClose: () => void;
 }
 
@@ -35,7 +34,7 @@ const curveLabels = {
     C: 'Queima',
 };
 
-export function MixValidationPanel({ validation, onFilterCurve, onClose }: MixValidationPanelProps) {
+export function MixValidationPanel({ validation, onClose }: MixValidationPanelProps) {
     const { mixCount, mixPercent, missingCurves, status, title, description, suggestions } = validation;
 
     return (
@@ -136,28 +135,6 @@ export function MixValidationPanel({ validation, onFilterCurve, onClose }: MixVa
                                 </li>
                             ))}
                         </ul>
-                    </div>
-                )}
-
-                {/* Filter Buttons */}
-                {missingCurves.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                        {missingCurves.map(curve => (
-                            <button
-                                key={curve}
-                                onClick={() => onFilterCurve(curve)}
-                                className={cn(
-                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                                    curveColors[curve].light,
-                                    curveColors[curve].text,
-                                    "hover:opacity-80"
-                                )}
-                            >
-                                <Filter className="w-3 h-3" />
-                                Filtrar Curva {curve}
-                                <span className="opacity-60">({curveLabels[curve]})</span>
-                            </button>
-                        ))}
                     </div>
                 )}
 
