@@ -267,8 +267,13 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             if (isPlan) {
                 // PLANO ESTRATÉGICO - exibir como texto no chat
                 const planStatus = actualCampaign?.plan?.status || 'ajuste_recomendado';
-                const planAlerts = actualCampaign?.alertas || actualCampaign?.plan?.alertas || [];
-                const planProducts = actualCampaign?.produtos || actualCampaign?.plan?.produtos || [];
+                // Garantir que são arrays
+                const planAlerts = Array.isArray(actualCampaign?.alertas)
+                    ? actualCampaign.alertas
+                    : (Array.isArray(actualCampaign?.plan?.alertas) ? actualCampaign.plan.alertas : []);
+                const planProducts = Array.isArray(actualCampaign?.produtos)
+                    ? actualCampaign.produtos
+                    : (Array.isArray(actualCampaign?.plan?.produtos) ? actualCampaign.plan.produtos : []);
 
                 // Formatar mensagem do plano
                 let planMessage = "📋 **Plano Estratégico de Campanha**\n\n";
@@ -282,8 +287,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 // Adicionar alertas
                 if (planAlerts.length > 0) {
                     planMessage += "**Alertas:**\n";
-                    planAlerts.forEach((alert: string) => {
-                        planMessage += `• ${alert}\n`;
+                    planAlerts.forEach((alert: any) => {
+                        planMessage += `• ${String(alert)}\n`;
                     });
                     planMessage += "\n";
                 }
@@ -292,10 +297,10 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 if (planProducts.length > 0) {
                     planMessage += "**Produtos analisados:**\n";
                     planProducts.slice(0, 5).forEach((p: any) => {
-                        const curva = p.curva || p.abc_curve || '?';
-                        const papel = p.papel || 'Queima';
-                        const desconto = p.desconto_sugerido || 0;
-                        planMessage += `• ${p.nome || p.name} (Curva ${curva}) - ${papel} - ${desconto}% OFF\n`;
+                        const curva = p?.curva || p?.abc_curve || '?';
+                        const papel = p?.papel || 'Queima';
+                        const desconto = p?.desconto_sugerido || 0;
+                        planMessage += `• ${p?.nome || p?.name || 'Produto'} (Curva ${curva}) - ${papel} - ${desconto}% OFF\n`;
                     });
                     if (planProducts.length > 5) {
                         planMessage += `  ... e mais ${planProducts.length - 5} produtos\n`;
