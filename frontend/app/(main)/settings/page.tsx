@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Save, Phone, Bell, ShieldAlert, Calendar, Flame, Loader2, User, Camera } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { getUserSettings, saveUserSettings } from "@/app/actions/settings";
+import { uploadAvatar } from "@/app/actions/avatar";
 
 // Mock User ID for now (In a real app, this comes from Auth)
 const MOCK_USER_ID = "b3e2bb3f-d920-444c-87ea-dfbdcb144413";
@@ -71,14 +72,35 @@ export default function SettingsPage() {
 
     // Custom form action wrapper
     const handleSubmit = async (formData: FormData) => {
-        // Save profile to localStorage for immediate UI update (simulating DB)
         const name = formData.get('userName') as string;
         const role = formData.get('userRole') as string;
+
+        let avatarUrl = avatarPreview;
+
+        // Se tem um novo avatar (base64), fazer upload para o Supabase Storage
+        if (avatarPreview && avatarPreview.startsWith('data:')) {
+            try {
+                const uploadResult = await uploadAvatar(avatarPreview, MOCK_USER_ID);
+                if (uploadResult.error) {
+                    alert(`Erro no upload da foto: ${uploadResult.error}`);
+                    // Continua sem a foto
+                    avatarUrl = null;
+                } else {
+                    avatarUrl = uploadResult.url;
+                    setAvatarPreview(avatarUrl); // Atualiza para URL pública
+                }
+            } catch (err) {
+                console.error('Upload error:', err);
+                avatarUrl = null;
+            }
+        }
+
+        // Salva perfil no localStorage
         if (name && role) {
             localStorage.setItem("user_profile", JSON.stringify({
                 name,
                 role,
-                avatar: avatarPreview || null
+                avatar: avatarUrl
             }));
             window.dispatchEvent(new Event("user-profile-updated"));
         }
