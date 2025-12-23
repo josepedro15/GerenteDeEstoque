@@ -533,7 +533,39 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             // Tenta detectar se é uma resposta de plano estratégico (JSON)
             try {
                 const parsed = JSON.parse(response);
+
+                // VERIFICAR SE É RESPOSTA DE AJUDA (exibir como texto simples)
+                const isHelpResponse = parsed?.plan?.type === 'ajuda' ||
+                    parsed?.plan?.status === 'instrucao' ||
+                    parsed?.type === 'ajuda';
+
+                if (isHelpResponse) {
+                    const helpMessage = parsed?.plan?.mensagem ||
+                        parsed?.mensagem ||
+                        'Para criar uma campanha eficaz, selecione produtos das 3 curvas (A, B e C) e clique em Gerar Campanha.';
+
+                    const aiMsg: Message = {
+                        id: (Date.now() + 1).toString(),
+                        role: "assistant",
+                        content: `💡 **Dica:**\n\n${helpMessage}`
+                    };
+                    setMessages(prev => [...prev, aiMsg]);
+
+                    if (userId && sessionId) {
+                        saveChatMessage(userId, sessionId, 'assistant', helpMessage).catch(console.error);
+                    }
+                    setIsLoading(false);
+                    return;
+                }
+
                 if (parsed.type === 'campaign_plan' && parsed.plan) {
+                    // Validar que plan tem estrutura correta para StrategicPlanCard
+                    const validStatuses = ['aprovado', 'ajuste_recomendado', 'ajuste_necessario'];
+                    if (!validStatuses.includes(parsed.plan.status)) {
+                        // Status inválido - exibir como texto
+                        throw new Error('Invalid plan status for StrategicPlanCard');
+                    }
+
                     const aiMsg: Message = {
                         id: (Date.now() + 1).toString(),
                         role: "assistant",
@@ -550,7 +582,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     return;
                 }
             } catch (e) {
-                // Não é JSON, continua como texto normal
+                // Não é JSON ou tem estrutura inválida, continua como texto normal
             }
 
             const aiMsg: Message = {
