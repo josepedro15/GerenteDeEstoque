@@ -262,6 +262,69 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         return () => window.removeEventListener("chat:send-product", handleProductEvent as unknown as EventListener);
     }, [userId, sessionId]);
 
+    // Listener para análise em lote (vindo da sidebar)
+    useEffect(() => {
+        const handleBatchEvent = async (e: CustomEvent) => {
+            const { mode, products } = e.detail;
+
+            if (!products || products.length === 0) return;
+
+            let prompt = "";
+
+            // Formatar lista de produtos para o prompt
+            const productsList = products.map((p: any) =>
+                `- ${p.nome} (SKU: ${p.codigo_produto || p.id}): Estoque ${p.estoque_atual} un, ABC ${p.abc}, ${p.status}`
+            ).join('\n');
+
+            if (mode === 'analysis') {
+                prompt = `Atue como um Gestor de Compras Sênior. Gere uma sugestão de pedido de compra estratégica para os seguintes ${products.length} produtos:\n\n${productsList}\n\nREGRAS:\n1. Calcule a reposição ideal para cobrir 30 dias de vendas, considerando o estoque atual e a curva ABC de cada item.\n2. LEAD TIME (CRÍTICO): Aponte que esta sugestão assume entrega imediata. ALERTE explicitamente que é necessário somar o prazo de entrega do fornecedor para definir o Ponto de Pedido exato.\n3. Pergunte ao usuário: "Qual o prazo de entrega médio destes fornecedores?" para ajustar a sugestão.\n4. Apresente os cálculos de forma clara e profissional.`;
+            } else if (mode === 'purchase') {
+                prompt = `Gere ordens de compra para os seguintes produtos:\n\n${productsList}\n\nConsidere reposição para 30 dias.`;
+            }
+
+            // Simular mensagem do usuário
+            const userMsg: Message = {
+                id: Date.now().toString(),
+                role: "user",
+                content: prompt
+            };
+            setMessages(prev => [...prev, userMsg]);
+            setIsLoading(true);
+
+            // Salvar no histórico
+            if (userId && sessionId) {
+                saveChatMessage(userId, sessionId, 'user', prompt, { source: 'batch_action', data: { mode, products } }).catch(console.error);
+            }
+
+            try {
+                // Enviar para API
+                const response = await sendMessage(prompt, {
+                    products,
+                    type: 'batch_analysis'
+                });
+
+                const aiMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: "assistant",
+                    content: response
+                };
+                setMessages(prev => [...prev, aiMsg]);
+
+                if (userId && sessionId) {
+                    saveChatMessage(userId, sessionId, 'assistant', response).catch(console.error);
+                }
+            } catch (error) {
+                console.error(error);
+                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao processar análise em lote.' }]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        window.addEventListener("chat:analyze-batch", handleBatchEvent as unknown as EventListener);
+        return () => window.removeEventListener("chat:analyze-batch", handleBatchEvent as unknown as EventListener);
+    }, [userId, sessionId]);
+
     // Listener para campanhas geradas
     useEffect(() => {
         const handleCampaignEvent = async (e: CustomEvent) => {
