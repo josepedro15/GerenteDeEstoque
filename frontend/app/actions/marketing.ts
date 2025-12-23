@@ -148,16 +148,29 @@ export async function generateCampaign(productIds: string[]) {
 
         console.log(`✅ Found ${products.length} products. preparing payload...`);
 
-        // 2. Prepare Payload for AI
+        // 2. Prepare Payload for AI - Enviar TODOS os dados do produto para análise completa
         const payload = {
             action: "generate_campaign",
             user_id: userId,
             products: products.map(p => ({
+                // Identificadores
                 sku: p.id_produto,
                 name: p.produto_descricao,
-                price: p.preco,
+                // Estoque e cobertura
                 stock: p.estoque_atual,
-                coverage: p.dias_de_cobertura
+                coverage: p.dias_de_cobertura,
+                daily_sales: p.media_diaria_venda,
+                // Financeiro
+                price: p.preco,
+                cost: p.custo,
+                margin: p.margem_percentual,
+                // Classificação ABC - ESSENCIAL para validar mix
+                abc_curve: p.classe_abc,
+                status: p.status_ruptura,
+                // Dados adicionais úteis
+                unit: p.unidade_medida,
+                supplier: p.fornecedor,
+                category: p.categoria
             })),
             date: new Date().toISOString().split('T')[0],
             context: "Gerar campanha focada em conversão imediata (Excess Stock)."
