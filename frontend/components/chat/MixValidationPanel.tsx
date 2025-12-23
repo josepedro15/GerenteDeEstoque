@@ -38,7 +38,7 @@ export function MixValidationPanel({ validation, onClose }: MixValidationPanelPr
     const { mixCount, mixPercent, missingCurves, status, title, description, suggestions } = validation;
 
     return (
-        <div className="absolute bottom-full left-0 right-0 mb-2 mx-2 z-50">
+        <div className="fixed left-4 right-4 bottom-4 z-[100] lg:absolute lg:left-full lg:right-auto lg:bottom-0 lg:ml-4 lg:w-80 lg:mb-0">
             <div className={cn(
                 "rounded-xl border p-4 shadow-lg backdrop-blur-sm",
                 status === 'blocked'

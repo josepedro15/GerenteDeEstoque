@@ -61,6 +61,35 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
     const [generating, setGenerating] = useState(false);
     const [showMixPanel, setShowMixPanel] = useState(false);
 
+    // Filtros
+    const [showFilters, setShowFilters] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<string[]>([]);
+    const [abcFilter, setAbcFilter] = useState<string[]>([]);
+    const [coberturaFilter, setCoberturaFilter] = useState<string[]>([]);
+
+    // Toggle de filtros
+    const toggleStatusFilter = (status: string) => {
+        setStatusFilter(prev =>
+            prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+        );
+    };
+    const toggleAbcFilter = (abc: string) => {
+        setAbcFilter(prev =>
+            prev.includes(abc) ? prev.filter(a => a !== abc) : [...prev, abc]
+        );
+    };
+    const toggleCoberturaFilter = (value: string) => {
+        setCoberturaFilter(prev =>
+            prev.includes(value) ? prev.filter(c => c !== value) : [...prev, value]
+        );
+    };
+    const clearFilters = () => {
+        setStatusFilter([]);
+        setAbcFilter([]);
+        setCoberturaFilter([]);
+    };
+    const hasActiveFilters = statusFilter.length > 0 || abcFilter.length > 0 || coberturaFilter.length > 0;
+
 
 
     // Carregar produtos
@@ -146,9 +175,30 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         return () => { mounted = false; };
     }, []);
 
-    // Filtrar produtos conforme aba e busca
+    // Filtrar produtos conforme aba, busca e filtros
     const filteredProducts = useMemo(() => {
         let filtered = products;
+
+        // Filtro por status
+        if (statusFilter.length > 0) {
+            filtered = filtered.filter(p => statusFilter.includes(p.status));
+        }
+
+        // Filtro por curva ABC
+        if (abcFilter.length > 0) {
+            filtered = filtered.filter(p => abcFilter.includes(p.abc));
+        }
+
+        // Filtro por cobertura
+        if (coberturaFilter.length > 0) {
+            filtered = filtered.filter(p => {
+                return coberturaFilter.some(filterValue => {
+                    const option = coberturaOptions.find(o => o.value === filterValue);
+                    if (!option) return false;
+                    return p.cobertura >= option.min && p.cobertura < option.max;
+                });
+            });
+        }
 
         // Busca
         if (search.trim()) {
@@ -160,7 +210,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         }
 
         return filtered;
-    }, [products, search]);
+    }, [products, search, statusFilter, abcFilter, coberturaFilter]);
 
     // Toggle seleção para campanhas
     const toggleSelection = (id: string) => {
@@ -317,20 +367,117 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                         </div>
                     )}
 
-                    {/* Search Only */}
-                    <div className="relative">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Buscar por nome ou SKU..."
-                            className="w-full pl-9 pr-3 py-2 text-sm bg-accent border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                        />
+                    {/* Search + Filter Toggle */}
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Buscar por nome ou SKU..."
+                                className="w-full pl-9 pr-3 py-2 text-sm bg-accent border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={cn(
+                                "p-2 rounded-lg border transition-colors relative",
+                                showFilters || hasActiveFilters
+                                    ? "bg-blue-500/10 border-blue-500 text-blue-400"
+                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
+                            )}
+                            title="Filtros"
+                        >
+                            <Filter size={16} />
+                            {hasActiveFilters && (
+                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
+                            )}
+                        </button>
                     </div>
 
+                    {/* Filtros colapsáveis */}
+                    {showFilters && (
+                        <div className="mt-3 pt-3 border-t border-border space-y-3">
+                            {/* Status */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-medium text-muted-foreground">Status</span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {statusOptions.map(status => (
+                                        <button
+                                            key={status}
+                                            onClick={() => toggleStatusFilter(status)}
+                                            className={cn(
+                                                "text-[10px] px-2 py-1 rounded-full border transition-colors",
+                                                statusFilter.includes(status)
+                                                    ? statusColors[status] + " border-current"
+                                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            {status}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Curva ABC */}
+                            <div>
+                                <span className="text-xs font-medium text-muted-foreground block mb-2">Curva ABC</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {abcOptions.map(abc => (
+                                        <button
+                                            key={abc}
+                                            onClick={() => toggleAbcFilter(abc)}
+                                            className={cn(
+                                                "text-[10px] px-3 py-1 rounded-full border transition-colors font-bold",
+                                                abcFilter.includes(abc)
+                                                    ? abcColors[abc] + " border-current"
+                                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            {abc}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Cobertura */}
+                            <div>
+                                <span className="text-xs font-medium text-muted-foreground block mb-2">Cobertura</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {coberturaOptions.map(option => (
+                                        <button
+                                            key={option.value}
+                                            onClick={() => toggleCoberturaFilter(option.value)}
+                                            className={cn(
+                                                "text-[10px] px-2 py-1 rounded-full border transition-colors",
+                                                coberturaFilter.includes(option.value)
+                                                    ? "bg-blue-500/20 text-blue-400 border-blue-500"
+                                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Limpar filtros */}
+                            {hasActiveFilters && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                >
+                                    Limpar filtros
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     {/* Contador de resultados */}
-                    {search.trim() && !loading && (
+                    {(hasActiveFilters || search.trim()) && !loading && (
                         <div className="mt-2 text-xs text-muted-foreground">
                             {filteredProducts.length} produto(s) encontrado(s)
                         </div>
