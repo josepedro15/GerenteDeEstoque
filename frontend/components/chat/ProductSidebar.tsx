@@ -155,8 +155,8 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                     return (abcOrder[a.abc] || 3) - (abcOrder[b.abc] || 3);
                 });
 
-                // Limitar a 1000 produtos para performance
-                setProducts(simpleProducts.slice(0, 1000));
+                // Exibir todos os produtos (sem limite)
+                setProducts(simpleProducts);
             } catch (err: any) {
                 console.error("Erro ProductSidebar:", err);
                 if (mounted) {
@@ -481,7 +481,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                         </div>
                     ) : (
                         <div className="divide-y divide-border">
-                            {filteredProducts.slice(0, 100).map((product) => {
+                            {filteredProducts.map((product) => {
                                 const isSelected = selectedIds.includes(product.id);
 
                                 return (
