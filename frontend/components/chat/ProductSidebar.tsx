@@ -141,24 +141,13 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                         };
                     });
 
-                // Ordenar por prioridade de status (urgentes primeiro) e depois por ABC
-                const statusOrder: Record<string, number> = {
-                    'RUPTURA': 1,
-                    'CRÍTICO': 2,
-                    'ATENÇÃO': 3,
-                    'SAUDÁVEL': 4,
-                    'EXCESSO': 5,
-                };
-                const abcOrder: Record<string, number> = { 'A': 1, 'B': 2, 'C': 3 };
-
-                simpleProducts.sort((a, b) => {
-                    const statusDiff = (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
-                    if (statusDiff !== 0) return statusDiff;
-                    return (abcOrder[a.abc] || 3) - (abcOrder[b.abc] || 3);
-                });
+                // Deduplicar produtos por ID para evitar chaves duplicadas e bugs de seleção
+                const uniqueProducts = Array.from(
+                    new Map(simpleProducts.map(p => [p.id, p])).values()
+                );
 
                 // Exibir todos os produtos (sem limite)
-                setProducts(simpleProducts);
+                setProducts(uniqueProducts);
             } catch (err: any) {
                 console.error("Erro ProductSidebar:", err);
                 if (mounted) {
