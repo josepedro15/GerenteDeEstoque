@@ -581,6 +581,24 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     setIsLoading(false);
                     return;
                 }
+
+                // VERIFICAR SE É CAMPANHA COM CHANNELS (ativos finais)
+                if (parsed.channels && Object.keys(parsed.channels).length > 0) {
+                    const aiMsg: Message = {
+                        id: (Date.now() + 1).toString(),
+                        role: "assistant",
+                        content: "Campanha gerada com sucesso! Veja os materiais abaixo:",
+                        type: 'campaign',
+                        campaignData: { campaign: parsed, products: [] }
+                    };
+                    setMessages(prev => [...prev, aiMsg]);
+
+                    if (userId && sessionId) {
+                        saveChatMessage(userId, sessionId, 'assistant', 'Campanha gerada com materiais').catch(console.error);
+                    }
+                    setIsLoading(false);
+                    return;
+                }
             } catch (e) {
                 // Não é JSON ou tem estrutura inválida, continua como texto normal
             }
