@@ -133,7 +133,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                             id: String(p.id_produto || ''),
                             nome: String(p.produto_descricao || 'Sem nome'),
                             estoque: Number(String(p.estoque_atual || '0').replace(',', '.')) || 0,
-                            abc: String(p.classe_abc || 'C').toUpperCase(),
+                            abc: String(p.classe_abc || 'C').toUpperCase().trim(),
                             status: status,
                             cobertura: Number(String(p.dias_de_cobertura || '0').replace(',', '.')) || 0,
                             preco: Number(String(p.preco || '0').replace(',', '.')) || 0,
