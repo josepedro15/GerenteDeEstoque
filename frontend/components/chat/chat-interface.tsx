@@ -636,32 +636,49 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 
                 // NOVA LÓGICA: Detectar formato "json {...}" seguido de markdown
                 // Este é o formato do roteador n8n que retorna metadados + conteúdo
-                const jsonPrefixMatch = response.match(/^json\s*(\{[\s\S]*?\})\s*([\s\S]*)$/i);
-                if (jsonPrefixMatch) {
-                    // Resposta tem "json {...}" de metadados seguido de conteúdo
-                    const metadataJson = jsonPrefixMatch[1];
-                    textContent = jsonPrefixMatch[2]?.trim() || '';
+                if (response.toLowerCase().startsWith('json')) {
+                    // Encontrar onde o JSON termina (balanceando chaves)
+                    const jsonStartIndex = response.indexOf('{');
+                    if (jsonStartIndex !== -1) {
+                        let braceCount = 0;
+                        let jsonEndIndex = -1;
 
-                    // Se tem conteúdo textual após o JSON, exibir o texto ao invés do JSON
-                    if (textContent && textContent.length > 50) {
-                        // Remover possíveis artefatos de formatação
-                        textContent = textContent
-                            .replace(/^---\s*/, '')
-                            .replace(/^\s*```\s*/, '')
-                            .trim();
+                        for (let i = jsonStartIndex; i < response.length; i++) {
+                            if (response[i] === '{') braceCount++;
+                            else if (response[i] === '}') braceCount--;
 
-                        const aiMsg: Message = {
-                            id: (Date.now() + 1).toString(),
-                            role: "assistant",
-                            content: textContent
-                        };
-                        setMessages(prev => [...prev, aiMsg]);
-
-                        if (userId && sessionId) {
-                            saveChatMessage(userId, sessionId, 'assistant', textContent).catch(console.error);
+                            if (braceCount === 0) {
+                                jsonEndIndex = i;
+                                break;
+                            }
                         }
-                        setIsLoading(false);
-                        return;
+
+                        if (jsonEndIndex !== -1) {
+                            // Extrair conteúdo após o JSON
+                            textContent = response.substring(jsonEndIndex + 1).trim();
+
+                            // Se tem conteúdo textual após o JSON, exibir o texto ao invés do JSON
+                            if (textContent && textContent.length > 50) {
+                                // Remover possíveis artefatos de formatação
+                                textContent = textContent
+                                    .replace(/^---\s*/, '')
+                                    .replace(/^\s*```\s*/, '')
+                                    .trim();
+
+                                const aiMsg: Message = {
+                                    id: (Date.now() + 1).toString(),
+                                    role: "assistant",
+                                    content: textContent
+                                };
+                                setMessages(prev => [...prev, aiMsg]);
+
+                                if (userId && sessionId) {
+                                    saveChatMessage(userId, sessionId, 'assistant', textContent).catch(console.error);
+                                }
+                                setIsLoading(false);
+                                return;
+                            }
+                        }
                     }
                 }
 
