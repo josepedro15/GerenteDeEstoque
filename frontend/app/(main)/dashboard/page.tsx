@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { LayoutDashboard, Calendar, TrendingUp, AlertTriangle, DollarSign, Package, BarChart3, ArrowUpDown } from "lucide-react";
 import { getStockData } from "@/app/actions/inventory";
 import { calculateDashboardMetrics } from "@/lib/analytics";
+import { DashboardMetrics } from "@/types/analytics";
 import { KPIGrid } from "@/components/dashboard/KPIGrid";
 import { StockStatusPie } from "@/components/dashboard/StockStatusPie";
 import { CoverageBar } from "@/components/dashboard/CoverageBar";
@@ -17,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
-    const [metrics, setMetrics] = useState<any>(null);
+    const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -35,7 +36,7 @@ export default function DashboardPage() {
         load();
     }, []);
 
-    if (loading) {
+    if (loading || !metrics) {
         return (
             <div className="min-h-screen relative overflow-hidden">
                 <div className="absolute inset-0 -z-10 bg-background" />

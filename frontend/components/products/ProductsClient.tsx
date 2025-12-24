@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, memo } from "react";
 import {
     Search, ChevronLeft, ChevronRight, Package, ArrowUpDown, ArrowUp, ArrowDown,
     TrendingUp, TrendingDown, Minus, AlertTriangle, ShoppingCart, DollarSign,
@@ -9,6 +9,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatCurrency, formatNumber, formatPercent } from "@/lib/formatters";
+import { STATUS_COLORS, ABC_COLORS, STATUS_OPTIONS, ABC_OPTIONS } from "@/lib/constants";
 
 // Tipo completo com todos os campos
 export interface Product {
@@ -43,34 +45,6 @@ interface ProductsClientProps {
 }
 
 const ITEMS_PER_PAGE = 25;
-
-// Helpers de formatação
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-};
-
-const formatNumber = (value: number, decimals = 0) => {
-    return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: decimals }).format(value);
-};
-
-const formatPercent = (value: number) => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
-};
-
-// Cores por status
-const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
-    'RUPTURA': { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/30' },
-    'CRÍTICO': { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/30' },
-    'ATENÇÃO': { bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/30' },
-    'SAUDÁVEL': { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-    'EXCESSO': { bg: 'bg-blue-500/15', text: 'text-blue-400', border: 'border-blue-500/30' },
-};
-
-const abcConfig: Record<string, { bg: string; text: string }> = {
-    'A': { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-    'B': { bg: 'bg-blue-500/20', text: 'text-blue-400' },
-    'C': { bg: 'bg-zinc-500/20', text: 'text-zinc-400' },
-};
 
 // Componente de Tendência
 function TrendBadge({ tendencia, variacao }: { tendencia: string; variacao: number }) {
@@ -120,8 +94,8 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [sortConfig, setSortConfig] = useState<{ key: keyof Product; direction: 'asc' | 'desc' } | null>(null);
 
-    const allStatuses = ['RUPTURA', 'CRÍTICO', 'ATENÇÃO', 'SAUDÁVEL', 'EXCESSO'];
-    const allAbc = ['A', 'B', 'C'];
+    const STATUS_OPTIONS = ['RUPTURA', 'CRÍTICO', 'ATENÇÃO', 'SAUDÁVEL', 'EXCESSO'];
+    const ABC_OPTIONS = ['A', 'B', 'C'];
 
     // Sort handler
     const handleSort = (key: keyof Product) => {
@@ -241,8 +215,8 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Status:</span>
                         <div className="flex flex-wrap gap-1">
-                            {allStatuses.map(status => {
-                                const config = statusConfig[status] || statusConfig['SAUDÁVEL'];
+                            {STATUS_OPTIONS.map(status => {
+                                const config = STATUS_COLORS[status] || STATUS_COLORS['SAUDÁVEL'];
                                 return (
                                     <button
                                         key={status}
@@ -264,8 +238,8 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">ABC:</span>
                         <div className="flex gap-1">
-                            {allAbc.map(abc => {
-                                const config = abcConfig[abc] || abcConfig['C'];
+                            {ABC_OPTIONS.map(abc => {
+                                const config = ABC_COLORS[abc] || ABC_COLORS['C'];
                                 return (
                                     <button
                                         key={abc}
@@ -373,8 +347,8 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                 </tr>
                             ) : (
                                 paginatedProducts.map((product) => {
-                                    const statusCfg = statusConfig[product.status] || statusConfig['SAUDÁVEL'];
-                                    const abcCfg = abcConfig[product.abc] || abcConfig['C'];
+                                    const statusCfg = STATUS_COLORS[product.status] || STATUS_COLORS['SAUDÁVEL'];
+                                    const abcCfg = ABC_COLORS[product.abc] || ABC_COLORS['C'];
 
                                     return (
                                         <tr key={product.id} className="group hover:bg-muted/30 transition-colors">

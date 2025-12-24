@@ -6,6 +6,14 @@ import { getStockData } from "@/app/actions/inventory";
 import { generateCampaign } from "@/app/actions/marketing";
 import { cn } from "@/lib/utils";
 import { MixValidationPanel, validateAbcMix } from "./MixValidationPanel";
+import { normalizeStatus, parseNumber } from "@/lib/formatters";
+import {
+    STATUS_COLORS_COMPACT,
+    ABC_COLORS_COMPACT,
+    STATUS_OPTIONS,
+    ABC_OPTIONS,
+    COVERAGE_RANGES
+} from "@/lib/constants";
 
 interface ProductSidebarProps {
     isOpen: boolean;
@@ -20,32 +28,8 @@ interface SimpleProduct {
     status: string;
     cobertura: number;
     preco: number;
-    rawData: any; // Dados originais completos da row
+    rawData: any;
 }
-
-const statusColors: Record<string, string> = {
-    'RUPTURA': 'bg-red-500/20 text-red-400',
-    'CRÍTICO': 'bg-red-500/20 text-red-400',
-    'ATENÇÃO': 'bg-orange-500/20 text-orange-400',
-    'SAUDÁVEL': 'bg-green-500/20 text-green-400',
-    'EXCESSO': 'bg-blue-500/20 text-blue-400',
-};
-
-const abcColors: Record<string, string> = {
-    'A': 'bg-emerald-500/20 text-emerald-400',
-    'B': 'bg-blue-500/20 text-blue-400',
-    'C': 'bg-gray-500/20 text-gray-400',
-};
-
-// Opções de filtro
-const statusOptions = ['RUPTURA', 'CRÍTICO', 'ATENÇÃO', 'SAUDÁVEL', 'EXCESSO'];
-const abcOptions = ['A', 'B', 'C'];
-const coberturaOptions = [
-    { label: 'Crítica (< 7d)', value: 'low', min: 0, max: 7 },
-    { label: 'Atenção (7-30d)', value: 'medium', min: 7, max: 30 },
-    { label: 'Saudável (30-90d)', value: 'healthy', min: 30, max: 90 },
-    { label: 'Excesso (> 90d)', value: 'high', min: 90, max: 9999 },
-];
 
 export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
     const [products, setProducts] = useState<SimpleProduct[]>([]);
@@ -125,34 +109,16 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
 
                 const simpleProducts: SimpleProduct[] = result.detalhe
                     .filter((p: any) => p?.id_produto)
-                    .map((p: any) => {
-                        // Normalizar status - garantir matching correto
-                        let rawStatus = String(p.status_ruptura || 'SAUDÁVEL').toUpperCase().trim();
-                        // Remover acentos e caracteres especiais para comparação
-                        const normalizedStatus = rawStatus
-                            .normalize('NFD')
-                            .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-                            .replace(/[^A-Z\s]/g, '')
-                            .trim();
-                        // Mapear para status padronizado
-                        let status = 'SAUDÁVEL';
-                        if (normalizedStatus.includes('RUPTURA')) status = 'RUPTURA';
-                        else if (normalizedStatus.includes('CRITICO')) status = 'CRÍTICO';
-                        else if (normalizedStatus.includes('ATENCAO')) status = 'ATENÇÃO';
-                        else if (normalizedStatus.includes('SAUDAVEL')) status = 'SAUDÁVEL';
-                        else if (normalizedStatus.includes('EXCESSO')) status = 'EXCESSO';
-
-                        return {
-                            id: String(p.id_produto || ''),
-                            nome: String(p.produto_descricao || 'Sem nome'),
-                            estoque: Number(String(p.estoque_atual || '0').replace(',', '.')) || 0,
-                            abc: String(p.classe_abc || 'C').toUpperCase().trim(),
-                            status: status,
-                            cobertura: Number(String(p.dias_de_cobertura || '0').replace(',', '.')) || 0,
-                            preco: Number(String(p.preco || '0').replace(',', '.')) || 0,
-                            rawData: p, // Dados originais completos
-                        };
-                    });
+                    .map((p: any) => ({
+                        id: String(p.id_produto || ''),
+                        nome: String(p.produto_descricao || 'Sem nome'),
+                        estoque: parseNumber(p.estoque_atual),
+                        abc: String(p.classe_abc || 'C').toUpperCase().trim(),
+                        status: normalizeStatus(p.status_ruptura),
+                        cobertura: parseNumber(p.dias_de_cobertura),
+                        preco: parseNumber(p.preco),
+                        rawData: p,
+                    }));
 
                 // Deduplicar produtos por ID para evitar chaves duplicadas e bugs de seleção
                 const uniqueProducts = Array.from(
@@ -195,7 +161,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         if (coberturaFilter.length > 0) {
             filtered = filtered.filter(p => {
                 return coberturaFilter.some(filterValue => {
-                    const option = coberturaOptions.find(o => o.value === filterValue);
+                    const option = COVERAGE_RANGES.find(o => o.value === filterValue);
                     if (!option) return false;
                     return p.cobertura >= option.min && p.cobertura < option.max;
                 });
@@ -415,14 +381,14 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                                     <span className="text-xs font-medium text-muted-foreground">Status</span>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
-                                    {statusOptions.map(status => (
+                                    {STATUS_OPTIONS.map(status => (
                                         <button
                                             key={status}
                                             onClick={() => toggleStatusFilter(status)}
                                             className={cn(
                                                 "text-[10px] px-2 py-1 rounded-full border transition-colors",
                                                 statusFilter.includes(status)
-                                                    ? statusColors[status] + " border-current"
+                                                    ? STATUS_COLORS_COMPACT[status] + " border-current"
                                                     : "bg-accent border-border text-muted-foreground hover:text-foreground"
                                             )}
                                         >
@@ -436,14 +402,14 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                             <div>
                                 <span className="text-xs font-medium text-muted-foreground block mb-2">Curva ABC</span>
                                 <div className="flex flex-wrap gap-1.5">
-                                    {abcOptions.map(abc => (
+                                    {ABC_OPTIONS.map(abc => (
                                         <button
                                             key={abc}
                                             onClick={() => toggleAbcFilter(abc)}
                                             className={cn(
                                                 "text-[10px] px-3 py-1 rounded-full border transition-colors font-bold",
                                                 abcFilter.includes(abc)
-                                                    ? abcColors[abc] + " border-current"
+                                                    ? ABC_COLORS_COMPACT[abc] + " border-current"
                                                     : "bg-accent border-border text-muted-foreground hover:text-foreground"
                                             )}
                                         >
@@ -457,7 +423,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                             <div>
                                 <span className="text-xs font-medium text-muted-foreground block mb-2">Cobertura</span>
                                 <div className="flex flex-wrap gap-1.5">
-                                    {coberturaOptions.map(option => (
+                                    {COVERAGE_RANGES.map(option => (
                                         <button
                                             key={option.value}
                                             onClick={() => toggleCoberturaFilter(option.value)}
@@ -578,7 +544,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                                                     </span>
                                                     <span className={cn(
                                                         "text-[10px] px-1.5 py-0.5 rounded font-bold",
-                                                        abcColors[product.abc] || abcColors['C']
+                                                        ABC_COLORS_COMPACT[product.abc] || ABC_COLORS_COMPACT['C']
                                                     )}>
                                                         {product.abc}
                                                     </span>
@@ -586,7 +552,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className={cn(
                                                         "text-[10px] px-1.5 py-0.5 rounded",
-                                                        statusColors[product.status] || statusColors['SAUDÁVEL']
+                                                        STATUS_COLORS_COMPACT[product.status] || STATUS_COLORS_COMPACT['SAUDÁVEL']
                                                     )}>
                                                         {product.status}
                                                     </span>

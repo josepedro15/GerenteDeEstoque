@@ -39,3 +39,25 @@ export const cleanStatusText = (status: string): string => {
 
 export const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+export const formatNumber = (value: number, decimals = 0): string =>
+    new Intl.NumberFormat('pt-BR', { maximumFractionDigits: decimals }).format(value);
+
+export const formatPercent = (value: number, showSign = true): string => {
+    const sign = showSign && value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(1)}%`;
+};
+
+export const normalizeAbc = (abc: string | null | undefined): string => {
+    if (!abc) return 'C';
+    const upper = abc.toUpperCase().trim();
+    if (upper === 'A' || upper === 'B' || upper === 'C') return upper;
+    return 'C';
+};
+
+export const formatDate = (date: string | Date | null | undefined): string => {
+    if (!date) return '-';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('pt-BR');
+};
