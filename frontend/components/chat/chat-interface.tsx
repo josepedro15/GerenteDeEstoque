@@ -632,6 +632,38 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             try {
                 // Limpar resposta - extrair JSON válido
                 let jsonString = response;
+                let textContent = '';
+
+                // NOVA LÓGICA: Detectar formato "json {...}" seguido de markdown
+                // Este é o formato do roteador n8n que retorna metadados + conteúdo
+                const jsonPrefixMatch = response.match(/^json\s*(\{[\s\S]*?\})\s*([\s\S]*)$/i);
+                if (jsonPrefixMatch) {
+                    // Resposta tem "json {...}" de metadados seguido de conteúdo
+                    const metadataJson = jsonPrefixMatch[1];
+                    textContent = jsonPrefixMatch[2]?.trim() || '';
+
+                    // Se tem conteúdo textual após o JSON, exibir o texto ao invés do JSON
+                    if (textContent && textContent.length > 50) {
+                        // Remover possíveis artefatos de formatação
+                        textContent = textContent
+                            .replace(/^---\s*/, '')
+                            .replace(/^\s*```\s*/, '')
+                            .trim();
+
+                        const aiMsg: Message = {
+                            id: (Date.now() + 1).toString(),
+                            role: "assistant",
+                            content: textContent
+                        };
+                        setMessages(prev => [...prev, aiMsg]);
+
+                        if (userId && sessionId) {
+                            saveChatMessage(userId, sessionId, 'assistant', textContent).catch(console.error);
+                        }
+                        setIsLoading(false);
+                        return;
+                    }
+                }
 
                 // Encontrar primeiro { ou [ que indica início de JSON
                 const jsonStartBrace = response.indexOf('{');
@@ -656,6 +688,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 const jsonEnd = Math.max(lastBrace, lastBracket);
 
                 if (jsonEnd !== -1 && jsonEnd < jsonString.length - 1) {
+                    // Guardar texto após o JSON para possível exibição
+                    textContent = jsonString.substring(jsonEnd + 1).trim();
                     jsonString = jsonString.substring(0, jsonEnd + 1);
                 }
 
@@ -665,6 +699,32 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 // Se n8n retornar um array (comum em 'All Incoming Items'), pega o primeiro item
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     parsed = parsed[0];
+                }
+
+                // DETECTAR RESPOSTA DE ROTEAMENTO N8N (tem intent, route, entities, etc.)
+                if (parsed.intent || parsed.route || parsed.entities) {
+                    // Esta é uma resposta de roteamento, não o conteúdo real
+                    // Verificar se tem content_from_memory ou original_question
+                    const displayContent = parsed.content_from_memory ||
+                        parsed.original_question ||
+                        textContent ||
+                        'Processando sua solicitação...';
+
+                    // Se tiver texto após o JSON, mostrar esse texto
+                    if (textContent && textContent.length > 20) {
+                        const aiMsg: Message = {
+                            id: (Date.now() + 1).toString(),
+                            role: "assistant",
+                            content: textContent
+                        };
+                        setMessages(prev => [...prev, aiMsg]);
+
+                        if (userId && sessionId) {
+                            saveChatMessage(userId, sessionId, 'assistant', textContent).catch(console.error);
+                        }
+                        setIsLoading(false);
+                        return;
+                    }
                 }
 
                 // VERIFICAR SE É RESPOSTA DE AJUDA (exibir como texto simples)
