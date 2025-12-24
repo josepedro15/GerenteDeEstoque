@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { History, Calendar, Package, Trash2, Eye, X, Instagram, MessageCircle, Printer, Copy, Check, Loader2 } from "lucide-react";
+import { History, Calendar, Package, Trash2, Eye, X, Instagram, MessageCircle, Printer, Copy, Check, Loader2, Save, FileText } from "lucide-react";
 import { getAllCampaigns, deleteCampaign, SavedCampaign } from "@/app/actions/marketing";
 import { cn } from "@/lib/utils";
+import { TemplateSelector } from "@/components/marketing/TemplateSelector";
+import { SaveTemplateDialog } from "@/components/marketing/SaveTemplateDialog";
 
 export default function CampaignHistoryPage() {
     const [campaigns, setCampaigns] = useState<SavedCampaign[]>([]);
@@ -12,6 +14,7 @@ export default function CampaignHistoryPage() {
     const [selectedCampaign, setSelectedCampaign] = useState<SavedCampaign | null>(null);
     const [activeTab, setActiveTab] = useState<'instagram' | 'whatsapp' | 'physical'>('instagram');
     const [copied, setCopied] = useState<string | null>(null);
+    const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
 
     // Carregar campanhas
     useEffect(() => {
@@ -86,6 +89,9 @@ export default function CampaignHistoryPage() {
                                     {campaigns.length} campanha(s) gerada(s)
                                 </p>
                             </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <TemplateSelector onSelectTemplate={(t) => console.log('Template selected:', t)} />
                         </div>
                         <div className="mt-6 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     </header>
@@ -174,16 +180,27 @@ export default function CampaignHistoryPage() {
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <h3 className="font-bold text-foreground">Detalhes da Campanha</h3>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    {formatDate(selectedCampaign.created_at)}
-                                                </p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {formatDate(selectedCampaign.created_at)}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <button
-                                                onClick={() => setSelectedCampaign(null)}
-                                                className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground lg:hidden"
-                                            >
-                                                <X size={18} />
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setSaveTemplateOpen(true)}
+                                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-foreground text-xs font-medium transition-colors"
+                                                >
+                                                    <Save size={14} />
+                                                    <span className="hidden sm:inline">Salvar Template</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setSelectedCampaign(null)}
+                                                    className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground lg:hidden"
+                                                >
+                                                    <X size={18} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -315,6 +332,15 @@ export default function CampaignHistoryPage() {
                     </div>
                 </motion.div>
             </div>
-        </div>
+
+            <SaveTemplateDialog
+                campaign={selectedCampaign}
+                open={saveTemplateOpen}
+                onOpenChange={setSaveTemplateOpen}
+                onSaved={() => {
+                    // Opcional: mostrar toast de sucesso
+                }}
+            />
+        </div >
     );
 }

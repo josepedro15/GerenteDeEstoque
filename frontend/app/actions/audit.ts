@@ -11,6 +11,7 @@ export interface AuditLogEntry {
     entity_id: string | null;
     old_data: any | null;
     new_data: any | null;
+    metadata?: any | null;
     created_at: string;
 }
 
@@ -89,11 +90,46 @@ export async function getUserAuditLogs(
 }
 
 /**
+ * Busca logs de auditoria com paginação
+ */
+export async function getAuditLog(
+    limit = 20,
+    offset = 0
+): Promise<{ entries: AuditLogEntry[]; hasMore: boolean }> {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return { entries: [], hasMore: false };
+
+        const { data, error, count } = await supabase
+            .from('audit_log')
+            .select('*', { count: 'exact' })
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+
+        if (error) {
+            logger.error("Error fetching audit log:", error);
+            return { entries: [], hasMore: false };
+        }
+
+        const hasMore = count ? offset + limit < count : false;
+        return { entries: data || [], hasMore };
+    } catch (e) {
+        logger.error("Error fetching audit log:", e);
+        return { entries: [], hasMore: false };
+    }
+}
+
+/**
  * Ações comuns para logging
  */
 export const AUDIT_ACTIONS = {
     // Campanhas
     CAMPAIGN_CREATED: 'campaign.created',
+    CAMPAIGN_APPROVED: 'campaign.approved',
+    CAMPAIGN_SAVED: 'campaign.saved',
     CAMPAIGN_DELETED: 'campaign.deleted',
     CAMPAIGN_EXPORTED: 'campaign.exported',
 
@@ -108,8 +144,15 @@ export const AUDIT_ACTIONS = {
 
     // Chat
     CHAT_CLEARED: 'chat.cleared',
+    CHAT_SESSION_STARTED: 'chat.session_started',
 
     // Exportação
     EXPORT_EXCEL: 'export.excel',
     EXPORT_PDF: 'export.pdf',
+    DATA_EXPORTED: 'data.exported',
+
+    // Auth
+    LOGIN: 'auth.login',
+    LOGOUT: 'auth.logout',
 } as const;
+

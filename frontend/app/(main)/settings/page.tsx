@@ -8,6 +8,7 @@ import { getUserSettings, saveUserSettings } from "@/app/actions/settings";
 import { uploadAvatar } from "@/app/actions/avatar";
 import { createBrowserClient } from "@supabase/ssr";
 import { getUserProfile, updateUserProfile } from "@/app/actions/profile";
+import { AuditLogViewer } from "@/components/settings/AuditLogViewer";
 
 // Interface para configurações do usuário
 interface UserSettings {

@@ -286,6 +286,10 @@ export interface SavedCampaign {
     physical_offer: string | null;
     physical_image_url?: string | null;
     status: string;
+    analise_dados?: {
+        sugestao?: string;
+        [key: string]: any;
+    };
 }
 
 // Salvar campanha no banco (recebe URLs de imagens já upadas do cliente)
