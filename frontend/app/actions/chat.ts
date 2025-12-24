@@ -1,18 +1,28 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
 
 export async function sendMessage(message: string, product_data?: any) {
     try {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id || "anonymous";
+
+        // Apply rate limiting
+        try {
+            enforceRateLimit('chat', userId);
+        } catch (rateLimitError: any) {
+            return `Erro: ${rateLimitError.message}`;
+        }
 
         const webhookUrl = process.env.N8N_CHAT_WEBHOOK;
-        console.log("DEBUG: Connecting to n8n...");
-        console.log("DEBUG: Webhook URL:", webhookUrl);
+        logger.debug("Connecting to n8n...");
+        logger.debug("Webhook URL:", webhookUrl);
 
         if (!webhookUrl) {
-            console.error("DEBUG: N8N_CHAT_WEBHOOK is undefined!");
+            logger.error("N8N_CHAT_WEBHOOK is undefined!");
             return "Erro: Configuração de chat ausente (ENV).";
         }
 
@@ -22,16 +32,16 @@ export async function sendMessage(message: string, product_data?: any) {
             body: JSON.stringify({
                 message: message,
                 product_data: product_data,
-                user_id: user?.id || "anonymous"
+                user_id: userId
             })
         });
 
-        console.log("DEBUG: n8n Response Status:", response.status);
+        logger.debug("n8n Response Status:", response.status);
 
         if (!response.ok) {
-            console.error("DEBUG: n8n Error Text:", response.statusText);
+            logger.error("n8n Error Text:", response.statusText);
             const text = await response.text();
-            console.error("DEBUG: n8n Error Body:", text);
+            logger.error("n8n Error Body:", text);
             return `Erro no n8n (${response.status}): Tente novamente.`;
         }
 
@@ -44,7 +54,7 @@ export async function sendMessage(message: string, product_data?: any) {
             return text;
         }
     } catch (error: any) {
-        console.error("Chat Action Error:", error);
+        logger.error("Chat Action Error:", error);
         return `Erro Técnico: ${error.message || String(error)}`;
     }
 }

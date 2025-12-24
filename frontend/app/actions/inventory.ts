@@ -1,13 +1,97 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-import { EstoqueItem, EstoqueSumario, EstoqueDetalhe } from "@/types/estoque";
+import { EstoqueSumario, EstoqueDetalhe } from "@/types/estoque";
+import { logger } from "@/lib/logger";
 
 export interface StockData {
     sumario: EstoqueSumario[];
     detalhe: EstoqueDetalhe[];
 }
 
+// Filtros para busca paginada
+export interface StockFilters {
+    status?: string;
+    abc?: string;
+    search?: string;
+    minCoverage?: number;
+    maxCoverage?: number;
+}
+
+// Resultado paginado
+export interface PaginatedStockResult {
+    items: EstoqueDetalhe[];
+    totalCount: number;
+    currentPage: number;
+    totalPages: number;
+    pageSize: number;
+}
+
+/**
+ * Busca dados de estoque com paginação server-side
+ * Ideal para listagens de produtos onde não precisa de todos os dados
+ */
+export async function getStockDataPaginated(
+    page = 1,
+    pageSize = 50,
+    filters?: StockFilters
+): Promise<PaginatedStockResult> {
+    try {
+        const from = (page - 1) * pageSize;
+
+        // Construir query base
+        let query = supabase
+            .from('dados_estoque')
+            .select('*', { count: 'exact' })
+            .eq('tipo_registro', 'DETALHE')
+            .range(from, from + pageSize - 1)
+            .order('id', { ascending: true });
+
+        // Aplicar filtros
+        if (filters?.status) {
+            query = query.ilike('status_ruptura', `%${filters.status}%`);
+        }
+        if (filters?.abc) {
+            query = query.eq('classe_abc', filters.abc);
+        }
+        if (filters?.search) {
+            query = query.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
+        }
+
+        const { data, count, error } = await query;
+
+        if (error) {
+            logger.error("Supabase Error (paginated):", error);
+            throw error;
+        }
+
+        const totalCount = count || 0;
+        const totalPages = Math.ceil(totalCount / pageSize);
+
+        return {
+            items: (data || []) as EstoqueDetalhe[],
+            totalCount,
+            currentPage: page,
+            totalPages,
+            pageSize
+        };
+    } catch (error) {
+        logger.error("Database Error (paginated):", error);
+        return {
+            items: [],
+            totalCount: 0,
+            currentPage: page,
+            totalPages: 0,
+            pageSize
+        };
+    }
+}
+
+/**
+ * Busca TODOS os dados de estoque
+ * Usado pelo dashboard que precisa calcular métricas sobre todos os produtos
+ * @deprecated Para listagens, use getStockDataPaginated
+ */
 export async function getStockData(): Promise<StockData> {
     try {
         // Supabase has a default limit of 1000 rows per query
@@ -25,7 +109,7 @@ export async function getStockData(): Promise<StockData> {
                 .order('id', { ascending: true });
 
             if (error) {
-                console.error("Supabase Error:", error);
+                logger.error("Supabase Error:", error);
                 throw error;
             }
 
@@ -45,21 +129,20 @@ export async function getStockData(): Promise<StockData> {
             return { sumario: [], detalhe: [] };
         }
 
-        const rawData = allData;
+        // Filter by tipo_registro
+        const sumario = allData.filter(item => item.tipo_registro === 'SUMARIO') as EstoqueSumario[];
+        const detalhe = allData.filter(item => item.tipo_registro === 'DETALHE') as EstoqueDetalhe[];
 
-        // Filter SUMARIO: tipo_registro is 'SUMARIO'
-        const sumario = rawData.filter(item => item.tipo_registro === 'SUMARIO') as EstoqueSumario[];
-        const detalhe = rawData.filter(item => item.tipo_registro === 'DETALHE') as EstoqueDetalhe[];
-
+        logger.debug(`Loaded ${detalhe.length} products, ${sumario.length} summary records`);
         return { sumario, detalhe };
     } catch (error) {
-        console.error("Database Error:", error);
+        logger.error("Database Error:", error);
         return { sumario: [], detalhe: [] };
     }
 }
 
 
-// Deprecated: kept for backward compatibility if needed during transition, but simply calls the new one or returns empty
+// Deprecated: kept for backward compatibility
 export async function getStockAnalysis() {
     return [];
 }
@@ -75,3 +158,4 @@ export async function getSuppliers(): Promise<Supplier[]> {
     // Placeholder to fix build. Future todo: migrate suppliers to new architecture if needed.
     return [];
 }
+

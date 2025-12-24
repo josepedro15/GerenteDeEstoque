@@ -1,6 +1,8 @@
 'use server';
 
 import { supabase } from "@/lib/supabase";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
 
 // N8N Webhook URL - deve ser configurada via variável de ambiente
 const N8N_WEBHOOK_URL = process.env.N8N_MARKETING_WEBHOOK_URL || '';
@@ -54,7 +56,7 @@ export async function getExcessStockProducts(): Promise<ProductCandidate[]> {
         }));
 
     } catch (e) {
-        console.error("Error fetching excess stock:", e);
+        logger.error("Error fetching excess stock:", e);
         return [];
     }
 }
@@ -121,11 +123,11 @@ export async function generateCampaign(productIds: string[], options?: GenerateC
     const action = options?.action || 'generate_campaign';
     const context = options?.context || 'Gerar campanha focada em conversão imediata (Excess Stock).';
 
-    console.log("🚀 Starting Campaign Generation for IDs:", productIds, { action, context });
+    logger.info("Starting Campaign Generation for IDs:", productIds, { action, context });
 
     // Validar que a URL do webhook está configurada
     if (!N8N_WEBHOOK_URL) {
-        console.error("❌ N8N_MARKETING_WEBHOOK_URL não configurada");
+        logger.error("N8N_MARKETING_WEBHOOK_URL não configurada");
         return {
             success: false,
             error: "Configuração de marketing ausente. Verifique N8N_MARKETING_WEBHOOK_URL."
@@ -160,7 +162,17 @@ export async function generateCampaign(productIds: string[], options?: GenerateC
         // 0b. Get User Context safely
         const { data: { user } } = await supabase.auth.getUser();
         const userId = user?.id || 'anonymous';
-        console.log("👤 User ID (Server Auth):", userId);
+        logger.debug("User ID (Server Auth):", userId);
+
+        // Apply rate limiting
+        try {
+            enforceRateLimit('marketing', userId);
+        } catch (rateLimitError: any) {
+            return {
+                success: false,
+                error: rateLimitError.message
+            };
+        }
 
         // 1. Fetch full product details (using the same server client is fine)
         const { data: products, error } = await supabase
@@ -171,16 +183,16 @@ export async function generateCampaign(productIds: string[], options?: GenerateC
             .eq('tipo_registro', 'DETALHE');
 
         if (error) {
-            console.error("❌ Database Error fetching products:", error);
+            logger.error("Database Error fetching products:", error);
             throw error;
         }
 
         if (!products || products.length === 0) {
-            console.warn("⚠️ No products found for provided IDs");
+            logger.warn("No products found for provided IDs");
             throw new Error("Produtos não encontrados");
         }
 
-        console.log(`✅ Found ${products.length} products. preparing payload...`);
+        logger.info(`Found ${products.length} products. preparing payload...`);
 
         // 2. Prepare Payload for AI - Enviar TODOS os dados do produto para análise completa
         const payload = {
@@ -210,7 +222,7 @@ export async function generateCampaign(productIds: string[], options?: GenerateC
             context: context
         };
 
-        console.log("📡 Sending Payload to N8N:", JSON.stringify(payload, null, 2));
+        logger.debug("Sending Payload to N8N:", JSON.stringify(payload, null, 2));
 
         // 3. Send to N8N
         const response = await fetch(N8N_WEBHOOK_URL, {
@@ -219,28 +231,28 @@ export async function generateCampaign(productIds: string[], options?: GenerateC
             body: JSON.stringify(payload)
         });
 
-        console.log(`📡 N8N Response Status: ${response.status} ${response.statusText}`);
+        logger.debug(`N8N Response Status: ${response.status} ${response.statusText}`);
 
         if (!response.ok) {
             const text = await response.text();
-            console.error("❌ N8N Error Body:", text);
+            logger.error("N8N Error Body:", text);
             throw new Error(`Erro no N8N: ${response.statusText}`);
         }
 
         let aiResult = await response.json();
-        console.log("✅ N8N Success Response:", JSON.stringify(aiResult, null, 2));
+        logger.info("N8N Success Response received");
 
         // Handle N8N returning an array (common with 'All Incoming Items')
         if (Array.isArray(aiResult) && aiResult.length > 0) {
-            console.log("⚠️ N8N returned an array, using first item.");
+            logger.debug("N8N returned an array, using first item.");
             aiResult = aiResult[0];
         }
 
         // 4. Return formatted result
         if (aiResult.channels) {
-            console.log("🔑 Keys do Instagram:", Object.keys(aiResult.channels.instagram || {}));
-            console.log("🔑 Keys do Physical:", Object.keys(aiResult.channels.physical || {}));
-            console.log("🖼️ Instagram tem imagem?", !!(aiResult.channels.instagram?.image || aiResult.channels.instagram?.imageBase64));
+            logger.debug("Instagram keys:", Object.keys(aiResult.channels.instagram || {}));
+            logger.debug("Physical keys:", Object.keys(aiResult.channels.physical || {}));
+            logger.debug("Instagram has image:", !!(aiResult.channels.instagram?.image || aiResult.channels.instagram?.imageBase64));
             return aiResult;
         } else {
             return {
@@ -250,7 +262,7 @@ export async function generateCampaign(productIds: string[], options?: GenerateC
         }
 
     } catch (e) {
-        console.error("❌ Campaign Generation Critical Error:", e);
+        logger.error("Campaign Generation Critical Error:", e);
         return {
             success: false,
             error: "Falha ao conectar com o Agente de Marketing."
@@ -286,15 +298,15 @@ export async function saveCampaign(
     instagramImageUrl?: string,
     physicalImageUrl?: string
 ): Promise<{ success: boolean; id?: string; error?: string }> {
-    console.log("📝 saveCampaign chamado:", { userId, productsCount: products?.length, hasInstagramImg: !!instagramImageUrl, hasPhysicalImg: !!physicalImageUrl });
+    logger.debug("saveCampaign called:", { userId, productsCount: products?.length, hasInstagramImg: !!instagramImageUrl, hasPhysicalImg: !!physicalImageUrl });
 
     if (!userId) {
-        console.error("❌ userId não fornecido");
+        logger.error("userId não fornecido");
         return { success: false, error: "userId não fornecido" };
     }
 
     if (!products || products.length === 0) {
-        console.error("❌ Nenhum produto fornecido");
+        logger.error("Nenhum produto fornecido");
         return { success: false, error: "Nenhum produto fornecido" };
     }
 
@@ -326,7 +338,7 @@ export async function saveCampaign(
             insertData.physical_image_url = physicalImageUrl;
         }
 
-        console.log("📝 Salvando campanha...");
+        logger.debug("Salvando campanha...");
 
         const { data, error } = await supabase
             .from('campanhas_marketing')
@@ -335,14 +347,14 @@ export async function saveCampaign(
             .single();
 
         if (error) {
-            console.error("❌ Erro Supabase ao salvar campanha:", error);
+            logger.error("Erro Supabase ao salvar campanha:", error);
             return { success: false, error: error.message };
         }
 
-        console.log("✅ Campanha salva com ID:", data?.id);
+        logger.info("Campanha salva com ID:", data?.id);
         return { success: true, id: data?.id };
     } catch (e: any) {
-        console.error("❌ Erro ao salvar campanha:", e);
+        logger.error("Erro ao salvar campanha:", e);
         return { success: false, error: e.message };
     }
 }
@@ -362,20 +374,20 @@ export async function getCampaignHistory(
             .limit(limit);
 
         if (error) {
-            console.error("Erro ao buscar campanhas:", error);
+            logger.error("Erro ao buscar campanhas:", error);
             return [];
         }
 
         return data || [];
     } catch (e) {
-        console.error("Erro ao buscar campanhas:", e);
+        logger.error("Erro ao buscar campanhas:", e);
         return [];
     }
 }
 
 // Buscar todas as campanhas (para quando não tem user_id)
 export async function getAllCampaigns(limit: number = 50): Promise<SavedCampaign[]> {
-    console.log("📋 getAllCampaigns chamado, limit:", limit);
+    logger.debug("getAllCampaigns called, limit:", limit);
     try {
         const { data, error } = await supabase
             .from('campanhas_marketing')
@@ -385,14 +397,14 @@ export async function getAllCampaigns(limit: number = 50): Promise<SavedCampaign
             .limit(limit);
 
         if (error) {
-            console.error("❌ Erro ao buscar campanhas:", error);
+            logger.error("Erro ao buscar campanhas:", error);
             return [];
         }
 
-        console.log("✅ Campanhas encontradas:", data?.length || 0);
+        logger.debug("Campanhas encontradas:", data?.length || 0);
         return data || [];
     } catch (e) {
-        console.error("❌ Erro ao buscar campanhas:", e);
+        logger.error("Erro ao buscar campanhas:", e);
         return [];
     }
 }
@@ -406,13 +418,13 @@ export async function deleteCampaign(campaignId: string): Promise<boolean> {
             .eq('id', campaignId);
 
         if (error) {
-            console.error("Erro ao arquivar campanha:", error);
+            logger.error("Erro ao arquivar campanha:", error);
             return false;
         }
 
         return true;
     } catch (e) {
-        console.error("Erro ao arquivar campanha:", e);
+        logger.error("Erro ao arquivar campanha:", e);
         return false;
     }
 }
