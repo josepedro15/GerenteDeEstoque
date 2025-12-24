@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/formatters";
 import { STATUS_COLORS, ABC_COLORS, STATUS_OPTIONS, ABC_OPTIONS } from "@/lib/constants";
+import { ExportDropdown } from "@/components/products/ExportButton";
 
 // Tipo completo com todos os campos
 export interface Product {
@@ -188,11 +189,18 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                         {formatNumber(initialProducts.length)} produtos no catálogo
                     </p>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
+                <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <DollarSign size={14} className="text-emerald-400" />
                         Valor Total: {formatCurrency(initialProducts.reduce((acc, p) => acc + p.valorEstoqueVenda, 0))}
                     </span>
+                    <ExportDropdown
+                        filters={{
+                            status: statusFilter.join(','),
+                            abc: abcFilter.join(','),
+                            search: search
+                        }}
+                    />
                 </div>
             </div>
 

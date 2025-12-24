@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Save, Phone, Bell, ShieldAlert, Calendar, Flame, Loader2, User, Camera } from "lucide-react";
+import { Save, Phone, Bell, ShieldAlert, Calendar, Flame, Loader2, User, Camera, CheckCircle } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { getUserSettings, saveUserSettings } from "@/app/actions/settings";
 import { uploadAvatar } from "@/app/actions/avatar";
 import { createBrowserClient } from "@supabase/ssr";
+import { getUserProfile, updateUserProfile } from "@/app/actions/profile";
 
 // Interface para configurações do usuário
 interface UserSettings {
@@ -38,6 +39,9 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [profileName, setProfileName] = useState("");
+    const [profileRole, setProfileRole] = useState("");
+    const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -58,15 +62,32 @@ export default function SettingsPage() {
             }
 
             setUserId(user.id);
+
+            // Carregar configurações
             const data = await getUserSettings(user.id);
             setSettings(data || {});
 
-            // Carregar avatar do localStorage
-            const stored = localStorage.getItem("user_profile");
-            if (stored) {
-                const profile = JSON.parse(stored);
-                if (profile.avatar) {
-                    setAvatarPreview(profile.avatar);
+            // Carregar perfil do banco de dados
+            const profile = await getUserProfile();
+            if (profile) {
+                setProfileName(profile.display_name || '');
+                setProfileRole(profile.role || '');
+                setAvatarPreview(profile.avatar_url || null);
+
+                // Sincronizar com localStorage para sidebar
+                localStorage.setItem("user_profile", JSON.stringify({
+                    name: profile.display_name,
+                    role: profile.role,
+                    avatar: profile.avatar_url
+                }));
+            } else {
+                // Fallback para localStorage se não tiver no banco
+                const stored = localStorage.getItem("user_profile");
+                if (stored) {
+                    const localProfile = JSON.parse(stored);
+                    setProfileName(localProfile.name || '');
+                    setProfileRole(localProfile.role || '');
+                    setAvatarPreview(localProfile.avatar || null);
                 }
             }
 
@@ -107,11 +128,10 @@ export default function SettingsPage() {
                 const uploadResult = await uploadAvatar(avatarPreview, userId);
                 if (uploadResult.error) {
                     alert(`Erro no upload da foto: ${uploadResult.error}`);
-                    // Continua sem a foto
                     avatarUrl = null;
                 } else {
                     avatarUrl = uploadResult.url;
-                    setAvatarPreview(avatarUrl); // Atualiza para URL pública
+                    setAvatarPreview(avatarUrl);
                 }
             } catch (err) {
                 console.error('Upload error:', err);
@@ -119,18 +139,36 @@ export default function SettingsPage() {
             }
         }
 
-        // Salva perfil no localStorage
+        // Salvar perfil no BANCO DE DADOS
         if (name && role) {
-            localStorage.setItem("user_profile", JSON.stringify({
+            const profileResult = await updateUserProfile(
                 name,
                 role,
-                avatar: avatarUrl
-            }));
-            window.dispatchEvent(new Event("user-profile-updated"));
+                avatarUrl
+            );
+
+            if (!profileResult.success) {
+                alert(`Erro ao salvar perfil: ${profileResult.error}`);
+            } else {
+                // Sincronizar com localStorage para sidebar
+                localStorage.setItem("user_profile", JSON.stringify({
+                    name,
+                    role,
+                    avatar: avatarUrl
+                }));
+                window.dispatchEvent(new Event("user-profile-updated"));
+
+                // Atualizar estados locais
+                setProfileName(name);
+                setProfileRole(role);
+            }
         }
 
         const result = await saveUserSettings(null, formData);
-        alert(result.message);
+
+        // Mostrar mensagem de sucesso
+        setSaveMessage("Configurações salvas com sucesso!");
+        setTimeout(() => setSaveMessage(null), 3000);
     };
 
     if (loading) {
@@ -156,6 +194,14 @@ export default function SettingsPage() {
                         Gerencie seus canais de contato e preferências de notificação do Agente.
                     </p>
                 </header>
+
+                {/* Success Message */}
+                {saveMessage && (
+                    <div className="mb-6 flex items-center gap-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 px-4 py-3 text-emerald-400">
+                        <CheckCircle size={18} />
+                        <span className="font-medium">{saveMessage}</span>
+                    </div>
+                )}
 
                 <form action={handleSubmit} className="space-y-8">
                     <input type="hidden" name="userId" value={userId || ''} />
@@ -187,10 +233,7 @@ export default function SettingsPage() {
                                         />
                                     ) : (
                                         <span>
-                                            {typeof window !== 'undefined'
-                                                ? (JSON.parse(localStorage.getItem("user_profile") || '{}').name || "U").charAt(0).toUpperCase()
-                                                : "U"
-                                            }
+                                            {profileName ? profileName.charAt(0).toUpperCase() : "U"}
                                         </span>
                                     )}
                                 </div>
@@ -221,7 +264,8 @@ export default function SettingsPage() {
                                 <input
                                     type="text"
                                     name="userName"
-                                    defaultValue={typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("user_profile") || '{}').name || "Pedro Silva" : "Pedro Silva"}
+                                    value={profileName}
+                                    onChange={(e) => setProfileName(e.target.value)}
                                     placeholder="Seu nome"
                                     className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                 />
@@ -231,7 +275,8 @@ export default function SettingsPage() {
                                 <input
                                     type="text"
                                     name="userRole"
-                                    defaultValue={typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("user_profile") || '{}').role || "Gerente de Compras" : "Gerente de Compras"}
+                                    value={profileRole}
+                                    onChange={(e) => setProfileRole(e.target.value)}
                                     placeholder="Ex: Gerente de Compras"
                                     className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                 />
