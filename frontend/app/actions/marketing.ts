@@ -5,6 +5,23 @@ import { supabase } from "@/lib/supabase";
 // N8N Webhook URL - deve ser configurada via variável de ambiente
 const N8N_WEBHOOK_URL = process.env.N8N_MARKETING_WEBHOOK_URL || '';
 
+// Interface para dados do estoque do banco
+interface EstoqueRow {
+    id_produto: string;
+    produto_descricao: string;
+    estoque_atual: number | string;
+    preco: number | string;
+    dias_de_cobertura: number | string;
+    media_diaria_venda?: number | string;
+    custo?: number | string;
+    margem_percentual?: number | string;
+    classe_abc?: string;
+    status_ruptura?: string;
+    unidade_medida?: string;
+    fornecedor?: string;
+    categoria?: string;
+}
+
 export interface ProductCandidate {
     id: string;
     name: string;
@@ -28,7 +45,7 @@ export async function getExcessStockProducts(): Promise<ProductCandidate[]> {
         if (error) throw error;
         if (!data) return [];
 
-        return data.map((item: any) => ({
+        return (data as EstoqueRow[]).map((item) => ({
             id: item.id_produto, // matches DB 'id_produto'
             name: item.produto_descricao, // matches DB 'produto_descricao'
             stock: Number(item.estoque_atual || 0),
@@ -105,6 +122,15 @@ export async function generateCampaign(productIds: string[], options?: GenerateC
     const context = options?.context || 'Gerar campanha focada em conversão imediata (Excess Stock).';
 
     console.log("🚀 Starting Campaign Generation for IDs:", productIds, { action, context });
+
+    // Validar que a URL do webhook está configurada
+    if (!N8N_WEBHOOK_URL) {
+        console.error("❌ N8N_MARKETING_WEBHOOK_URL não configurada");
+        return {
+            success: false,
+            error: "Configuração de marketing ausente. Verifique N8N_MARKETING_WEBHOOK_URL."
+        };
+    }
 
     try {
         // 0. Initialize Server Client for Auth

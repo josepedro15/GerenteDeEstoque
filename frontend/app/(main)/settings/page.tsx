@@ -6,9 +6,18 @@ import { Save, Phone, Bell, ShieldAlert, Calendar, Flame, Loader2, User, Camera 
 import { useFormStatus } from "react-dom";
 import { getUserSettings, saveUserSettings } from "@/app/actions/settings";
 import { uploadAvatar } from "@/app/actions/avatar";
+import { createBrowserClient } from "@supabase/ssr";
 
-// Mock User ID for now (In a real app, this comes from Auth)
-const MOCK_USER_ID = "b3e2bb3f-d920-444c-87ea-dfbdcb144413";
+// Interface para configurações do usuário
+interface UserSettings {
+    phone_primary?: string;
+    phone_secondary?: string;
+    notification_preferences?: {
+        critical_rupture: boolean;
+        daily_briefing: boolean;
+        weekly_burn: boolean;
+    };
+}
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -25,16 +34,31 @@ function SubmitButton() {
 }
 
 export default function SettingsPage() {
-    const [state, formAction] = useState<any>(null);
+    const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [settings, setSettings] = useState<any>(null);
+    const [settings, setSettings] = useState<UserSettings | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         async function load() {
             setLoading(true);
-            const data = await getUserSettings(MOCK_USER_ID);
+
+            // Buscar usuário autenticado
+            const supabase = createBrowserClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            );
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                console.warn('Usuário não autenticado');
+                setLoading(false);
+                return;
+            }
+
+            setUserId(user.id);
+            const data = await getUserSettings(user.id);
             setSettings(data || {});
 
             // Carregar avatar do localStorage
@@ -78,9 +102,9 @@ export default function SettingsPage() {
         let avatarUrl = avatarPreview;
 
         // Se tem um novo avatar (base64), fazer upload para o Supabase Storage
-        if (avatarPreview && avatarPreview.startsWith('data:')) {
+        if (avatarPreview && avatarPreview.startsWith('data:') && userId) {
             try {
-                const uploadResult = await uploadAvatar(avatarPreview, MOCK_USER_ID);
+                const uploadResult = await uploadAvatar(avatarPreview, userId);
                 if (uploadResult.error) {
                     alert(`Erro no upload da foto: ${uploadResult.error}`);
                     // Continua sem a foto
@@ -106,11 +130,7 @@ export default function SettingsPage() {
         }
 
         const result = await saveUserSettings(null, formData);
-
-        // @ts-ignore
-        import("react-dom").then((rd) => {
-            alert(result.message);
-        });
+        alert(result.message);
     };
 
     if (loading) {
@@ -121,7 +141,7 @@ export default function SettingsPage() {
         );
     }
 
-    const prefs = settings.notification_preferences || { critical_rupture: true, daily_briefing: true, weekly_burn: true };
+    const prefs = settings?.notification_preferences || { critical_rupture: true, daily_briefing: true, weekly_burn: true };
 
     return (
         <div className="min-h-screen bg-background p-8 text-foreground">
@@ -138,7 +158,7 @@ export default function SettingsPage() {
                 </header>
 
                 <form action={handleSubmit} className="space-y-8">
-                    <input type="hidden" name="userId" value={MOCK_USER_ID} />
+                    <input type="hidden" name="userId" value={userId || ''} />
 
                     {/* Profile Section */}
                     <div className="rounded-2xl border border-border bg-accent p-8 backdrop-blur-xl">
@@ -237,7 +257,7 @@ export default function SettingsPage() {
                                 <input
                                     type="tel"
                                     name="phonePrimary"
-                                    defaultValue={settings.phone_primary}
+                                    defaultValue={settings?.phone_primary || ''}
                                     placeholder="+55 11 99999-9999"
                                     className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                 />
@@ -247,7 +267,7 @@ export default function SettingsPage() {
                                 <input
                                     type="tel"
                                     name="phoneSecondary"
-                                    defaultValue={settings.phone_secondary}
+                                    defaultValue={settings?.phone_secondary || ''}
                                     placeholder="+55 11 98888-8888"
                                     className="w-full rounded-lg border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                 />
