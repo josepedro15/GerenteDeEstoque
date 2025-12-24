@@ -2,8 +2,8 @@
 
 import { supabase } from "@/lib/supabase";
 
-// N8N Webhook URL provided by user
-const N8N_WEBHOOK_URL = 'https://webhook.aiensed.com/webhook/estoque';
+// N8N Webhook URL - deve ser configurada via variável de ambiente
+const N8N_WEBHOOK_URL = process.env.N8N_MARKETING_WEBHOOK_URL || '';
 
 export interface ProductCandidate {
     id: string;

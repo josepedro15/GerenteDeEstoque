@@ -6,15 +6,9 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
     LayoutDashboard,
-    Sparkles,
     Package,
-    Truck,
-    Calculator,
     Settings,
     LogOut,
-    BarChart,
-    BrainCircuit,
-    PackageCheck,
     Megaphone,
     Menu,
     X,
@@ -29,9 +23,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
     { icon: Package, label: "Produtos", href: "/products", activeColor: "text-emerald-400" },
-    // { icon: Sparkles, label: "Sugestões (IA)", href: "/recommendations", activeColor: "text-blue-400" },
     { icon: MessageCircle, label: "Bate-papo", href: "/chat", activeColor: "text-indigo-400" },
-    // { icon: BrainCircuit, label: "Simulador IA", href: "/simulator", activeColor: "text-purple-400" },
     { icon: Megaphone, label: "Campanhas", href: "/marketing", activeColor: "text-pink-400" },
 ];
 

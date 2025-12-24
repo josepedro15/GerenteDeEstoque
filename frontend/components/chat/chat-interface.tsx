@@ -15,6 +15,7 @@ import { CampaignCard } from "@/components/chat/CampaignCard";
 import { StrategicPlanCard } from "@/components/chat/StrategicPlanCard";
 import { saveCampaign, generateCampaign } from "@/app/actions/marketing";
 import { uploadImageToStorage } from "@/lib/storage";
+import { createBrowserClient } from "@supabase/ssr";
 
 interface Message {
     id: string;
@@ -38,18 +39,21 @@ function getOrCreateSessionId(): string {
     return newId;
 }
 
-// TODO: Substituir por contexto de auth real quando disponível
-function getUserId(): string {
-    // Por enquanto usando um placeholder - substituir por auth.uid() real
-    if (typeof window === 'undefined') return '';
+// Busca userId do usuário autenticado via Supabase
+async function fetchAuthenticatedUserId(): Promise<string | null> {
+    if (typeof window === 'undefined') return null;
 
-    const stored = localStorage.getItem('user_id');
-    if (stored) return stored;
-
-    // Fallback para desenvolvimento
-    const devId = '3afe2fba-ef22-474a-8888-d55380066dd3';
-    localStorage.setItem('user_id', devId);
-    return devId;
+    try {
+        const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        const { data: { user } } = await supabase.auth.getUser();
+        return user?.id || null;
+    } catch (error) {
+        console.error('Erro ao buscar usuário autenticado:', error);
+        return null;
+    }
 }
 
 
@@ -71,7 +75,15 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
     // Inicializa IDs no cliente
     useEffect(() => {
         setSessionId(getOrCreateSessionId());
-        setUserId(getUserId());
+
+        // Buscar userId do usuário autenticado
+        fetchAuthenticatedUserId().then(id => {
+            if (id) {
+                setUserId(id);
+            } else {
+                console.warn('Usuário não autenticado - funcionalidades de histórico desabilitadas');
+            }
+        });
 
         // Carregar avatar do localStorage
         const stored = localStorage.getItem("user_profile");

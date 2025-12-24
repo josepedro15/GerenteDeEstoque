@@ -1,9 +1,8 @@
-// @ts-nocheck
-import { Pool } from 'pg';
+import { Pool, QueryResult, QueryResultRow } from 'pg';
 
-let pool: Pool;
+let pool: Pool | null = null;
 
-export function getDb() {
+export function getDb(): Pool {
     if (!pool) {
         pool = new Pool({
             user: process.env.DB_USER || 'postgres',
@@ -16,7 +15,11 @@ export function getDb() {
     return pool;
 }
 
-export async function query(text: string, params: any[] = []) {
+export async function query<T extends QueryResultRow = QueryResultRow>(
+    text: string,
+    params: (string | number | boolean | null)[] = []
+): Promise<QueryResult<T>> {
     const db = getDb();
-    return db.query(text, params);
+    return db.query<T>(text, params);
 }
+
