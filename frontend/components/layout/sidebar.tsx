@@ -14,17 +14,22 @@ import {
     X,
     MessageCircle,
     Sun,
-    Moon
+    Moon,
+    Rocket,
+    BookOpen
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signout } from "@/app/login/actions";
 import { useTheme } from "@/contexts/ThemeContext";
+import { BranchSelector } from "@/components/layout/BranchSelector";
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
     { icon: Package, label: "Produtos", href: "/products", activeColor: "text-emerald-400" },
     { icon: MessageCircle, label: "Bate-papo", href: "/chat", activeColor: "text-indigo-400" },
     { icon: Megaphone, label: "Campanhas", href: "/marketing", activeColor: "text-pink-400" },
+    { icon: Rocket, label: "Roadmap", href: "/roadmap", activeColor: "text-blue-400" },
+    { icon: BookOpen, label: "Ajuda", href: "/help", activeColor: "text-amber-400" },
 ];
 
 // Theme Toggle Component
@@ -57,7 +62,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
     return (
         <div className="flex h-full flex-col px-4 py-6">
             {/* Logo Area */}
-            <div className="mb-10 flex items-center justify-between px-2">
+            <div className="mb-6 flex items-center justify-between px-2">
                 <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
                         S
@@ -72,6 +77,9 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
                     </button>
                 )}
             </div>
+
+            {/* Branch Selector */}
+            <BranchSelector />
 
             {/* Navigation */}
             <nav className="flex-1 space-y-2">
