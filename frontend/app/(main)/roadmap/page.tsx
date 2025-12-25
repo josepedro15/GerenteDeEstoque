@@ -33,74 +33,164 @@ const roadmapData: RoadmapItem[] = [
         eta: "Janeiro 2025",
         tags: ["UX"]
     },
-    // Planejado
+    // Planejado - Curto Prazo
     {
         id: "3",
         title: "Relatórios Exportáveis",
-        description: "Exportar análises e relatórios em PDF e Excel com gráficos e métricas.",
+        description: "Exportar dashboard, lista de compras e histórico de campanhas em PDF e Excel.",
         status: "planned",
-        eta: "Fevereiro 2025",
+        eta: "Janeiro 2025",
         tags: ["Relatórios"]
     },
     {
         id: "4",
         title: "Notificações por Email",
-        description: "Alertas automáticos de ruptura de estoque e oportunidades enviados por email.",
+        description: "Alertas automáticos de ruptura de estoque, resumo diário e oportunidades.",
         status: "planned",
-        eta: "Fevereiro 2025",
-        tags: ["Alertas"]
+        eta: "Janeiro 2025",
+        tags: ["Alertas", "Automação"]
     },
     {
         id: "5",
+        title: "UX Mobile Otimizada",
+        description: "Melhorias de responsividade: sidebar, tabelas, cards e gestures touch.",
+        status: "planned",
+        eta: "Janeiro 2025",
+        tags: ["UX", "Mobile"]
+    },
+    // Planejado - Médio Prazo
+    {
+        id: "6",
         title: "Dashboard Comparativo",
-        description: "Comparar performance entre filiais, períodos e categorias de produtos.",
+        description: "Comparar performance entre filiais, períodos e categorias. Gráficos de tendência temporal.",
+        status: "planned",
+        eta: "Fevereiro 2025",
+        tags: ["Analytics"]
+    },
+    {
+        id: "7",
+        title: "Gestão de Fornecedores",
+        description: "Página de fornecedores com histórico de lead times, avaliação de performance e integração com pedidos.",
+        status: "planned",
+        eta: "Fevereiro 2025",
+        tags: ["Fornecedores", "Core"]
+    },
+    {
+        id: "8",
+        title: "Pedidos de Compra Automáticos",
+        description: "Sugestão automática baseada em ROP, geração de PDF e envio por email ao fornecedor.",
         status: "planned",
         eta: "Março 2025",
-        tags: ["Analytics"]
+        tags: ["Automação", "Compras"]
+    },
+    {
+        id: "9",
+        title: "Histórico e Auditoria",
+        description: "Log completo de ações do usuário, histórico de alterações de estoque e timeline de atividades.",
+        status: "planned",
+        eta: "Março 2025",
+        tags: ["Auditoria", "Segurança"]
+    },
+    {
+        id: "10",
+        title: "Previsão de Demanda com IA",
+        description: "Machine Learning para prever demanda futura (30/60/90 dias) considerando sazonalidade.",
+        status: "planned",
+        eta: "Abril 2025",
+        tags: ["IA", "Analytics"]
     },
     // Em Consideração
     {
-        id: "6",
+        id: "11",
         title: "Integração com WhatsApp Business",
         description: "Enviar campanhas de marketing diretamente para WhatsApp Business API.",
         status: "considering",
         tags: ["Marketing", "Integração"]
     },
     {
-        id: "7",
-        title: "App Mobile",
-        description: "Aplicativo mobile nativo para consultas rápidas e notificações push.",
+        id: "12",
+        title: "Integrações com ERPs",
+        description: "Sync automático com Bling, Tiny, Omie e outros sistemas de gestão.",
         status: "considering",
-        tags: ["Mobile"]
+        tags: ["Integração", "ERP"]
     },
     {
-        id: "8",
-        title: "Previsão de Demanda com IA",
-        description: "Machine Learning para prever demanda futura e otimizar pedidos de compra.",
+        id: "13",
+        title: "Integrações E-commerce",
+        description: "Conectar com Shopify, WooCommerce, Nuvemshop para gestão omnichannel.",
         status: "considering",
-        tags: ["IA", "Analytics"]
+        tags: ["Integração", "E-commerce"]
+    },
+    {
+        id: "14",
+        title: "App Mobile Nativo",
+        description: "Aplicativo React Native/Flutter com notificações push e scan de código de barras.",
+        status: "considering",
+        tags: ["Mobile", "App"]
+    },
+    {
+        id: "15",
+        title: "Analytics Avançado",
+        description: "Gráficos interativos, cohort analysis, heatmap de vendas e análise de margem.",
+        status: "considering",
+        tags: ["Analytics", "BI"]
+    },
+    {
+        id: "16",
+        title: "Colaboração em Equipe",
+        description: "Comentários em produtos, tarefas atribuídas, notificações internas e permissões por papel.",
+        status: "considering",
+        tags: ["Colaboração", "UX"]
+    },
+    {
+        id: "17",
+        title: "Multi-Tenant / SaaS",
+        description: "Isolamento de dados por empresa, onboarding, planos e cobrança via Stripe.",
+        status: "considering",
+        tags: ["Plataforma", "Negócio"]
     },
     // Concluído
     {
-        id: "9",
+        id: "18",
         title: "Chat com IA",
         description: "Assistente inteligente para análise de estoque, sugestões de compra e geração de campanhas.",
         status: "completed",
         tags: ["IA", "Core"]
     },
     {
-        id: "10",
+        id: "19",
         title: "Geração de Campanhas de Marketing",
         description: "IA gera materiais para Instagram, WhatsApp e PDV automaticamente.",
         status: "completed",
         tags: ["Marketing", "IA"]
     },
     {
-        id: "11",
+        id: "20",
         title: "Análise Curva ABC",
         description: "Classificação automática de produtos por importância de vendas.",
         status: "completed",
         tags: ["Analytics"]
+    },
+    {
+        id: "21",
+        title: "Dashboard de Estoque",
+        description: "Visão geral com KPIs, gráficos de status e alertas em tempo real.",
+        status: "completed",
+        tags: ["Dashboard", "Core"]
+    },
+    {
+        id: "22",
+        title: "Simulador de Cenários",
+        description: "Simular impacto de promoções e ajustes de estoque.",
+        status: "completed",
+        tags: ["Simulação"]
+    },
+    {
+        id: "23",
+        title: "Página de Roadmap",
+        description: "Timeline visual de próximas funcionalidades e atualizações.",
+        status: "completed",
+        tags: ["UX"]
     }
 ];
 
