@@ -895,10 +895,10 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 
     return (
         <div className={cn(
-            "flex flex-col h-full",
+            "flex flex-col",
             fullPage
-                ? "w-full bg-transparent"
-                : "bg-transparent"
+                ? "w-full h-full bg-transparent"
+                : "h-full bg-transparent"
         )}>
             {/* Header - só mostra no widget flutuante quando hideHeader é false */}
             {!fullPage && !hideHeader && (
@@ -944,7 +944,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             {/* Messages Area */}
             <div
                 ref={scrollRef}
-                className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 lg:px-16 py-4 space-y-4">
+                className="flex-1 overflow-y-auto overscroll-contain px-3 sm:px-4 md:px-8 lg:px-16 py-4 space-y-4"
+                style={{ minHeight: 0 }}>
                 <div className="max-w-4xl mx-auto space-y-4">
                     {isLoadingHistory ? (
                         <div className="flex flex-col items-center justify-center h-full gap-3">
@@ -1052,7 +1053,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             </div>
 
             {/* Input Area */}
-            <div className="shrink-0 px-4 md:px-8 lg:px-16 py-4">
+            <div className="shrink-0 px-3 sm:px-4 md:px-8 lg:px-16 py-3 sm:py-4 border-t border-border/50 bg-background/80 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto">
                     {/* Quick Actions */}
                     {messages.length <= 1 && !isLoading && (

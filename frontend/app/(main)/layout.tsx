@@ -7,7 +7,7 @@ export default function MainLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex min-h-screen bg-background text-foreground">
+        <div className="flex min-h-[100dvh] bg-background text-foreground">
             {/* Sidebar Desktop (Fixed) */}
             <Sidebar />
 
