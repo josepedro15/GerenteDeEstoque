@@ -910,10 +910,10 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 
     return (
         <div className={cn(
-            "flex flex-col",
+            "flex flex-col overflow-hidden",
             fullPage
-                ? "w-full h-full bg-transparent"
-                : "h-full bg-transparent"
+                ? "w-full h-full absolute inset-0"
+                : "h-full"
         )}>
             {/* Header - só mostra no widget flutuante quando hideHeader é false */}
             {!fullPage && !hideHeader && (
@@ -959,8 +959,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             {/* Messages Area */}
             <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto overscroll-contain px-3 sm:px-4 md:px-8 lg:px-16 py-4 space-y-4"
-                style={{ minHeight: 0 }}>
+                className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-3 sm:px-4 md:px-8 lg:px-16 py-4 space-y-4"
+                style={{ minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
                 <div className="max-w-4xl mx-auto space-y-4">
                     {isLoadingHistory ? (
                         <div className="flex flex-col items-center justify-center h-full gap-3">

@@ -101,7 +101,7 @@ export default function ChatPage() {
                 </header>
 
                 {/* Chat Container - ocupa todo o espaço */}
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 relative">
                     <ChatInterface fullPage={true} />
                 </div>
             </div>
