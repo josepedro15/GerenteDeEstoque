@@ -60,7 +60,7 @@ export default function DashboardPage() {
                 <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[150px]" />
             </div>
 
-            <div className="p-6 lg:p-8">
+            <div className="p-4 sm:p-6 lg:p-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -91,7 +91,7 @@ export default function DashboardPage() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.3 }}
-                                        className="text-3xl lg:text-4xl font-bold tracking-tight text-foreground"
+                                        className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-foreground tracking-tight"
                                     >
                                         Visão Geral
                                     </motion.h1>

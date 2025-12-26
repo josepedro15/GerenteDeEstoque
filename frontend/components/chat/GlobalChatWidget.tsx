@@ -19,8 +19,8 @@ export function GlobalChatWidget() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         className={`rounded-2xl border border-border bg-card backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ${isExpanded
-                            ? "w-[800px] h-[80vh]"
-                            : "w-[400px] h-[600px] max-h-[80vh]"
+                            ? "fixed inset-4 sm:inset-auto sm:w-[800px] sm:h-[80vh] sm:relative"
+                            : "w-[calc(100vw-2rem)] sm:w-[400px] h-[70vh] sm:h-[600px] max-h-[80vh]"
                             }`}
                     >
                         {/* Header do Widget */}

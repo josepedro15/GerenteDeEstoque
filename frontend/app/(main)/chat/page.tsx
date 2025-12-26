@@ -28,7 +28,7 @@ export default function ChatPage() {
     }, []);
 
     return (
-        <div className="h-[calc(100vh-4rem)] md:h-screen relative overflow-hidden flex bg-background">
+        <div className="h-[calc(100dvh-4rem)] md:h-[100dvh] relative overflow-hidden flex bg-background">
             {/* Animated Background - only visible in dark mode */}
             <div className="absolute inset-0 -z-10 dark:block hidden">
                 <div className="absolute inset-0 bg-background" />
@@ -47,7 +47,7 @@ export default function ChatPage() {
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Header compacto */}
-                <header className="shrink-0 px-4 py-2 md:px-6 md:py-3 border-b border-border">
+                <header className="shrink-0 px-3 py-2 sm:px-4 md:px-6 md:py-3 border-b border-border">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {/* Toggle Sidebar Button */}
@@ -95,7 +95,7 @@ export default function ChatPage() {
                             title="Limpar histórico de conversa"
                         >
                             <Trash2 size={16} />
-                            <span className="text-sm font-medium hidden sm:inline">Limpar histórico</span>
+                            <span className="text-sm font-medium hidden md:inline">Limpar histórico</span>
                         </button>
                     </div>
                 </header>

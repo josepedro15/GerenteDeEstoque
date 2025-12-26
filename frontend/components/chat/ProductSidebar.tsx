@@ -295,7 +295,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
             />
 
             {/* Sidebar */}
-            <aside className="fixed lg:relative left-0 top-0 h-full w-80 bg-card border-r border-border z-50 flex flex-col">
+            <aside className="fixed lg:relative left-0 top-0 h-full w-[85vw] max-w-80 sm:w-80 bg-card border-r border-border z-50 flex flex-col">
                 {/* Tabs */}
                 <div className="flex border-b border-border">
                     <button

@@ -65,7 +65,7 @@ export function AlertPanel({ alerts, risk }: AlertPanelProps) {
             transition={{ duration: 0.5 }}
             className="mb-8 w-full"
         >
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {cards.map((card, index) => (
                     <motion.div
                         key={card.id}

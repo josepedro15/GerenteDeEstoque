@@ -351,7 +351,7 @@ export default function HelpPage() {
                 <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-emerald-600/10 rounded-full blur-[120px]" />
             </div>
 
-            <div className="p-6 lg:p-8">
+            <div className="p-4 sm:p-6 lg:p-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -375,32 +375,34 @@ export default function HelpPage() {
                         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     </header>
 
-                    <div className="grid gap-6 lg:grid-cols-12">
-                        {/* Navigation */}
-                        <nav className="lg:col-span-3 space-y-1">
-                            {helpSections.map((section) => (
-                                <button
-                                    key={section.id}
-                                    onClick={() => setActiveSection(section.id)}
-                                    className={cn(
-                                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all",
-                                        activeSection === section.id
-                                            ? "bg-accent border border-border"
-                                            : "hover:bg-accent/50"
-                                    )}
-                                >
-                                    <section.icon size={20} className={section.color} />
-                                    <span className={cn(
-                                        "font-medium",
-                                        activeSection === section.id ? "text-foreground" : "text-muted-foreground"
-                                    )}>
-                                        {section.title}
-                                    </span>
-                                    {activeSection === section.id && (
-                                        <ChevronRight size={16} className="ml-auto text-muted-foreground" />
-                                    )}
-                                </button>
-                            ))}
+                    <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
+                        {/* Navigation - horizontal scroll on mobile, sidebar on desktop */}
+                        <nav className="lg:col-span-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
+                            <div className="flex lg:flex-col gap-2 lg:gap-1 min-w-max lg:min-w-0">
+                                {helpSections.map((section) => (
+                                    <button
+                                        key={section.id}
+                                        onClick={() => setActiveSection(section.id)}
+                                        className={cn(
+                                            "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all",
+                                            activeSection === section.id
+                                                ? "bg-accent border border-border"
+                                                : "hover:bg-accent/50"
+                                        )}
+                                    >
+                                        <section.icon size={20} className={section.color} />
+                                        <span className={cn(
+                                            "font-medium",
+                                            activeSection === section.id ? "text-foreground" : "text-muted-foreground"
+                                        )}>
+                                            {section.title}
+                                        </span>
+                                        {activeSection === section.id && (
+                                            <ChevronRight size={16} className="ml-auto text-muted-foreground" />
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
 
                             <div className="pt-4 mt-4 border-t border-border">
                                 <button
@@ -412,12 +414,12 @@ export default function HelpPage() {
                                             : "hover:bg-accent/50"
                                     )}
                                 >
-                                    <HelpCircle size={20} className="text-amber-500" />
+                                    <HelpCircle size={18} className="sm:w-5 sm:h-5 text-amber-500" />
                                     <span className={cn(
-                                        "font-medium",
+                                        "font-medium whitespace-nowrap",
                                         activeSection === "faq" ? "text-foreground" : "text-muted-foreground"
                                     )}>
-                                        Perguntas Frequentes
+                                        FAQ
                                     </span>
                                 </button>
                             </div>

@@ -177,22 +177,22 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
     };
 
     return (
-        <div className="space-y-4 animate-in fade-in duration-300">
+        <div className="space-y-3 sm:space-y-4 p-2 sm:p-4 lg:p-0 animate-in fade-in duration-300">
             {/* Header */}
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                        <Layers className="text-primary" size={24} />
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                        <Layers className="text-primary" size={20} />
                         Gestão de Estoque
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         {formatNumber(initialProducts.length)} produtos no catálogo
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
                         <DollarSign size={14} className="text-emerald-400" />
-                        Valor Total: {formatCurrency(initialProducts.reduce((acc, p) => acc + p.valorEstoqueVenda, 0))}
+                        Valor: {formatCurrency(initialProducts.reduce((acc, p) => acc + p.valorEstoqueVenda, 0))}
                     </span>
                     <ExportDropdown
                         filters={{
@@ -205,7 +205,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
             </div>
 
             {/* Search + Filters */}
-            <div className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-card/50 backdrop-blur-sm">
+            <div className="flex flex-col gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl border border-border bg-card/50 backdrop-blur-sm">
                 <div className="flex flex-col md:flex-row gap-3 items-stretch">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -279,13 +279,13 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
 
             {/* Table */}
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                    <table className="w-full text-left text-xs min-w-[600px] lg:min-w-0">
                         <thead className="bg-muted/50 text-[10px] uppercase text-muted-foreground border-b border-border sticky top-0">
                             <tr>
-                                <th className="px-4 py-3 font-semibold whitespace-nowrap min-w-[250px]">Produto</th>
-                                <th className="px-3 py-3 font-semibold text-center">Status</th>
-                                <th className="px-3 py-3 font-semibold text-center">ABC</th>
+                                <th className="px-2 sm:px-4 py-3 font-semibold whitespace-nowrap min-w-[180px] sm:min-w-[250px]">Produto</th>
+                                <th className="px-2 sm:px-3 py-3 font-semibold text-center">Status</th>
+                                <th className="px-2 sm:px-3 py-3 font-semibold text-center">ABC</th>
                                 <th
                                     className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('estoque')}
@@ -299,50 +299,50 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                     <div className="flex items-center gap-1">Cobertura <SortIcon field="cobertura" /></div>
                                 </th>
                                 <th
-                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    className="px-2 sm:px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('preco')}
                                 >
                                     <div className="flex items-center gap-1">Preço <SortIcon field="preco" /></div>
                                 </th>
                                 <th
-                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    className="hidden md:table-cell px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('custo')}
                                 >
                                     <div className="flex items-center gap-1">Custo <SortIcon field="custo" /></div>
                                 </th>
                                 <th
-                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    className="hidden md:table-cell px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('margemPercentual')}
                                 >
                                     <div className="flex items-center gap-1">Margem % <SortIcon field="margemPercentual" /></div>
                                 </th>
                                 <th
-                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    className="hidden sm:table-cell px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('qtdVendida60d')}
                                 >
                                     <div className="flex items-center gap-1">Vendas 60d <SortIcon field="qtdVendida60d" /></div>
                                 </th>
                                 <th
-                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    className="hidden lg:table-cell px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('faturamento60d')}
                                 >
                                     <div className="flex items-center gap-1">Fat. 60d <SortIcon field="faturamento60d" /></div>
                                 </th>
                                 <th
-                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    className="hidden lg:table-cell px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('giroMensal')}
                                 >
                                     <div className="flex items-center gap-1">Giro <SortIcon field="giroMensal" /></div>
                                 </th>
-                                <th className="px-3 py-3 font-semibold whitespace-nowrap">Tendência</th>
+                                <th className="hidden lg:table-cell px-3 py-3 font-semibold whitespace-nowrap">Tendência</th>
                                 <th
-                                    className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
+                                    className="hidden sm:table-cell px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('sugestaoCompra')}
                                 >
                                     <div className="flex items-center gap-1">Sug. Compra <SortIcon field="sugestaoCompra" /></div>
                                 </th>
-                                <th className="px-3 py-3 font-semibold whitespace-nowrap">Prioridade</th>
-                                <th className="px-3 py-3 font-semibold whitespace-nowrap">Alerta</th>
+                                <th className="hidden xl:table-cell px-3 py-3 font-semibold whitespace-nowrap">Prioridade</th>
+                                <th className="hidden xl:table-cell px-3 py-3 font-semibold whitespace-nowrap">Alerta</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/50">
@@ -361,13 +361,13 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                     return (
                                         <tr key={product.id} className="group hover:bg-muted/30 transition-colors">
                                             {/* Produto */}
-                                            <td className="px-4 py-3">
+                                            <td className="px-2 sm:px-4 py-3">
                                                 <div className="flex items-center gap-2">
                                                     <div className="h-8 w-8 rounded bg-muted/50 flex items-center justify-center text-muted-foreground/50 shrink-0">
                                                         <Package size={16} />
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="font-medium text-foreground truncate max-w-[200px]" title={product.nome}>
+                                                        <p className="font-medium text-foreground truncate max-w-[140px] sm:max-w-[200px]" title={product.nome}>
                                                             {product.nome}
                                                         </p>
                                                         <p className="text-[10px] text-muted-foreground font-mono">
@@ -378,7 +378,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                             </td>
 
                                             {/* Status */}
-                                            <td className="px-3 py-3 text-center">
+                                            <td className="px-2 sm:px-3 py-3 text-center">
                                                 <span className={cn(
                                                     "text-[10px] font-semibold px-2 py-0.5 rounded-full",
                                                     statusCfg.bg, statusCfg.text
@@ -388,7 +388,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                             </td>
 
                                             {/* ABC */}
-                                            <td className="px-3 py-3 text-center">
+                                            <td className="px-2 sm:px-3 py-3 text-center">
                                                 <span className={cn(
                                                     "inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold",
                                                     abcCfg.bg, abcCfg.text
@@ -420,12 +420,12 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                             </td>
 
                                             {/* Custo */}
-                                            <td className="px-3 py-3 text-right text-muted-foreground">
+                                            <td className="hidden md:table-cell px-3 py-3 text-right text-muted-foreground">
                                                 {formatCurrency(product.custo)}
                                             </td>
 
                                             {/* Margem % */}
-                                            <td className="px-3 py-3 text-right">
+                                            <td className="hidden md:table-cell px-3 py-3 text-right">
                                                 <span className={cn(
                                                     "font-medium",
                                                     product.margemPercentual >= 30 && "text-emerald-400",
@@ -437,17 +437,17 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                             </td>
 
                                             {/* Vendas 60d */}
-                                            <td className="px-3 py-3 text-right font-medium">
+                                            <td className="hidden sm:table-cell px-3 py-3 text-right font-medium">
                                                 {formatNumber(product.qtdVendida60d)} un
                                             </td>
 
                                             {/* Faturamento 60d */}
-                                            <td className="px-3 py-3 text-right text-muted-foreground">
+                                            <td className="hidden lg:table-cell px-3 py-3 text-right text-muted-foreground">
                                                 {formatCurrency(product.faturamento60d)}
                                             </td>
 
                                             {/* Giro */}
-                                            <td className="px-3 py-3 text-right">
+                                            <td className="hidden lg:table-cell px-3 py-3 text-right">
                                                 <span className={cn(
                                                     product.giroMensal >= 1 ? "text-emerald-400" : "text-muted-foreground"
                                                 )}>
@@ -456,12 +456,12 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                             </td>
 
                                             {/* Tendência */}
-                                            <td className="px-3 py-3">
+                                            <td className="hidden lg:table-cell px-3 py-3">
                                                 <TrendBadge tendencia={product.tendencia} variacao={product.variacaoPercentual} />
                                             </td>
 
                                             {/* Sugestão Compra */}
-                                            <td className="px-3 py-3 text-right">
+                                            <td className="hidden sm:table-cell px-3 py-3 text-right">
                                                 {product.sugestaoCompra > 0 ? (
                                                     <span className="flex items-center justify-end gap-1 text-amber-400 font-medium">
                                                         <ShoppingCart size={12} />
@@ -473,12 +473,12 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                             </td>
 
                                             {/* Prioridade */}
-                                            <td className="px-3 py-3 text-center">
+                                            <td className="hidden xl:table-cell px-3 py-3 text-center">
                                                 <PriorityBadge priority={product.prioridadeCompra} />
                                             </td>
 
                                             {/* Alerta */}
-                                            <td className="px-3 py-3 text-center">
+                                            <td className="hidden xl:table-cell px-3 py-3 text-center">
                                                 {product.alertaEstoque ? (
                                                     <span className="text-[10px] whitespace-nowrap">
                                                         {product.alertaEstoque}
@@ -496,8 +496,8 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between border-t border-border bg-muted/20 px-4 py-3">
-                    <div className="text-[11px] text-muted-foreground">
+                <div className="flex items-center justify-between border-t border-border bg-muted/20 px-3 sm:px-4 py-2 sm:py-3">
+                    <div className="text-[10px] sm:text-[11px] text-muted-foreground">
                         <strong>{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</strong> - <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)}</strong> de <strong>{filteredProducts.length}</strong>
                     </div>
 
@@ -507,11 +507,11 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                             size="sm"
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="h-7 w-7 p-0"
+                            className="h-9 w-9 sm:h-7 sm:w-7 p-0"
                         >
-                            <ChevronLeft size={16} />
+                            <ChevronLeft size={18} className="sm:w-4 sm:h-4" />
                         </Button>
-                        <span className="text-xs font-medium px-2 min-w-[80px] text-center">
+                        <span className="text-xs font-medium px-1 sm:px-2 min-w-[60px] sm:min-w-[80px] text-center">
                             {currentPage} / {totalPages || 1}
                         </span>
                         <Button
@@ -519,9 +519,9 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                             size="sm"
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages || totalPages === 0}
-                            className="h-7 w-7 p-0"
+                            className="h-9 w-9 sm:h-7 sm:w-7 p-0"
                         >
-                            <ChevronRight size={16} />
+                            <ChevronRight size={18} className="sm:w-4 sm:h-4" />
                         </Button>
                     </div>
                 </div>

@@ -68,35 +68,38 @@ export default function CampaignHistoryPage() {
                 <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-pink-600/10 rounded-full blur-[120px]" />
             </div>
 
-            <div className="p-6 lg:p-8">
+            <div className="p-4 sm:p-6 lg:p-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mx-auto max-w-7xl"
                 >
                     {/* Header */}
-                    <header className="mb-8">
-                        <div className="flex items-center gap-4">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg shadow-purple-500/25">
-                                <History size={28} className="text-white" />
+                    <header className="mb-6 sm:mb-8">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-lg shadow-purple-500/25">
+                                    <History size={24} className="sm:hidden text-white" />
+                                    <History size={28} className="hidden sm:block text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                                        Histórico de Campanhas
+                                    </h1>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        {campaigns.length} campanha(s) gerada(s)
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-                                    Histórico de Campanhas
-                                </h1>
-                                <p className="text-muted-foreground mt-1">
-                                    {campaigns.length} campanha(s) gerada(s)
-                                </p>
-                            </div>
+                            <button
+                                onClick={() => router.push('/chat')}
+                                className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium text-sm hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/25 w-full sm:w-auto"
+                            >
+                                <Plus size={18} />
+                                Gerar Nova Campanha
+                            </button>
                         </div>
-                        <button
-                            onClick={() => router.push('/chat')}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium text-sm hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/25"
-                        >
-                            <Plus size={18} />
-                            Gerar Nova Campanha
-                        </button>
-                        <div className="mt-6 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                        <div className="mt-4 sm:mt-6 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     </header>
 
                     {/* Content */}

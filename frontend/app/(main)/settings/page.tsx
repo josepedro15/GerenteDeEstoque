@@ -183,7 +183,7 @@ export default function SettingsPage() {
     const prefs = settings?.notification_preferences || { critical_rupture: true, daily_briefing: true, weekly_burn: true };
 
     return (
-        <div className="min-h-screen bg-background p-8 text-foreground">
+        <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8 text-foreground">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
