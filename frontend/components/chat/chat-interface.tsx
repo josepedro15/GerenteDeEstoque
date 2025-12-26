@@ -811,18 +811,33 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 }
             } catch (e) {
                 // Não é JSON ou tem estrutura inválida, continua como texto normal
+                console.log("⚠️ Parse JSON falhou, usando resposta como texto:", e);
+            }
+
+            // LÓGICA FINAL: Se a resposta começa com JSON de roteamento, extrair apenas o texto
+            let finalContent = response;
+
+            // Detectar padrão: json {...} seguido de texto OU {...} seguido de texto
+            const jsonMatch = response.match(/^(json\s*)?\{[\s\S]*?\}([\s\S]*)/i);
+            if (jsonMatch && jsonMatch[2]) {
+                const textAfterJson = jsonMatch[2].trim();
+                if (textAfterJson.length > 10) {
+                    // Usar o texto após o JSON
+                    finalContent = textAfterJson;
+                    console.log("✅ Extraído texto após JSON:", finalContent.substring(0, 100) + "...");
+                }
             }
 
             const aiMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: response
+                content: finalContent
             };
             setMessages(prev => [...prev, aiMsg]);
 
             // Salva resposta da IA no banco (não bloqueia a UI)
             if (userId && sessionId) {
-                saveChatMessage(userId, sessionId, 'assistant', response).catch(console.error);
+                saveChatMessage(userId, sessionId, 'assistant', finalContent).catch(console.error);
             }
         } catch (error) {
             console.error(error);
