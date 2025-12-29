@@ -182,8 +182,56 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         router.push('/chat');
     };
 
-    const cleanContent = (text: string) => {
-        return text.replace(/^```markdown\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
+    // Clean markdown content - remove JSON routing metadata and markdown code fences
+    const cleanContent = (text: string): string => {
+        let cleaned = text;
+
+        // Remove markdown code fences
+        cleaned = cleaned.replace(/^```markdown\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
+
+        // Detectar e remover JSON de roteamento no início (formato: "json {...}" ou "{...}")
+        const trimmed = cleaned.trim();
+
+        // Verificar se começa com "json" seguido de {
+        const jsonPrefixMatch = trimmed.match(/^json\s*(\{)/i);
+        const startsWithBrace = trimmed.startsWith('{');
+
+        if (jsonPrefixMatch || startsWithBrace) {
+            // Encontrar onde o JSON começa
+            const jsonStartIndex = trimmed.indexOf('{');
+
+            if (jsonStartIndex !== -1) {
+                // Balancear chaves para encontrar o fim do JSON
+                let braceCount = 0;
+                let jsonEndIndex = -1;
+
+                for (let i = jsonStartIndex; i < trimmed.length; i++) {
+                    if (trimmed[i] === '{') braceCount++;
+                    else if (trimmed[i] === '}') braceCount--;
+
+                    if (braceCount === 0) {
+                        jsonEndIndex = i;
+                        break;
+                    }
+                }
+
+                if (jsonEndIndex !== -1) {
+                    // Extrair o conteúdo após o JSON
+                    const afterJson = trimmed.substring(jsonEndIndex + 1).trim();
+
+                    // Se há conteúdo significativo após o JSON, usar esse conteúdo
+                    if (afterJson.length > 20) {
+                        // Remover possíveis artefatos de formatação
+                        cleaned = afterJson
+                            .replace(/^---\s*/, '')
+                            .replace(/^\s*```\s*/, '')
+                            .trim();
+                    }
+                }
+            }
+        }
+
+        return cleaned;
     };
 
     // Limpar conversa
