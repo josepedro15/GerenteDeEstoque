@@ -177,7 +177,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
     };
 
     return (
-        <div className="space-y-3 sm:space-y-4 p-2 sm:p-4 lg:p-0 animate-in fade-in duration-300">
+        <div className="space-y-3 sm:space-y-4 p-2 sm:p-4 lg:p-6 animate-in fade-in duration-300">
             {/* Header */}
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
