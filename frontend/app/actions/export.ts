@@ -32,13 +32,24 @@ export async function prepareExportData(
             .order('produto_descricao', { ascending: true });
 
         // Aplicar filtros
-        if (filters?.status) {
-            query = query.ilike('status_ruptura', `%${filters.status}%`);
+        if (filters?.status && filters.status.trim()) {
+            const statusValues = filters.status.split(',').filter(s => s.trim());
+            if (statusValues.length === 1) {
+                query = query.ilike('status_ruptura', `%${statusValues[0]}%`);
+            } else if (statusValues.length > 1) {
+                // Usar 'in' para múltiplos valores
+                query = query.in('status_ruptura', statusValues.map(s => s.trim()));
+            }
         }
-        if (filters?.abc) {
-            query = query.eq('classe_abc', filters.abc);
+        if (filters?.abc && filters.abc.trim()) {
+            const abcValues = filters.abc.split(',').filter(a => a.trim());
+            if (abcValues.length === 1) {
+                query = query.eq('classe_abc', abcValues[0]);
+            } else if (abcValues.length > 1) {
+                query = query.in('classe_abc', abcValues.map(a => a.trim()));
+            }
         }
-        if (filters?.search) {
+        if (filters?.search && filters.search.trim()) {
             query = query.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
         }
 
