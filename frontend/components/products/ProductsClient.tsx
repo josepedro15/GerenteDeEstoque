@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/formatters";
 import { STATUS_COLORS, ABC_COLORS, STATUS_OPTIONS, ABC_OPTIONS } from "@/lib/constants";
-import { ExportDropdown } from "@/components/products/ExportButton";
 
 // Tipo completo com todos os campos
 export interface Product {
@@ -194,13 +193,6 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                         <DollarSign size={14} className="text-emerald-400" />
                         Valor: {formatCurrency(initialProducts.reduce((acc, p) => acc + p.valorEstoqueVenda, 0))}
                     </span>
-                    <ExportDropdown
-                        filters={{
-                            status: statusFilter.join(','),
-                            abc: abcFilter.join(','),
-                            search: search
-                        }}
-                    />
                 </div>
             </div>
 
