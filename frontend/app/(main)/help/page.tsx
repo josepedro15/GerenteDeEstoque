@@ -377,28 +377,28 @@ export default function HelpPage() {
 
                     <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
                         {/* Navigation - horizontal scroll on mobile, sidebar on desktop */}
-                        <nav className="lg:col-span-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
+                        <nav className="lg:col-span-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible scrollbar-hide">
                             <div className="flex lg:flex-col gap-2 lg:gap-1 min-w-max lg:min-w-0">
                                 {helpSections.map((section) => (
                                     <button
                                         key={section.id}
                                         onClick={() => setActiveSection(section.id)}
                                         className={cn(
-                                            "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all",
+                                            "flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl text-left transition-all shrink-0 lg:w-full",
                                             activeSection === section.id
                                                 ? "bg-accent border border-border"
                                                 : "hover:bg-accent/50"
                                         )}
                                     >
-                                        <section.icon size={20} className={section.color} />
+                                        <section.icon size={18} className={cn("lg:w-5 lg:h-5", section.color)} />
                                         <span className={cn(
-                                            "font-medium",
+                                            "text-sm font-medium whitespace-nowrap",
                                             activeSection === section.id ? "text-foreground" : "text-muted-foreground"
                                         )}>
                                             {section.title}
                                         </span>
                                         {activeSection === section.id && (
-                                            <ChevronRight size={16} className="ml-auto text-muted-foreground" />
+                                            <ChevronRight size={16} className="ml-auto text-muted-foreground hidden lg:block" />
                                         )}
                                     </button>
                                 ))}

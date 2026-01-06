@@ -65,9 +65,9 @@ Oferta: ${campaign?.channels?.physical?.offer || 'N/A'}
     ];
 
     return (
-        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg w-full max-w-xl mx-auto">
+        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg w-full max-w-lg mx-auto">
             {/* Header */}
-            <div className="p-4 border-b border-border bg-gradient-to-r from-pink-500/10 to-purple-500/10">
+            <div className="p-3 sm:p-4 border-b border-border bg-gradient-to-r from-pink-500/10 to-purple-500/10">
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="font-bold text-foreground flex items-center gap-2">
@@ -107,13 +107,13 @@ Oferta: ${campaign?.channels?.physical?.offer || 'N/A'}
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-border">
+            <div className="flex border-b border-border overflow-x-auto">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={cn(
-                            "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors",
+                            "flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-0",
                             activeTab === tab.id
                                 ? `text-foreground border-b-2 ${tab.id === 'instagram' ? 'border-pink-500' : tab.id === 'whatsapp' ? 'border-green-500' : 'border-orange-500'}`
                                 : "text-muted-foreground hover:text-foreground"
@@ -126,7 +126,7 @@ Oferta: ${campaign?.channels?.physical?.offer || 'N/A'}
             </div>
 
             {/* Content */}
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
                 {/* Instagram */}
                 {activeTab === 'instagram' && (
                     <div className="space-y-4">
