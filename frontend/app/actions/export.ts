@@ -70,10 +70,14 @@ export async function prepareExportData(
             'Alerta': item.alerta_estoque || ''
         }));
 
-        // Log audit
-        await logAuditAction(AUDIT_ACTIONS.EXPORT_EXCEL, 'products', undefined, {
-            new: { count: exportData.length, filters }
-        });
+        // Log audit (non-blocking - don't fail export if audit fails)
+        try {
+            await logAuditAction(AUDIT_ACTIONS.EXPORT_EXCEL, 'products', undefined, {
+                new: { count: exportData.length, filters }
+            });
+        } catch (auditError) {
+            logger.warn("Audit logging failed, but export continues:", auditError);
+        }
 
         return { success: true, data: exportData };
     } catch (e: any) {
@@ -155,8 +159,12 @@ export async function prepareDashboardExport(): Promise<{ success: boolean; data
                 }))
         };
 
-        // Log audit
-        await logAuditAction(AUDIT_ACTIONS.EXPORT_PDF, 'dashboard');
+        // Log audit (non-blocking)
+        try {
+            await logAuditAction(AUDIT_ACTIONS.EXPORT_PDF, 'dashboard');
+        } catch (auditError) {
+            logger.warn("Audit logging failed:", auditError);
+        }
 
         return { success: true, data: dashboardData };
     } catch (e: any) {
