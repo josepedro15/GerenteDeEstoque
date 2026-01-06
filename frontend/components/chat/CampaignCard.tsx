@@ -65,7 +65,7 @@ Oferta: ${campaign?.channels?.physical?.offer || 'N/A'}
     ];
 
     return (
-        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg max-w-2xl">
+        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg w-full max-w-xl mx-auto">
             {/* Header */}
             <div className="p-4 border-b border-border bg-gradient-to-r from-pink-500/10 to-purple-500/10">
                 <div className="flex items-center justify-between">
