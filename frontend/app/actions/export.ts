@@ -24,44 +24,63 @@ export async function prepareExportData(
             return { success: false, error: "Usuário não autenticado" };
         }
 
-        // Construir query
-        let query = supabase
-            .from('dados_estoque')
-            .select('*')
-            .eq('tipo_registro', 'DETALHE')
-            .order('produto_descricao', { ascending: true });
+        // Buscar todos os dados com paginação (Supabase tem limite de 1000 por query)
+        const PAGE_SIZE = 1000;
+        let allData: any[] = [];
+        let from = 0;
+        let hasMore = true;
 
-        // Aplicar filtros
-        if (filters?.status && filters.status.trim()) {
-            const statusValues = filters.status.split(',').filter(s => s.trim());
-            if (statusValues.length === 1) {
-                query = query.ilike('status_ruptura', `%${statusValues[0]}%`);
-            } else if (statusValues.length > 1) {
-                // Usar 'in' para múltiplos valores
-                query = query.in('status_ruptura', statusValues.map(s => s.trim()));
+        while (hasMore) {
+            let query = supabase
+                .from('dados_estoque')
+                .select('*')
+                .eq('tipo_registro', 'DETALHE')
+                .order('produto_descricao', { ascending: true })
+                .range(from, from + PAGE_SIZE - 1);
+
+            // Aplicar filtros
+            if (filters?.status && filters.status.trim()) {
+                const statusValues = filters.status.split(',').filter(s => s.trim());
+                if (statusValues.length === 1) {
+                    query = query.ilike('status_ruptura', `%${statusValues[0]}%`);
+                } else if (statusValues.length > 1) {
+                    query = query.in('status_ruptura', statusValues.map(s => s.trim()));
+                }
+            }
+            if (filters?.abc && filters.abc.trim()) {
+                const abcValues = filters.abc.split(',').filter(a => a.trim());
+                if (abcValues.length === 1) {
+                    query = query.eq('classe_abc', abcValues[0]);
+                } else if (abcValues.length > 1) {
+                    query = query.in('classe_abc', abcValues.map(a => a.trim()));
+                }
+            }
+            if (filters?.search && filters.search.trim()) {
+                query = query.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                logger.error("Error fetching export data:", error);
+                return { success: false, error: error.message };
+            }
+
+            if (!data || data.length === 0) {
+                hasMore = false;
+            } else {
+                allData = [...allData, ...data];
+                from += PAGE_SIZE;
+                if (data.length < PAGE_SIZE) {
+                    hasMore = false;
+                }
             }
         }
-        if (filters?.abc && filters.abc.trim()) {
-            const abcValues = filters.abc.split(',').filter(a => a.trim());
-            if (abcValues.length === 1) {
-                query = query.eq('classe_abc', abcValues[0]);
-            } else if (abcValues.length > 1) {
-                query = query.in('classe_abc', abcValues.map(a => a.trim()));
-            }
-        }
-        if (filters?.search && filters.search.trim()) {
-            query = query.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
-        }
 
-        const { data, error } = await query;
-
-        if (error) {
-            logger.error("Error fetching export data:", error);
-            return { success: false, error: error.message };
-        }
+        logger.info(`Export: fetched ${allData.length} products`);
 
         // Formatar dados para exportação
-        const exportData = (data || []).map((item: EstoqueDetalhe) => ({
+        const exportData = allData.map((item: EstoqueDetalhe) => ({
             'Código': item.id_produto || '',
             'Descrição': item.produto_descricao || '',
             'Estoque Atual': item.estoque_atual,
