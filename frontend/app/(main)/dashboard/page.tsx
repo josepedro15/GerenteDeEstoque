@@ -11,6 +11,7 @@ import { CoverageBar } from "@/components/dashboard/CoverageBar";
 import { TopOpportunities } from "@/components/dashboard/TopOpportunities";
 import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysisButton";
 import { AlertPanel } from "@/components/dashboard/AlertPanel";
+import { AlertProductsModal, AlertType } from "@/components/dashboard/AlertProductsModal";
 import { ABCDistribution } from "@/components/dashboard/ABCDistribution";
 import { TrendSummary } from "@/components/dashboard/TrendSummary";
 import { PriorityActionList } from "@/components/dashboard/PriorityActionList";
@@ -20,6 +21,17 @@ import { useEffect, useState } from "react";
 export default function DashboardPage() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
     const [loading, setLoading] = useState(true);
+    const [selectedAlert, setSelectedAlert] = useState<AlertType | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    function handleAlertClick(alertType: AlertType) {
+        setSelectedAlert(alertType);
+        setIsModalOpen(true);
+    }
+
+    function handleCloseModal() {
+        setIsModalOpen(false);
+    }
 
     useEffect(() => {
         async function load() {
@@ -67,7 +79,11 @@ export default function DashboardPage() {
                     className="mx-auto max-w-7xl space-y-8"
                 >
                     {/* SECTION 1: Alert Panel (substitui MorningBriefing) */}
-                    <AlertPanel alerts={metrics.alerts} risk={metrics.risk} />
+                    <AlertPanel
+                        alerts={metrics.alerts}
+                        risk={metrics.risk}
+                        onCardClick={handleAlertClick}
+                    />
 
                     {/* SECTION 2: Header */}
                     <header>
@@ -206,6 +222,15 @@ export default function DashboardPage() {
                     </motion.div>
                 </motion.div>
             </div>
+
+            {/* Modal de Produtos por Alerta */}
+            {selectedAlert && (
+                <AlertProductsModal
+                    isOpen={isModalOpen}
+                    onClose={handleCloseModal}
+                    alertType={selectedAlert}
+                />
+            )}
         </div>
     );
 }

@@ -16,6 +16,7 @@ export interface StockFilters {
     search?: string;
     minCoverage?: number;
     maxCoverage?: number;
+    alerta?: string; // 'MORTO', 'LIQUIDAR', 'RUPTURA', etc.
 }
 
 // Resultado paginado
@@ -56,6 +57,14 @@ export async function getStockDataPaginated(
         }
         if (filters?.search) {
             query = query.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
+        }
+        if (filters?.alerta) {
+            // Filtro especial para RUPTURA que usa status_ruptura
+            if (filters.alerta === 'RUPTURA') {
+                query = query.or('status_ruptura.ilike.%RUPTURA%,status_ruptura.ilike.%CRÍTICO%');
+            } else {
+                query = query.ilike('alerta_estoque', `%${filters.alerta}%`);
+            }
         }
 
         const { data, count, error } = await query;

@@ -1,62 +1,79 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Skull, AlertTriangle, Flame, Eye, CheckCircle, ArrowRight } from "lucide-react";
+import { Skull, AlertTriangle, Flame, ArrowRight } from "lucide-react";
 import { DashboardMetrics } from "@/types/analytics";
 import { formatCurrency } from "@/lib/formatters";
+import { AlertType } from "./AlertProductsModal";
 
 interface AlertPanelProps {
     alerts: DashboardMetrics['alerts'];
     risk: DashboardMetrics['risk'];
+    onCardClick?: (alertType: AlertType) => void;
 }
 
-export function AlertPanel({ alerts, risk }: AlertPanelProps) {
-    const cards = [
-        {
-            id: 'mortos',
-            icon: Skull,
-            label: 'Produtos Mortos',
-            sublabel: 'Sem vendas em 60 dias',
-            count: alerts.mortos.count,
-            value: alerts.mortos.value,
-            color: 'gray',
-            bgGradient: 'from-gray-500/10 to-background',
-            borderColor: 'border-gray-500/20',
-            hoverBorder: 'hover:border-gray-500/40',
-            textColor: 'text-gray-400',
-            actionLabel: 'Liquidar itens',
-        },
-        {
-            id: 'liquidar',
-            icon: Flame,
-            label: 'Liquidar Urgente',
-            sublabel: 'Cobertura > 1 ano (Curva C)',
-            count: alerts.liquidar.count,
-            value: alerts.liquidar.value,
-            color: 'red',
-            bgGradient: 'from-red-500/10 to-background',
-            borderColor: 'border-red-500/20',
-            hoverBorder: 'hover:border-red-500/40',
-            textColor: 'text-red-400',
-            actionLabel: 'Criar promoção',
-        },
-        {
-            id: 'ruptura',
-            icon: AlertTriangle,
-            label: 'Ruptura/Crítico',
-            sublabel: 'Perdendo vendas agora',
-            count: risk.ruptureCount,
-            value: 0, // Calculado diferente
-            color: 'orange',
-            bgGradient: 'from-orange-500/10 to-background',
-            borderColor: 'border-orange-500/20',
-            hoverBorder: 'hover:border-orange-500/40',
-            textColor: 'text-orange-400',
-            actionLabel: 'Comprar urgente',
-            showPercentage: true,
-            percentage: risk.ruptureShare,
-        },
-    ];
+export function AlertPanel({ alerts, risk, onCardClick }: AlertPanelProps) {
+    const cards: {
+        id: AlertType;
+        icon: typeof Skull;
+        label: string;
+        sublabel: string;
+        count: number;
+        value: number;
+        color: string;
+        bgGradient: string;
+        borderColor: string;
+        hoverBorder: string;
+        textColor: string;
+        actionLabel: string;
+        showPercentage?: boolean;
+        percentage?: number;
+    }[] = [
+            {
+                id: 'mortos',
+                icon: Skull,
+                label: 'Produtos Mortos',
+                sublabel: 'Sem vendas em 60 dias',
+                count: alerts.mortos.count,
+                value: alerts.mortos.value,
+                color: 'gray',
+                bgGradient: 'from-gray-500/10 to-background',
+                borderColor: 'border-gray-500/20',
+                hoverBorder: 'hover:border-gray-500/40',
+                textColor: 'text-gray-400',
+                actionLabel: 'Liquidar itens',
+            },
+            {
+                id: 'liquidar',
+                icon: Flame,
+                label: 'Liquidar Urgente',
+                sublabel: 'Cobertura > 1 ano (Curva C)',
+                count: alerts.liquidar.count,
+                value: alerts.liquidar.value,
+                color: 'red',
+                bgGradient: 'from-red-500/10 to-background',
+                borderColor: 'border-red-500/20',
+                hoverBorder: 'hover:border-red-500/40',
+                textColor: 'text-red-400',
+                actionLabel: 'Criar promoção',
+            },
+            {
+                id: 'ruptura',
+                icon: AlertTriangle,
+                label: 'Ruptura/Crítico',
+                sublabel: 'Perdendo vendas agora',
+                count: risk.ruptureCount,
+                value: 0,
+                color: 'orange',
+                bgGradient: 'from-orange-500/10 to-background',
+                borderColor: 'border-orange-500/20',
+                hoverBorder: 'hover:border-orange-500/40',
+                textColor: 'text-orange-400',
+                actionLabel: 'Comprar urgente',
+                showPercentage: true,
+                percentage: risk.ruptureShare,
+            },
+        ];
 
     return (
         <motion.div
@@ -107,7 +124,10 @@ export function AlertPanel({ alerts, risk }: AlertPanelProps) {
 
                             {/* Action Button */}
                             {card.count > 0 && (
-                                <button className={`group flex items-center gap-2 text-sm font-medium ${card.textColor} decoration-${card.color}-400/30 underline-offset-4 hover:underline`}>
+                                <button
+                                    onClick={() => onCardClick?.(card.id)}
+                                    className={`group flex items-center gap-2 text-sm font-medium ${card.textColor} decoration-${card.color}-400/30 underline-offset-4 hover:underline`}
+                                >
                                     {card.actionLabel}
                                     <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
                                 </button>
@@ -119,3 +139,4 @@ export function AlertPanel({ alerts, risk }: AlertPanelProps) {
         </motion.div>
     );
 }
+
