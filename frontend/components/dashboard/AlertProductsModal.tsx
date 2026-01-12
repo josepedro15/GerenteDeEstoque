@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Package, AlertTriangle, Skull, Flame, Loader2, ChevronDown, Wand2 } from "lucide-react";
-import { getStockDataPaginated, PaginatedStockResult } from "@/app/actions/inventory";
-import { sendActionPlanRequest } from "@/app/actions/action-plan";
+import { getStockDataPaginated } from "@/app/actions/inventory";
+import { useChat } from "@/contexts/ChatContext";
 import { EstoqueDetalhe } from "@/types/estoque";
 import { formatCurrency, parseNumber } from "@/lib/formatters";
 
@@ -55,13 +55,13 @@ const alertConfig: Record<AlertType, {
 };
 
 export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProductsModalProps) {
+    const { sendActionPlanMessage } = useChat();
     const [items, setItems] = useState<EstoqueDetalhe[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [totalValue, setTotalValue] = useState(0);
     const [hasMore, setHasMore] = useState(false);
-    const [sendingPlan, setSendingPlan] = useState(false);
 
     const config = alertConfig[alertType];
     const Icon = config.icon;
@@ -104,31 +104,21 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
         }
     }
 
-    async function handleSendToAgent() {
-        setSendingPlan(true);
-        try {
-            const payload = {
-                action: 'criar_plano_acao',
-                alertType: alertType,
-                alertLabel: config.label,
-                totalQuantity: totalCount,
-                totalValue: totalValue,
-                message: `Preciso de um plano de ação para ${config.label.toLowerCase()}. Tenho ${totalCount.toLocaleString('pt-BR')} itens parados totalizando ${formatCurrency(totalValue)}.`
-            };
+    function handleSendToAgent() {
+        const payload = {
+            action: 'criar_plano_acao',
+            alertType: alertType,
+            alertLabel: config.label,
+            totalQuantity: totalCount,
+            totalValue: totalValue,
+            message: `Preciso de um plano de ação para ${config.label.toLowerCase()}. Tenho ${totalCount.toLocaleString('pt-BR')} itens parados totalizando ${formatCurrency(totalValue)}.`
+        };
 
-            const result = await sendActionPlanRequest(payload);
+        // Abre o chat e envia a mensagem
+        sendActionPlanMessage(payload);
 
-            if (result.success) {
-                // Close modal after success
-                onClose();
-            } else {
-                console.error('Erro:', result.message);
-            }
-        } catch (error) {
-            console.error('Erro ao enviar para o agente:', error);
-        } finally {
-            setSendingPlan(false);
-        }
+        // Fecha o modal
+        onClose();
     }
 
     if (!isOpen) return null;
@@ -162,20 +152,11 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
                                 {/* Action Button - Top */}
                                 <button
                                     onClick={handleSendToAgent}
-                                    disabled={sendingPlan || totalCount === 0}
+                                    disabled={totalCount === 0}
                                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-white font-medium shadow-lg shadow-purple-500/20"
                                 >
-                                    {sendingPlan ? (
-                                        <>
-                                            <Loader2 size={18} className="animate-spin" />
-                                            Gerando plano de ação...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Wand2 size={18} />
-                                            Criar plano de ação ({totalCount.toLocaleString('pt-BR')} itens • {formatCurrency(totalValue)})
-                                        </>
-                                    )}
+                                    <Wand2 size={18} />
+                                    Criar plano de ação ({totalCount.toLocaleString('pt-BR')} itens • {formatCurrency(totalValue)})
                                 </button>
 
                                 {/* Title Row */}

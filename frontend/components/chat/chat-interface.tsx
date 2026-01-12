@@ -16,6 +16,7 @@ import { StrategicPlanCard } from "@/components/chat/StrategicPlanCard";
 import { saveCampaign, generateCampaign } from "@/app/actions/marketing";
 import { uploadImageToStorage } from "@/lib/storage";
 import { createBrowserClient } from "@supabase/ssr";
+import { sendActionPlanRequest } from "@/app/actions/action-plan";
 
 interface Message {
     id: string;
@@ -391,6 +392,53 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 
         window.addEventListener("chat:analyze-batch", handleBatchEvent as unknown as EventListener);
         return () => window.removeEventListener("chat:analyze-batch", handleBatchEvent as unknown as EventListener);
+    }, [userId, sessionId]);
+
+    // Listener para plano de ação (vindo do modal de alertas)
+    useEffect(() => {
+        const handleActionPlanEvent = async (e: CustomEvent) => {
+            const data = e.detail;
+
+            if (!data) return;
+
+            // Adiciona mensagem do usuário
+            const userMsg: Message = {
+                id: Date.now().toString(),
+                role: "user",
+                content: data.message
+            };
+            setMessages(prev => [...prev, userMsg]);
+            setIsLoading(true);
+
+            // Salvar no histórico
+            if (userId && sessionId) {
+                saveChatMessage(userId, sessionId, 'user', data.message, { source: 'action_plan', data }).catch(console.error);
+            }
+
+            try {
+                // Enviar para webhook específico de plano de ação
+                const result = await sendActionPlanRequest(data);
+
+                const aiMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: "assistant",
+                    content: result.message
+                };
+                setMessages(prev => [...prev, aiMsg]);
+
+                if (userId && sessionId) {
+                    saveChatMessage(userId, sessionId, 'assistant', result.message).catch(console.error);
+                }
+            } catch (error) {
+                console.error(error);
+                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao gerar plano de ação. Tente novamente.' }]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        window.addEventListener("chat:send-action-plan", handleActionPlanEvent as unknown as EventListener);
+        return () => window.removeEventListener("chat:send-action-plan", handleActionPlanEvent as unknown as EventListener);
     }, [userId, sessionId]);
 
     // Listener para campanhas geradas

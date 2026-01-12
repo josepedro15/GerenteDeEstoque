@@ -2,12 +2,22 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
 
+interface ActionPlanData {
+    action: string;
+    alertType: string;
+    alertLabel: string;
+    totalQuantity: number;
+    totalValue: number;
+    message: string;
+}
+
 interface ChatContextType {
     isOpen: boolean;
     toggleChat: () => void;
     openChat: () => void;
     closeChat: () => void;
     sendProductMessage: (product: any) => void;
+    sendActionPlanMessage: (data: ActionPlanData) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -28,8 +38,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const sendActionPlanMessage = (data: ActionPlanData) => {
+        setIsOpen(true);
+        // Dispara evento para o ChatInterface processar
+        if (typeof window !== "undefined") {
+            const event = new CustomEvent("chat:send-action-plan", { detail: data });
+            window.dispatchEvent(event);
+        }
+    };
+
     return (
-        <ChatContext.Provider value={{ isOpen, toggleChat, openChat, closeChat, sendProductMessage }}>
+        <ChatContext.Provider value={{ isOpen, toggleChat, openChat, closeChat, sendProductMessage, sendActionPlanMessage }}>
             {children}
         </ChatContext.Provider>
     );
