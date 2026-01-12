@@ -1,6 +1,8 @@
 "use server";
 
 import { logger } from "@/lib/logger";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 interface ActionPlanPayload {
     action: string;
@@ -14,14 +16,45 @@ interface ActionPlanPayload {
 
 const WEBHOOK_URL = "https://webhook.aiensed.com/webhook/estoque";
 
+// Helper para obter userId do servidor
+async function getServerUserId(): Promise<string | null> {
+    try {
+        const cookieStore = await cookies();
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    getAll() {
+                        return cookieStore.getAll();
+                    },
+                },
+            }
+        );
+        const { data: { user } } = await supabase.auth.getUser();
+        return user?.id || null;
+    } catch (error) {
+        console.error('Erro ao buscar userId no servidor:', error);
+        return null;
+    }
+}
+
 export async function sendActionPlanRequest(payload: ActionPlanPayload): Promise<{ success: boolean; message: string }> {
     try {
-        logger.debug("Enviando para webhook de plano de ação:", payload);
+        // Garantir que temos o user_id - buscar do servidor se não vier no payload
+        let userId = payload.user_id;
+        if (!userId) {
+            userId = await getServerUserId() || undefined;
+        }
+
+        const payloadWithUser = { ...payload, user_id: userId };
+
+        logger.debug("Enviando para webhook de plano de ação:", payloadWithUser);
 
         const response = await fetch(WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payloadWithUser)
         });
 
         logger.debug("Resposta do webhook:", response.status);
