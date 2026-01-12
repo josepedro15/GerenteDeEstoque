@@ -7,6 +7,7 @@ import { getStockDataPaginated } from "@/app/actions/inventory";
 import { useChat } from "@/contexts/ChatContext";
 import { EstoqueDetalhe } from "@/types/estoque";
 import { formatCurrency, parseNumber } from "@/lib/formatters";
+import { createBrowserClient } from "@supabase/ssr";
 
 export type AlertType = 'mortos' | 'liquidar' | 'ruptura';
 
@@ -62,9 +63,27 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
     const [totalCount, setTotalCount] = useState(0);
     const [totalValue, setTotalValue] = useState(0);
     const [hasMore, setHasMore] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
 
     const config = alertConfig[alertType];
     const Icon = config.icon;
+
+    // Buscar userId do Supabase
+    useEffect(() => {
+        async function fetchUserId() {
+            try {
+                const supabase = createBrowserClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+                );
+                const { data: { user } } = await supabase.auth.getUser();
+                setUserId(user?.id || null);
+            } catch (error) {
+                console.error('Erro ao buscar userId:', error);
+            }
+        }
+        fetchUserId();
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
@@ -111,7 +130,8 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
             alertLabel: config.label,
             totalQuantity: totalCount,
             totalValue: totalValue,
-            message: `Preciso de um plano de ação para ${config.label.toLowerCase()}. Tenho ${totalCount.toLocaleString('pt-BR')} itens parados totalizando ${formatCurrency(totalValue)}.`
+            message: `Preciso de um plano de ação para ${config.label.toLowerCase()}. Tenho ${totalCount.toLocaleString('pt-BR')} itens parados totalizando ${formatCurrency(totalValue)}.`,
+            user_id: userId || undefined
         };
 
         // Abre o chat e envia a mensagem
