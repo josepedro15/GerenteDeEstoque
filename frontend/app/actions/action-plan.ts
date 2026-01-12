@@ -62,6 +62,78 @@ export async function sendActionPlanRequest(payload: ActionPlanPayload): Promise
             };
         }
 
+        // Se for um plano de ação estratégico (novo formato)
+        if (data.type === 'action_plan') {
+            const lines: string[] = [];
+
+            lines.push("## 🎯 Plano de Ação Estratégico");
+            lines.push("");
+
+            // Diagnóstico
+            if (data.diagnostico) {
+                lines.push(`**Diagnóstico:** ${data.diagnostico}`);
+                lines.push("");
+            }
+
+            // Resumo
+            if (data.resumo) {
+                lines.push("### 📊 Situação Atual");
+                lines.push(`- **Total de itens:** ${(data.resumo.total_itens || 0).toLocaleString('pt-BR')}`);
+                lines.push(`- **Valor parado:** R$ ${(data.resumo.valor_parado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+                lines.push("");
+            }
+
+            // Plano de Ação por Fases
+            if (data.plano_de_acao && Array.isArray(data.plano_de_acao)) {
+                lines.push("### 📋 Fases do Plano");
+                lines.push("");
+
+                data.plano_de_acao.forEach((fase: any) => {
+                    lines.push(`#### ${fase.fase ? `Fase ${fase.fase}: ` : ''}${fase.titulo}`);
+                    if (fase.duracao) {
+                        lines.push(`*Duração: ${fase.duracao}*`);
+                    }
+                    lines.push("");
+                    if (fase.acoes && Array.isArray(fase.acoes)) {
+                        fase.acoes.forEach((acao: string) => {
+                            lines.push(`- ${acao}`);
+                        });
+                    }
+                    lines.push("");
+                });
+            }
+
+            // Metas
+            if (data.metas) {
+                lines.push("### 🎯 Metas");
+                Object.entries(data.metas).forEach(([key, value]) => {
+                    const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    lines.push(`- **${label}:** ${value}`);
+                });
+                lines.push("");
+            }
+
+            // Próximos Passos
+            if (data.proximos_passos && Array.isArray(data.proximos_passos)) {
+                lines.push("### ✅ Próximos Passos");
+                data.proximos_passos.forEach((passo: string) => {
+                    lines.push(`- ${passo}`);
+                });
+                lines.push("");
+            }
+
+            // Alerta Importante
+            if (data.alerta_importante) {
+                lines.push(`> ⚠️ **${data.alerta_importante}**`);
+                lines.push("");
+            }
+
+            return {
+                success: true,
+                message: lines.join('\n')
+            };
+        }
+
         // Se for um plano de campanha, formatar em markdown
         if (data.type === 'campaign_plan' || data.plan) {
             const plan = data.plan || data;
