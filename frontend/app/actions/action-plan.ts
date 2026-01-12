@@ -37,19 +37,116 @@ export async function sendActionPlanRequest(payload: ActionPlanPayload): Promise
 
         // Tentar parsear resposta
         const contentType = response.headers.get("content-type");
+        let data: any;
+
         if (contentType && contentType.includes("application/json")) {
-            const data = await response.json();
-            return {
-                success: true,
-                message: data.output || data.text || "Plano de ação solicitado com sucesso!"
-            };
+            data = await response.json();
         } else {
             const text = await response.text();
+            // Tentar parsear como JSON mesmo se content-type não indicar
+            try {
+                data = JSON.parse(text);
+            } catch {
+                return {
+                    success: true,
+                    message: text || "Plano de ação solicitado com sucesso!"
+                };
+            }
+        }
+
+        // Se tiver output ou text direto, retornar
+        if (data.output || data.text) {
             return {
                 success: true,
-                message: text || "Plano de ação solicitado com sucesso!"
+                message: data.output || data.text
             };
         }
+
+        // Se for um plano de campanha, formatar em markdown
+        if (data.type === 'campaign_plan' || data.plan) {
+            const plan = data.plan || data;
+            const lines: string[] = [];
+
+            lines.push("## 📋 Plano de Ação");
+            lines.push("");
+
+            // Status
+            if (plan.status) {
+                const statusEmoji = plan.status === 'aprovado' ? '✅' : plan.status === 'ajuste_necessario' ? '⚠️' : '🔄';
+                lines.push(`**Status:** ${statusEmoji} ${plan.status.replace(/_/g, ' ').toUpperCase()}`);
+                lines.push("");
+            }
+
+            // Nome sugerido
+            if (plan.nome_sugerido || data.nome_sugerido) {
+                lines.push(`**Campanha:** ${plan.nome_sugerido || data.nome_sugerido}`);
+            }
+
+            // Tipo e duração
+            if (plan.tipo_campanha_sugerido || data.tipo_campanha_sugerido) {
+                lines.push(`**Tipo:** ${plan.tipo_campanha_sugerido || data.tipo_campanha_sugerido}`);
+            }
+            if (plan.duracao_sugerida || data.duracao_sugerida) {
+                lines.push(`**Duração:** ${plan.duracao_sugerida || data.duracao_sugerida}`);
+            }
+
+            // Alertas
+            const alertas = plan.alertas || data.alertas || [];
+            if (alertas.length > 0) {
+                lines.push("");
+                lines.push("### ⚠️ Alertas");
+                alertas.forEach((alerta: string) => {
+                    lines.push(`- ${alerta}`);
+                });
+            }
+
+            // Mix ABC
+            const mix = plan.mix_percentual || data.mix_percentual;
+            if (mix) {
+                lines.push("");
+                lines.push("### 📊 Mix ABC");
+                lines.push(`- Curva A: ${mix.A || '0%'}`);
+                lines.push(`- Curva B: ${mix.B || '0%'}`);
+                lines.push(`- Curva C: ${mix.C || '0%'}`);
+            }
+
+            // Estimativas
+            const est = plan.estimativas || data.estimativas;
+            if (est) {
+                lines.push("");
+                lines.push("### 💰 Estimativas");
+                if (est.faturamento_potencial !== undefined) {
+                    lines.push(`- Faturamento potencial: R$ ${(est.faturamento_potencial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+                }
+                if (est.desconto_medio !== undefined) {
+                    lines.push(`- Desconto médio: ${est.desconto_medio || 0}%`);
+                }
+            }
+
+            // Produtos
+            const produtos = plan.produtos || data.produtos || [];
+            if (produtos.length > 0) {
+                lines.push("");
+                lines.push(`### 📦 Produtos (${produtos.length})`);
+                produtos.slice(0, 10).forEach((p: any) => {
+                    lines.push(`- ${p.nome || p.name || 'Produto'} (Curva ${p.curva || p.abc_curve || '?'})`);
+                });
+                if (produtos.length > 10) {
+                    lines.push(`- ... e mais ${produtos.length - 10} produtos`);
+                }
+            }
+
+            return {
+                success: true,
+                message: lines.join('\n')
+            };
+        }
+
+        // Fallback: retornar JSON formatado
+        return {
+            success: true,
+            message: JSON.stringify(data, null, 2)
+        };
     } catch (error: any) {
         logger.error("Erro ao enviar plano de ação:", error);
         return {
