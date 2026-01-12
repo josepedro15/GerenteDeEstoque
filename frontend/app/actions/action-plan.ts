@@ -54,6 +54,11 @@ export async function sendActionPlanRequest(payload: ActionPlanPayload): Promise
             }
         }
 
+        // Se for array, pegar primeiro elemento
+        if (Array.isArray(data) && data.length > 0) {
+            data = data[0];
+        }
+
         // Se tiver output ou text direto, retornar
         if (data.output || data.text) {
             return {
@@ -62,33 +67,37 @@ export async function sendActionPlanRequest(payload: ActionPlanPayload): Promise
             };
         }
 
+        // Verificar se o action_plan está aninhado dentro de plan
+        const actionPlanData = data.plan?.type === 'action_plan' ? data.plan :
+            data.type === 'action_plan' ? data : null;
+
         // Se for um plano de ação estratégico (novo formato)
-        if (data.type === 'action_plan') {
+        if (actionPlanData) {
             const lines: string[] = [];
 
             lines.push("## 🎯 Plano de Ação Estratégico");
             lines.push("");
 
             // Diagnóstico
-            if (data.diagnostico) {
-                lines.push(`**Diagnóstico:** ${data.diagnostico}`);
+            if (actionPlanData.diagnostico) {
+                lines.push(`**Diagnóstico:** ${actionPlanData.diagnostico}`);
                 lines.push("");
             }
 
             // Resumo
-            if (data.resumo) {
+            if (actionPlanData.resumo) {
                 lines.push("### 📊 Situação Atual");
-                lines.push(`- **Total de itens:** ${(data.resumo.total_itens || 0).toLocaleString('pt-BR')}`);
-                lines.push(`- **Valor parado:** R$ ${(data.resumo.valor_parado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+                lines.push(`- **Total de itens:** ${(actionPlanData.resumo.total_itens || 0).toLocaleString('pt-BR')}`);
+                lines.push(`- **Valor parado:** R$ ${(actionPlanData.resumo.valor_parado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
                 lines.push("");
             }
 
             // Plano de Ação por Fases
-            if (data.plano_de_acao && Array.isArray(data.plano_de_acao)) {
+            if (actionPlanData.plano_de_acao && Array.isArray(actionPlanData.plano_de_acao)) {
                 lines.push("### 📋 Fases do Plano");
                 lines.push("");
 
-                data.plano_de_acao.forEach((fase: any) => {
+                actionPlanData.plano_de_acao.forEach((fase: any) => {
                     lines.push(`#### ${fase.fase ? `Fase ${fase.fase}: ` : ''}${fase.titulo}`);
                     if (fase.duracao) {
                         lines.push(`*Duração: ${fase.duracao}*`);
@@ -104,9 +113,9 @@ export async function sendActionPlanRequest(payload: ActionPlanPayload): Promise
             }
 
             // Metas
-            if (data.metas) {
+            if (actionPlanData.metas) {
                 lines.push("### 🎯 Metas");
-                Object.entries(data.metas).forEach(([key, value]) => {
+                Object.entries(actionPlanData.metas).forEach(([key, value]) => {
                     const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     lines.push(`- **${label}:** ${value}`);
                 });
@@ -114,17 +123,17 @@ export async function sendActionPlanRequest(payload: ActionPlanPayload): Promise
             }
 
             // Próximos Passos
-            if (data.proximos_passos && Array.isArray(data.proximos_passos)) {
+            if (actionPlanData.proximos_passos && Array.isArray(actionPlanData.proximos_passos)) {
                 lines.push("### ✅ Próximos Passos");
-                data.proximos_passos.forEach((passo: string) => {
+                actionPlanData.proximos_passos.forEach((passo: string) => {
                     lines.push(`- ${passo}`);
                 });
                 lines.push("");
             }
 
             // Alerta Importante
-            if (data.alerta_importante) {
-                lines.push(`> ⚠️ **${data.alerta_importante}**`);
+            if (actionPlanData.alerta_importante) {
+                lines.push(`> ⚠️ **${actionPlanData.alerta_importante}**`);
                 lines.push("");
             }
 
