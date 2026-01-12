@@ -23,6 +23,7 @@ export interface StockFilters {
 export interface PaginatedStockResult {
     items: EstoqueDetalhe[];
     totalCount: number;
+    totalValue: number;
     currentPage: number;
     totalPages: number;
     pageSize: number;
@@ -77,9 +78,49 @@ export async function getStockDataPaginated(
         const totalCount = count || 0;
         const totalPages = Math.ceil(totalCount / pageSize);
 
+        // Calcular valor total dos itens na página (nota: para valor total real, seria necessária query separada)
+        // Aqui fazemos uma query separada para obter o totalValue de todos os itens filtrados
+        let totalValue = 0;
+        try {
+            let valueQuery = supabase
+                .from('dados_estoque')
+                .select('valor_estoque_custo')
+                .eq('tipo_registro', 'DETALHE');
+
+            // Aplicar os mesmos filtros para a query de valor total
+            if (filters?.status) {
+                valueQuery = valueQuery.ilike('status_ruptura', `%${filters.status}%`);
+            }
+            if (filters?.abc) {
+                valueQuery = valueQuery.eq('classe_abc', filters.abc);
+            }
+            if (filters?.search) {
+                valueQuery = valueQuery.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
+            }
+            if (filters?.alerta) {
+                if (filters.alerta === 'RUPTURA') {
+                    valueQuery = valueQuery.or('status_ruptura.ilike.%RUPTURA%,status_ruptura.ilike.%CRÍTICO%');
+                } else {
+                    valueQuery = valueQuery.ilike('alerta_estoque', `%${filters.alerta}%`);
+                }
+            }
+
+            // Paginar para obter todos os valores
+            const { data: allValues } = await valueQuery;
+            if (allValues) {
+                totalValue = allValues.reduce((sum, item) => {
+                    const value = parseFloat(String(item.valor_estoque_custo || 0));
+                    return sum + (isNaN(value) ? 0 : value);
+                }, 0);
+            }
+        } catch (valueError) {
+            logger.debug("Não foi possível calcular valor total:", valueError);
+        }
+
         return {
             items: (data || []) as EstoqueDetalhe[],
             totalCount,
+            totalValue,
             currentPage: page,
             totalPages,
             pageSize
@@ -89,6 +130,7 @@ export async function getStockDataPaginated(
         return {
             items: [],
             totalCount: 0,
+            totalValue: 0,
             currentPage: page,
             totalPages: 0,
             pageSize

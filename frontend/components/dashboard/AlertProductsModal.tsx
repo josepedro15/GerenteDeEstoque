@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Package, AlertTriangle, Skull, Flame, Loader2, ChevronDown } from "lucide-react";
+import { X, Package, AlertTriangle, Skull, Flame, Loader2, ChevronDown, Wand2 } from "lucide-react";
 import { getStockDataPaginated, PaginatedStockResult } from "@/app/actions/inventory";
 import { EstoqueDetalhe } from "@/types/estoque";
 import { formatCurrency, parseNumber } from "@/lib/formatters";
@@ -58,7 +58,9 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
+    const [totalValue, setTotalValue] = useState(0);
     const [hasMore, setHasMore] = useState(false);
+    const [sendingPlan, setSendingPlan] = useState(false);
 
     const config = alertConfig[alertType];
     const Icon = config.icon;
@@ -85,6 +87,7 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
             }
 
             setTotalCount(result.totalCount);
+            setTotalValue(result.totalValue || 0);
             setHasMore(result.currentPage < result.totalPages);
             setPage(pageNum);
         } catch (error) {
@@ -97,6 +100,43 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
     function handleLoadMore() {
         if (!loading && hasMore) {
             loadItems(page + 1);
+        }
+    }
+
+    async function handleSendToAgent() {
+        setSendingPlan(true);
+        try {
+            const webhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK;
+            if (!webhookUrl) {
+                console.error('Webhook URL not configured');
+                return;
+            }
+
+            const payload = {
+                action: 'criar_plano_acao',
+                alertType: alertType,
+                alertLabel: config.label,
+                totalQuantity: totalCount,
+                totalValue: totalValue,
+                message: `Preciso de um plano de ação para ${config.label.toLowerCase()}. Tenho ${totalCount.toLocaleString('pt-BR')} itens parados totalizando ${formatCurrency(totalValue)}.`
+            };
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to send to agent');
+            }
+
+            // Close modal after success
+            onClose();
+        } catch (error) {
+            console.error('Erro ao enviar para o agente:', error);
+        } finally {
+            setSendingPlan(false);
         }
     }
 
@@ -127,24 +167,46 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
                             className={`relative w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl border ${config.borderColor} bg-gradient-to-br ${config.bgGradient} backdrop-blur-xl shadow-2xl pointer-events-auto`}
                         >
                             {/* Header */}
-                            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-background/80 backdrop-blur-xl">
-                                <div className="flex items-center gap-4">
-                                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border`}>
-                                        <Icon size={24} className={config.color} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold text-foreground">{config.label}</h2>
-                                        <p className="text-sm text-muted-foreground">
-                                            {config.sublabel} • {totalCount.toLocaleString('pt-BR')} produtos
-                                        </p>
-                                    </div>
-                                </div>
+                            <div className="sticky top-0 z-10 flex flex-col gap-4 p-6 border-b border-white/10 bg-background/80 backdrop-blur-xl">
+                                {/* Action Button - Top */}
                                 <button
-                                    onClick={onClose}
-                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                                    onClick={handleSendToAgent}
+                                    disabled={sendingPlan || totalCount === 0}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-white font-medium shadow-lg shadow-purple-500/20"
                                 >
-                                    <X size={20} className="text-muted-foreground" />
+                                    {sendingPlan ? (
+                                        <>
+                                            <Loader2 size={18} className="animate-spin" />
+                                            Gerando plano de ação...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Wand2 size={18} />
+                                            Criar plano de ação ({totalCount.toLocaleString('pt-BR')} itens • {formatCurrency(totalValue)})
+                                        </>
+                                    )}
                                 </button>
+
+                                {/* Title Row */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border`}>
+                                            <Icon size={24} className={config.color} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-foreground">{config.label}</h2>
+                                            <p className="text-sm text-muted-foreground">
+                                                {config.sublabel} • {totalCount.toLocaleString('pt-BR')} produtos
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={onClose}
+                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                                    >
+                                        <X size={20} className="text-muted-foreground" />
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Content */}
@@ -209,8 +271,8 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
                                                             </td>
                                                             <td className="py-3 px-4 text-center">
                                                                 <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold ${item.classe_abc === 'A' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                                        item.classe_abc === 'B' ? 'bg-blue-500/20 text-blue-400' :
-                                                                            'bg-gray-500/20 text-gray-400'
+                                                                    item.classe_abc === 'B' ? 'bg-blue-500/20 text-blue-400' :
+                                                                        'bg-gray-500/20 text-gray-400'
                                                                     }`}>
                                                                     {item.classe_abc || 'C'}
                                                                 </span>
