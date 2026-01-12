@@ -42,9 +42,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const sendActionPlanMessage = (data: ActionPlanData) => {
         setIsOpen(true);
         // Dispara evento para o ChatInterface processar
+        // Usa setTimeout para garantir que o chat esteja montado
         if (typeof window !== "undefined") {
-            const event = new CustomEvent("chat:send-action-plan", { detail: data });
-            window.dispatchEvent(event);
+            setTimeout(() => {
+                const event = new CustomEvent("chat:send-action-plan", { detail: data });
+                window.dispatchEvent(event);
+            }, 100);
         }
     };
 
