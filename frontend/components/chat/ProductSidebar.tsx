@@ -121,18 +121,21 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                     .filter((p: any) => p?.id_produto)
                     .map((p: any) => {
                         // Normalizar alerta do banco (ex: '💀 MORTO' -> 'MORTO')
-                        let alerta = String(p.alerta_estoque || '').toUpperCase();
-                        if (alerta.includes('MORTO')) alerta = 'MORTO';
-                        else if (alerta.includes('LIQUIDAR')) alerta = 'LIQUIDAR';
-                        else if (alerta.includes('RUPTURA')) alerta = 'RUPTURA';
-                        else alerta = '';
+                        const alertaEstoque = String(p.alerta_estoque || '').toUpperCase();
+                        const statusRuptura = normalizeStatus(p.status_ruptura);
+
+                        let alerta = '';
+                        if (alertaEstoque.includes('MORTO')) alerta = 'MORTO';
+                        else if (alertaEstoque.includes('LIQUIDAR')) alerta = 'LIQUIDAR';
+                        // Ruptura/Crítico vem do status, não do alerta_estoque
+                        else if (statusRuptura === 'RUPTURA' || statusRuptura === 'CRÍTICO') alerta = 'RUPTURA';
 
                         return {
                             id: String(p.id_produto || ''),
                             nome: String(p.produto_descricao || 'Sem nome'),
                             estoque: parseNumber(p.estoque_atual),
                             abc: String(p.classe_abc || 'C').toUpperCase().trim(),
-                            status: normalizeStatus(p.status_ruptura),
+                            status: statusRuptura,
                             cobertura: parseNumber(p.dias_de_cobertura),
                             preco: parseNumber(p.preco),
                             alerta,
