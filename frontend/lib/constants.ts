@@ -73,3 +73,16 @@ export const ABC_CAMPAIGN_LABELS: Record<string, string> = {
 // Opções de filtros
 export const STATUS_OPTIONS = ['RUPTURA', 'CRÍTICO', 'ATENÇÃO', 'SAUDÁVEL', 'EXCESSO'] as const;
 export const ABC_OPTIONS = ['A', 'B', 'C'] as const;
+
+// Alertas especiais (dashboard)
+export const ALERT_OPTIONS = [
+    { value: 'MORTO', label: 'Mortos', icon: 'skull', color: 'bg-gray-500/20 text-gray-400' },
+    { value: 'LIQUIDAR', label: 'Liquidar', icon: 'flame', color: 'bg-red-500/20 text-red-400' },
+    { value: 'RUPTURA', label: 'Ruptura', icon: 'alert', color: 'bg-orange-500/20 text-orange-400' },
+] as const;
+
+export const ALERT_COLORS: Record<string, string> = {
+    'MORTO': 'bg-gray-500/20 text-gray-400 border-gray-500',
+    'LIQUIDAR': 'bg-red-500/20 text-red-400 border-red-500',
+    'RUPTURA': 'bg-orange-500/20 text-orange-400 border-orange-500',
+};

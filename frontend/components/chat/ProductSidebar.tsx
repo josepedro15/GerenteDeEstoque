@@ -12,7 +12,9 @@ import {
     ABC_COLORS_COMPACT,
     STATUS_OPTIONS,
     ABC_OPTIONS,
-    COVERAGE_RANGES
+    COVERAGE_RANGES,
+    ALERT_OPTIONS,
+    ALERT_COLORS
 } from "@/lib/constants";
 
 interface ProductSidebarProps {
@@ -28,6 +30,7 @@ interface SimpleProduct {
     status: string;
     cobertura: number;
     preco: number;
+    alerta: string;
     rawData: any;
 }
 
@@ -50,6 +53,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
     const [statusFilter, setStatusFilter] = useState<string[]>([]);
     const [abcFilter, setAbcFilter] = useState<string[]>([]);
     const [coberturaFilter, setCoberturaFilter] = useState<string[]>([]);
+    const [alertFilter, setAlertFilter] = useState<string[]>([]);
 
     // Ordenação
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
@@ -79,13 +83,19 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
             prev.includes(value) ? prev.filter(c => c !== value) : [...prev, value]
         );
     };
+    const toggleAlertFilter = (value: string) => {
+        setAlertFilter(prev =>
+            prev.includes(value) ? prev.filter(a => a !== value) : [...prev, value]
+        );
+    };
     const clearFilters = () => {
         setStatusFilter([]);
         setAbcFilter([]);
         setCoberturaFilter([]);
+        setAlertFilter([]);
         setSortOrder(null);
     };
-    const hasActiveFilters = statusFilter.length > 0 || abcFilter.length > 0 || coberturaFilter.length > 0 || sortOrder !== null;
+    const hasActiveFilters = statusFilter.length > 0 || abcFilter.length > 0 || coberturaFilter.length > 0 || alertFilter.length > 0 || sortOrder !== null;
 
 
 
@@ -109,16 +119,26 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
 
                 const simpleProducts: SimpleProduct[] = result.detalhe
                     .filter((p: any) => p?.id_produto)
-                    .map((p: any) => ({
-                        id: String(p.id_produto || ''),
-                        nome: String(p.produto_descricao || 'Sem nome'),
-                        estoque: parseNumber(p.estoque_atual),
-                        abc: String(p.classe_abc || 'C').toUpperCase().trim(),
-                        status: normalizeStatus(p.status_ruptura),
-                        cobertura: parseNumber(p.dias_de_cobertura),
-                        preco: parseNumber(p.preco),
-                        rawData: p,
-                    }));
+                    .map((p: any) => {
+                        // Normalizar alerta do banco (ex: '💀 MORTO' -> 'MORTO')
+                        let alerta = String(p.alerta_estoque || '').toUpperCase();
+                        if (alerta.includes('MORTO')) alerta = 'MORTO';
+                        else if (alerta.includes('LIQUIDAR')) alerta = 'LIQUIDAR';
+                        else if (alerta.includes('RUPTURA')) alerta = 'RUPTURA';
+                        else alerta = '';
+
+                        return {
+                            id: String(p.id_produto || ''),
+                            nome: String(p.produto_descricao || 'Sem nome'),
+                            estoque: parseNumber(p.estoque_atual),
+                            abc: String(p.classe_abc || 'C').toUpperCase().trim(),
+                            status: normalizeStatus(p.status_ruptura),
+                            cobertura: parseNumber(p.dias_de_cobertura),
+                            preco: parseNumber(p.preco),
+                            alerta,
+                            rawData: p,
+                        };
+                    });
 
                 // Deduplicar produtos por ID para evitar chaves duplicadas e bugs de seleção
                 const uniqueProducts = Array.from(
@@ -168,6 +188,11 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
             });
         }
 
+        // Filtro por alerta (Mortos, Liquidar, Ruptura)
+        if (alertFilter.length > 0) {
+            filtered = filtered.filter(p => alertFilter.includes(p.alerta));
+        }
+
         // Busca
         if (search.trim()) {
             const term = search.toLowerCase();
@@ -186,7 +211,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         }
 
         return filtered;
-    }, [products, search, statusFilter, abcFilter, coberturaFilter, sortOrder]);
+    }, [products, search, statusFilter, abcFilter, coberturaFilter, alertFilter, sortOrder]);
 
     // Toggle seleção para campanhas
     const toggleSelection = (id: string) => {
@@ -375,6 +400,27 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                     {/* Filtros colapsáveis */}
                     {showFilters && (
                         <div className="mt-3 pt-3 border-t border-border space-y-3">
+                            {/* Alertas */}
+                            <div>
+                                <span className="text-xs font-medium text-muted-foreground block mb-2">Alertas</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {ALERT_OPTIONS.map(option => (
+                                        <button
+                                            key={option.value}
+                                            onClick={() => toggleAlertFilter(option.value)}
+                                            className={cn(
+                                                "text-[10px] px-2 py-1 rounded-full border transition-colors",
+                                                alertFilter.includes(option.value)
+                                                    ? ALERT_COLORS[option.value]
+                                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Status */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
