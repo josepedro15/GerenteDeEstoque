@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Package, AlertTriangle, Skull, Flame, Loader2, ChevronDown, Wand2 } from "lucide-react";
 import { getStockDataPaginated, PaginatedStockResult } from "@/app/actions/inventory";
+import { sendActionPlanRequest } from "@/app/actions/action-plan";
 import { EstoqueDetalhe } from "@/types/estoque";
 import { formatCurrency, parseNumber } from "@/lib/formatters";
 
@@ -106,12 +107,6 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
     async function handleSendToAgent() {
         setSendingPlan(true);
         try {
-            const webhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK;
-            if (!webhookUrl) {
-                console.error('Webhook URL not configured');
-                return;
-            }
-
             const payload = {
                 action: 'criar_plano_acao',
                 alertType: alertType,
@@ -121,18 +116,14 @@ export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProducts
                 message: `Preciso de um plano de ação para ${config.label.toLowerCase()}. Tenho ${totalCount.toLocaleString('pt-BR')} itens parados totalizando ${formatCurrency(totalValue)}.`
             };
 
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            const result = await sendActionPlanRequest(payload);
 
-            if (!response.ok) {
-                throw new Error('Failed to send to agent');
+            if (result.success) {
+                // Close modal after success
+                onClose();
+            } else {
+                console.error('Erro:', result.message);
             }
-
-            // Close modal after success
-            onClose();
         } catch (error) {
             console.error('Erro ao enviar para o agente:', error);
         } finally {
