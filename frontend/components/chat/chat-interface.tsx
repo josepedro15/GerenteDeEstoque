@@ -236,11 +236,12 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
     };
 
     // Limpar conversa
-    const handleClearChat = useCallback(async () => {
-        if (!userId || !sessionId) return;
-
-        const confirmed = window.confirm("Tem certeza que deseja limpar o histórico desta conversa?");
-        if (!confirmed) return;
+    // Lógica de limpar conversa (sem confirm)
+    const clearChatAction = useCallback(async () => {
+        if (!userId || !sessionId) {
+            console.warn("Tentativa de limpar chat sem userId/sessionId");
+            return;
+        }
 
         try {
             // Enviar comando de reset para o webhook
@@ -268,15 +269,23 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         }
     }, [userId, sessionId]);
 
+    // Handler para botão interno (com confirm)
+    const handleClearChatClick = useCallback(() => {
+        if (window.confirm("Tem certeza que deseja limpar o histórico desta conversa?")) {
+            clearChatAction();
+        }
+    }, [clearChatAction]);
+
     // Listener para limpar histórico via evento customizado (do header da página)
     useEffect(() => {
         const handleClearEvent = () => {
-            handleClearChat();
+            // Evento externo já teve confirmação
+            clearChatAction();
         };
 
         window.addEventListener('chat:clear-history', handleClearEvent);
         return () => window.removeEventListener('chat:clear-history', handleClearEvent);
-    }, [handleClearChat]);
+    }, [clearChatAction]);
 
     // Listen to "Explain Product" events
     useEffect(() => {
@@ -1031,7 +1040,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     </div>
                     <div className="flex items-center gap-1">
                         <button
-                            onClick={handleClearChat}
+                            onClick={handleClearChatClick}
                             className="p-1.5 rounded-lg hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-colors"
                             title="Limpar conversa"
                         >
