@@ -78,40 +78,53 @@ export async function getStockDataPaginated(
         const totalCount = count || 0;
         const totalPages = Math.ceil(totalCount / pageSize);
 
-        // Calcular valor total dos itens na página (nota: para valor total real, seria necessária query separada)
-        // Aqui fazemos uma query separada para obter o totalValue de todos os itens filtrados
+        // Calcular valor total dos itens - precisa paginar pois Supabase tem limite de 1000 por query
         let totalValue = 0;
         try {
-            let valueQuery = supabase
-                .from('dados_estoque')
-                .select('valor_estoque_custo')
-                .eq('tipo_registro', 'DETALHE');
+            const VALUE_PAGE_SIZE = 1000;
+            let valueFrom = 0;
+            let hasMoreValues = true;
 
-            // Aplicar os mesmos filtros para a query de valor total
-            if (filters?.status) {
-                valueQuery = valueQuery.ilike('status_ruptura', `%${filters.status}%`);
-            }
-            if (filters?.abc) {
-                valueQuery = valueQuery.eq('classe_abc', filters.abc);
-            }
-            if (filters?.search) {
-                valueQuery = valueQuery.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
-            }
-            if (filters?.alerta) {
-                if (filters.alerta === 'RUPTURA') {
-                    valueQuery = valueQuery.or('status_ruptura.ilike.%RUPTURA%,status_ruptura.ilike.%CRÍTICO%');
-                } else {
-                    valueQuery = valueQuery.ilike('alerta_estoque', `%${filters.alerta}%`);
+            while (hasMoreValues) {
+                let valueQuery = supabase
+                    .from('dados_estoque')
+                    .select('valor_estoque_custo')
+                    .eq('tipo_registro', 'DETALHE')
+                    .range(valueFrom, valueFrom + VALUE_PAGE_SIZE - 1);
+
+                // Aplicar os mesmos filtros para a query de valor total
+                if (filters?.status) {
+                    valueQuery = valueQuery.ilike('status_ruptura', `%${filters.status}%`);
                 }
-            }
+                if (filters?.abc) {
+                    valueQuery = valueQuery.eq('classe_abc', filters.abc);
+                }
+                if (filters?.search) {
+                    valueQuery = valueQuery.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
+                }
+                if (filters?.alerta) {
+                    if (filters.alerta === 'RUPTURA') {
+                        valueQuery = valueQuery.or('status_ruptura.ilike.%RUPTURA%,status_ruptura.ilike.%CRÍTICO%');
+                    } else {
+                        valueQuery = valueQuery.ilike('alerta_estoque', `%${filters.alerta}%`);
+                    }
+                }
 
-            // Paginar para obter todos os valores
-            const { data: allValues } = await valueQuery;
-            if (allValues) {
-                totalValue = allValues.reduce((sum, item) => {
-                    const value = parseFloat(String(item.valor_estoque_custo || 0));
-                    return sum + (isNaN(value) ? 0 : value);
-                }, 0);
+                const { data: pageValues } = await valueQuery;
+
+                if (!pageValues || pageValues.length === 0) {
+                    hasMoreValues = false;
+                } else {
+                    totalValue += pageValues.reduce((sum, item) => {
+                        const value = parseFloat(String(item.valor_estoque_custo || 0));
+                        return sum + (isNaN(value) ? 0 : value);
+                    }, 0);
+
+                    valueFrom += VALUE_PAGE_SIZE;
+                    if (pageValues.length < VALUE_PAGE_SIZE) {
+                        hasMoreValues = false;
+                    }
+                }
             }
         } catch (valueError) {
             logger.debug("Não foi possível calcular valor total:", valueError);
