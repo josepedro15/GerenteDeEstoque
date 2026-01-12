@@ -9,6 +9,7 @@ interface ActionPlanData {
     totalQuantity: number;
     totalValue: number;
     message: string;
+    user_id?: string;
 }
 
 interface ChatContextType {

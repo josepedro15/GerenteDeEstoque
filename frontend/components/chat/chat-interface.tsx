@@ -416,8 +416,9 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             }
 
             try {
-                // Enviar para webhook específico de plano de ação
-                const result = await sendActionPlanRequest(data);
+                // Enviar para webhook específico de plano de ação (adicionando user_id)
+                const payloadWithUser = { ...data, user_id: userId };
+                const result = await sendActionPlanRequest(payloadWithUser);
 
                 const aiMsg: Message = {
                     id: (Date.now() + 1).toString(),

@@ -9,6 +9,7 @@ interface ActionPlanPayload {
     totalQuantity: number;
     totalValue: number;
     message: string;
+    user_id?: string;
 }
 
 const WEBHOOK_URL = "https://webhook.aiensed.com/webhook/estoque";
