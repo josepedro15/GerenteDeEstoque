@@ -242,6 +242,13 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         if (!confirmed) return;
 
         try {
+            // Enviar comando de reset para o webhook
+            try {
+                await sendMessage('/reset');
+            } catch (err) {
+                console.error("Erro ao enviar /reset para webhook:", err);
+            }
+
             await clearChatSession(userId, sessionId);
 
             // Cria nova sessão
