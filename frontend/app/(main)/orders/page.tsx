@@ -37,7 +37,7 @@ export default function OrdersPage() {
         const term = search.toLowerCase();
         return orders.filter(o =>
             o.fornecedor_nome.toLowerCase().includes(term) ||
-            o.nf?.toLowerCase().includes(term)
+            o.numero_nf?.toLowerCase().includes(term)
         );
     }, [orders, search]);
 
@@ -94,21 +94,21 @@ export default function OrdersPage() {
                                 <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                                     <div className="flex items-center gap-1">
                                         <Calendar size={12} />
-                                        <span>{new Date(order.data_emissao).toLocaleDateString()}</span>
+                                        <span>{order.data_pedido ? new Date(order.data_pedido).toLocaleDateString() : "N/A"}</span>
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <AlertCircle size={12} className={order.dias_aguardando > 30 ? "text-red-400" : ""} />
                                         <span>Há {order.dias_aguardando} dias</span>
                                     </div>
                                     <div className="col-span-2 text-[10px] font-mono mt-1">
-                                        NF: {order.nf || "N/A"}
+                                        NF: {order.numero_nf || "N/A"}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Footer */}
                             <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                                <span>{order.lista_produtos?.length || 0} itens</span>
+                                <span>{order.qtd_itens || 0} itens</span>
                                 <Button variant="ghost" size="sm" className="h-6 text-[10px]">
                                     Ver Detalhes
                                 </Button>
