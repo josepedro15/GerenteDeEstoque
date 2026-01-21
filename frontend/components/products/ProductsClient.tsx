@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, memo } from "react";
 import {
     Search, ChevronLeft, ChevronRight, Package, ArrowUpDown, ArrowUp, ArrowDown,
     TrendingUp, TrendingDown, Minus, AlertTriangle, ShoppingCart, DollarSign,
-    Calendar, BarChart2, Percent, Layers
+    Calendar, BarChart2, Percent, Layers, Download
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,28 +16,57 @@ import { STATUS_COLORS, ABC_COLORS, STATUS_OPTIONS, ABC_OPTIONS } from "@/lib/co
 export interface Product {
     id: string;
     nome: string;
+
+    // Estoque
     estoque: number;
+    estoqueTransito: number;
+    estoqueProjetado: number;
     cobertura: number;
+    coberturaProjetada: number;
     mediaVenda: number;
+
+    // Fornecedor
+    fornecedorPrincipal: string;
+
+    // Financeiro
     preco: number;
     custo: number;
     margemUnitaria: number;
     margemPercentual: number;
+
+    // Vendas
     qtdVendida60d: number;
     faturamento60d: number;
     lucro60d: number;
+
+    // Classificação
     abc: string;
     status: string;
     giroMensal: number;
+
+    // Valores
     valorEstoqueCusto: number;
     valorEstoqueVenda: number;
+    valorTransito: number;
+
+    // Sugestão
     sugestaoCompra: number;
+    sugestaoAjustada: number;
+
+    // Tendência
     tendencia: string;
     variacaoPercentual: number;
+
+    // Última venda
     ultimaVenda: string | null;
     diasSemVenda: number;
+
+    // Alertas
     prioridadeCompra: string;
     alertaEstoque: string;
+
+    // Pedidos
+    pedidosAbertos: number;
 }
 
 interface ProductsClientProps {
@@ -151,6 +180,48 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
         return result;
     }, [initialProducts, search, statusFilter, abcFilter, sortConfig]);
 
+    // Download Handler
+    const handleDownload = () => {
+        const headers = [
+            "ID", "Nome", "Status", "ABC", "Estoque", "Estoque Trânsito",
+            "Cobertura (dias)", "Preço", "Custo", "Margem %",
+            "Vendas 60d", "Faturamento 60d", "Giro Mensal",
+            "Sugestão Ajustada", "Fornecedor", "Prioridade", "Alerta"
+        ];
+
+        const csvContent = [
+            headers.join(","),
+            ...filteredProducts.map(p => [
+                p.id,
+                `"${p.nome.replace(/"/g, '""')}"`, // Escape quotes
+                p.status,
+                p.abc,
+                p.estoque,
+                p.estoqueTransito,
+                p.cobertura,
+                p.preco,
+                p.custo,
+                p.margemPercentual.toFixed(2),
+                p.qtdVendida60d,
+                p.faturamento60d,
+                p.giroMensal.toFixed(2),
+                p.sugestaoAjustada,
+                `"${p.fornecedorPrincipal.replace(/"/g, '""')}"`,
+                p.prioridadeCompra,
+                p.alertaEstoque
+            ].join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `estoque_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     // Pagination
     const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
     const paginatedProducts = filteredProducts.slice(
@@ -189,10 +260,19 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                     </p>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3">
-                    <span className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
+                    <span className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground mr-2">
                         <DollarSign size={14} className="text-emerald-400" />
                         Valor: {formatCurrency(initialProducts.reduce((acc, p) => acc + p.valorEstoqueVenda, 0))}
                     </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 gap-2"
+                        onClick={handleDownload}
+                    >
+                        <Download size={16} />
+                        <span className="hidden sm:inline">Exportar CSV</span>
+                    </Button>
                 </div>
             </div>
 
@@ -282,7 +362,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                     className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
                                     onClick={() => handleSort('estoque')}
                                 >
-                                    <div className="flex items-center gap-1">Estoque <SortIcon field="estoque" /></div>
+                                    <div className="flex items-center gap-1">Est. <span className="text-purple-400">(+Trâns.)</span> <SortIcon field="estoque" /></div>
                                 </th>
                                 <th
                                     className="px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
@@ -329,10 +409,11 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                 <th className="hidden lg:table-cell px-3 py-3 font-semibold whitespace-nowrap">Tendência</th>
                                 <th
                                     className="hidden sm:table-cell px-3 py-3 font-semibold cursor-pointer hover:bg-muted/70 transition-colors whitespace-nowrap"
-                                    onClick={() => handleSort('sugestaoCompra')}
+                                    onClick={() => handleSort('sugestaoAjustada')}
                                 >
-                                    <div className="flex items-center gap-1">Sug. Compra <SortIcon field="sugestaoCompra" /></div>
+                                    <div className="flex items-center gap-1">Sug. Ajust. <SortIcon field="sugestaoAjustada" /></div>
                                 </th>
+                                <th className="hidden lg:table-cell px-3 py-3 font-semibold whitespace-nowrap">Fornecedor</th>
                                 <th className="hidden xl:table-cell px-3 py-3 font-semibold whitespace-nowrap">Prioridade</th>
                                 <th className="hidden xl:table-cell px-3 py-3 font-semibold whitespace-nowrap">Alerta</th>
                             </tr>
@@ -389,9 +470,14 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                                 </span>
                                             </td>
 
-                                            {/* Estoque */}
-                                            <td className="px-3 py-3 text-right font-medium">
-                                                {formatNumber(product.estoque)} un
+                                            {/* Estoque + Trânsito */}
+                                            <td className="px-3 py-3 text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span className="font-medium">{formatNumber(product.estoque)} un</span>
+                                                    {product.estoqueTransito > 0 && (
+                                                        <span className="text-[10px] text-purple-400">+{formatNumber(product.estoqueTransito)} trâns.</span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             {/* Cobertura */}
@@ -452,16 +538,23 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                                 <TrendBadge tendencia={product.tendencia} variacao={product.variacaoPercentual} />
                                             </td>
 
-                                            {/* Sugestão Compra */}
+                                            {/* Sugestão Ajustada */}
                                             <td className="hidden sm:table-cell px-3 py-3 text-right">
-                                                {product.sugestaoCompra > 0 ? (
+                                                {product.sugestaoAjustada > 0 ? (
                                                     <span className="flex items-center justify-end gap-1 text-amber-400 font-medium">
                                                         <ShoppingCart size={12} />
-                                                        {formatNumber(product.sugestaoCompra)}
+                                                        {formatNumber(product.sugestaoAjustada)}
                                                     </span>
                                                 ) : (
                                                     <span className="text-muted-foreground">-</span>
                                                 )}
+                                            </td>
+
+                                            {/* Fornecedor */}
+                                            <td className="hidden lg:table-cell px-3 py-3 text-left">
+                                                <span className="text-[10px] text-muted-foreground truncate max-w-[100px] block" title={product.fornecedorPrincipal}>
+                                                    {product.fornecedorPrincipal || '-'}
+                                                </span>
                                             </td>
 
                                             {/* Prioridade */}

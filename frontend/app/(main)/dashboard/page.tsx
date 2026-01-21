@@ -36,8 +36,8 @@ export default function DashboardPage() {
     useEffect(() => {
         async function load() {
             try {
-                const { detalhe } = await getStockData();
-                const data = calculateDashboardMetrics(detalhe);
+                const { produtos } = await getStockData();
+                const data = calculateDashboardMetrics(produtos);
                 setMetrics(data);
             } catch (e) {
                 console.error(e);
@@ -149,7 +149,8 @@ export default function DashboardPage() {
                         </div>
                         <KPIGrid metrics={{
                             ...metrics.financial,
-                            ruptureShare: metrics.risk.ruptureShare
+                            ruptureShare: metrics.risk.ruptureShare,
+                            chegandoCount: metrics.risk.chegandoCount
                         }} />
                     </motion.div>
 

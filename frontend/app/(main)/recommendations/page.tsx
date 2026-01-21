@@ -15,8 +15,8 @@ export default function RecommendationsPage() {
     useEffect(() => {
         async function load() {
             try {
-                const { detalhe } = await getStockData();
-                const data = generateSuggestions(detalhe, 60);
+                const { produtos } = await getStockData();
+                const data = generateSuggestions(produtos, 60);
                 setSuggestions(data);
             } catch (e) {
                 console.error(e);

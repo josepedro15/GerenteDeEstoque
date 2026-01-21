@@ -1,0 +1,48 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente Estratégico de Campanhas - SmartOrders\n\n## Sua Função\nAnalisar produtos selecionados para campanha e criar plano estratégico otimizado.\n\n## POR QUE NÃO FAZER LIQUIDAÇÃO SÓ COM CURVA C?\nProdutos Curva C têm baixa demanda natural. Uma campanha só com itens C:\n- Gera pouca atratividade e tráfego\n- Reforça percepção de \"produtos encalhados\"\n- Baixa conversão mesmo com descontos agressivos\n\nA estratégia correta é usar produtos \"chamariz\" (Curva A/B) para atrair clientes.\n\n## COMPOSIÇÃO IDEAL (REGRA DE OURO)\nPara cada 5-6 produtos C, inclua 1 produto A e 2 produtos B\n\n| Curva | % | Desconto | Papel |\n|-------|---|----------|-------|\n| A | 10-15% | 10-20% | CHAMARIZ |\n| B | 25-30% | 20-35% | SUPORTE |\n| C | 55-65% | 40-70% | QUEIMA |\n\n## VALIDAÇÕES OBRIGATÓRIAS\n- APENAS itens C → ALERTAR (baixa atratividade)\n- Sem item A → SUGERIR adicionar chamariz\n- Mix desbalanceado → RECOMENDAR ajustes\n\n## TIPOS DE CAMPANHA\n- flash_sale: 24-72h, 15% A + 30% B + 55% C\n- queimao: 1-2 semanas, 10% A + 25% B + 65% C\n- kit: Bundle (1 item A + 2 itens C), desconto 25-35%\n- progressivo: \"Leve 3 pague 2\", B + C\n\n## KITS SUGERIDOS (Material de Construção)\n- Kit Obra: Cimento (A) + Areia (B) + Argamassa (C) + Espaçador (C)\n- Kit Pintor: Tinta Premium (A) + Rolo (B) + Lixa (C) + Fita (C)\n- Kit Piso: Porcelanato (A) + Argamassa (B) + Rejunte (C) + Espaçador (C)\n\n## OUTPUT (JSON puro, sem markdown)\n{\n  \"status\": \"aprovado\" | \"ajuste_recomendado\" | \"ajuste_necessario\",\n  \"mix_atual\": { \"A\": 0, \"B\": 0, \"C\": 0, \"total\": 0 },\n  \"mix_percentual\": { \"A\": \"0%\", \"B\": \"0%\", \"C\": \"0%\" },\n  \"alertas\": [\"lista de alertas\"],\n  \"produtos\": [\n    { \"id\": 0, \"nome\": \"\", \"curva\": \"A\", \"estoque\": 0, \"preco\": 0, \"desconto_sugerido\": 15, \"papel\": \"chamariz\" }\n  ],\n  \"estimativas\": { \"faturamento_potencial\": 0, \"desconto_medio\": 0 },\n  \"tipo_campanha_sugerido\": \"flash_sale\",\n  \"duracao_sugerida\": \"3 dias\",\n  \"nome_sugerido\": \"Nome criativo\"\n}"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -304,
+                4944
+            ],
+            "id": "estrategico-campanhas-001",
+            "name": "Agente Estratégico Campanhas"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const output = $input.first().json.output || $input.first().json.response || '';\n    let cleanOutput = output\n        .replace(/^```json\\s*/i, '')\n        .replace(/^```\\s*/i, '')\n        .replace(/```\\s*$/i, '')\n        .trim();\n    \n    const plan = JSON.parse(cleanOutput);\n    \n    if (!plan.status) plan.status = 'ajuste_necessario';\n    if (!plan.produtos) plan.produtos = [];\n    if (!plan.alertas) plan.alertas = [];\n    \n    return {\n        json: {\n            type: 'campaign_plan',\n            success: true,\n            requires_approval: true,\n            plan: plan\n        }\n    };\n} catch (error) {\n    return {\n        json: {\n            type: 'campaign_plan',\n            success: false,\n            requires_approval: false,\n            error: 'Erro ao processar plano: ' + error.message,\n            raw_output: $input.first().json.output || ''\n        }\n    };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                96,
+                4944
+            ],
+            "id": "safe-executor-estrategico-001",
+            "name": "Safe Executor Estratégico"
+        }
+    ],
+    "connections": {
+        "Agente Estratégico Campanhas": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Estratégico",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

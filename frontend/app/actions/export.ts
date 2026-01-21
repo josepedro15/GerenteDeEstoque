@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { logger } from "@/lib/logger";
 import { logAuditAction, AUDIT_ACTIONS } from "./audit";
-import { EstoqueDetalhe } from "@/types/estoque";
+import { DadosEstoque } from "@/types/estoque";
 
 /**
  * Prepara dados de produtos para exportação
@@ -34,7 +34,6 @@ export async function prepareExportData(
             let query = supabase
                 .from('dados_estoque')
                 .select('*')
-                .eq('tipo_registro', 'DETALHE')
                 .order('produto_descricao', { ascending: true })
                 .range(from, from + PAGE_SIZE - 1);
 
@@ -56,7 +55,7 @@ export async function prepareExportData(
                 }
             }
             if (filters?.search && filters.search.trim()) {
-                query = query.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
+                query = query.or(`produto_descricao.ilike.%${filters.search}%,id_produto.eq.${filters.search}`);
             }
 
             const { data, error } = await query;
@@ -80,10 +79,12 @@ export async function prepareExportData(
         logger.info(`Export: fetched ${allData.length} products`);
 
         // Formatar dados para exportação
-        const exportData = allData.map((item: EstoqueDetalhe) => ({
+        const exportData = allData.map((item: DadosEstoque) => ({
             'Código': item.id_produto || '',
             'Descrição': item.produto_descricao || '',
+            'Fornecedor': item.fornecedor_principal || '',
             'Estoque Atual': item.estoque_atual,
+            'Estoque Trânsito': item.estoque_transito || 0,
             'Preço': item.preco,
             'Custo': item.custo,
             'Margem Unitária': item.margem_unitaria || '',
@@ -96,6 +97,7 @@ export async function prepareExportData(
             'Valor Estoque (Custo)': item.valor_estoque_custo || '',
             'Valor Estoque (Venda)': item.valor_estoque_venda || '',
             'Tendência': item.tendencia || '',
+            'Sugestão Compra': item.sugestao_compra_ajustada || '',
             'Prioridade Compra': item.prioridade_compra || '',
             'Alerta': item.alerta_estoque || ''
         }));
@@ -131,8 +133,7 @@ export async function prepareDashboardExport(): Promise<{ success: boolean; data
         // Buscar dados agregados
         const { data: allData, error } = await supabase
             .from('dados_estoque')
-            .select('*')
-            .eq('tipo_registro', 'DETALHE');
+            .select('*');
 
         if (error) {
             logger.error("Error fetching dashboard data:", error);

@@ -1,0 +1,586 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "contextWindowLength": 50,
+                "sessionIdKey": "sessionId"
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                -1824,
+                3488
+            ],
+            "id": "98749b7c-0a63-44a6-8ef2-68029f0cf9b1",
+            "name": "Memory Analisador"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $item(\"0\").$node[\"Code in JavaScript\"].json[\"body\"] }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente Analisador de Intenção - SmartOrders\n\n## Sua Função\nVocê é o primeiro passo de um sistema de chat inteligente. Sua ÚNICA tarefa é:\n1. Entender o que o usuário quer\n2. Determinar se precisa buscar dados do banco\n3. Identificar entidades mencionadas (produtos, fornecedores)\n4. Definir a ROTA correta para o próximo agente\n5. **USAR O HISTÓRICO DA CONVERSA** para entender contexto e continuidade\n\n## REGRA: USE A MEMÓRIA\nVocê tem acesso ao histórico de mensagens. Use-o para:\n- Entender se é uma continuação de conversa anterior\n- Identificar produtos já mencionados antes\n- Determinar se o usuário está dando follow-up em algo\n- **DETECTAR APROVAÇÃO DE PLANOS** de campanha apresentados anteriormente\n\n## REGRA CRÍTICA: APROVAÇÃO DE CAMPANHA\nQuando o usuário responde a um plano estratégico de campanha com frases como:\n- \"pode criar assim mesmo\"\n- \"ok, pode gerar\"\n- \"aprovado\"\n- \"sim, gera\"\n- \"pode fazer\"\n- \"manda ver\"\n- \"tá bom\"\n- \"confirmo\"\n- \"isso, cria\"\nEle está APROVANDO o plano para gerar os ativos. Use:\n- intent: \"aprovar_campanha\"\n- route: \"GERAR_ATIVOS\"\n- requires_data: false\n\n## REGRA CRÍTICA: requires_data\nDefina `requires_data: true` APENAS quando:\n- Usuário pergunta sobre um produto específico\n- Usuário pede lista de produtos\n- Usuário quer relatório ou números\n- Usuário quer campanha/marketing para produtos específicos\n- Usuário quer criar campanha de liquidação\n\nDefina `requires_data: false` quando:\n- Usuário faz pergunta conversacional\n- Usuário agradece\n- Usuário faz follow-up sem mencionar produto novo\n- Usuário pede esclarecimento\n- **Usuário APROVA um plano existente**\n\n## ROTAS DISPONÍVEIS (campo route)\n- ESTOQUE: consultas de produtos, estoque, compras\n- MARKETING: criar posts para instagram/redes sociais\n- CAMPANHA: liquidação com análise de mix ABC (queimão, desconto)\n- GERAR_ATIVOS: gerar ativos após aprovação do plano estratégico\n- EMAIL: ajuda com email marketing\n- NEGOCIACAO: negociação com fornecedores\n- RELATORIO: relatórios e análises\n\n## INTENTS DISPONÍVEIS (campo intent)\n- consulta_produto, consulta_estoque, email_marketing, campanha_marketing\n- campanha_estrategica, aprovar_campanha, relatorio_geral, negociacao, sugestao_compra\n- conversa, esclarecimento, agradecimento\n\n## MAPEAMENTO INTENT → ROUTE\n- consulta_produto, consulta_estoque, sugestao_compra → ESTOQUE\n- campanha_marketing → MARKETING\n- campanha_estrategica → CAMPANHA\n- aprovar_campanha → GERAR_ATIVOS\n- email_marketing → EMAIL\n- negociacao → NEGOCIACAO\n- relatorio_geral → RELATORIO\n- conversa, esclarecimento, agradecimento → ESTOQUE\n\n## Output OBRIGATÓRIO (JSON puro, sem markdown, sem ```)\n{\n  \"intent\": \"consulta_produto | email_marketing | campanha_marketing | campanha_estrategica | aprovar_campanha | negociacao | relatorio_geral | sugestao_compra | conversa | esclarecimento | agradecimento\",\n  \"route\": \"ESTOQUE | MARKETING | CAMPANHA | GERAR_ATIVOS | EMAIL | NEGOCIACAO | RELATORIO\",\n  \"requires_data\": true ou false,\n  \"confidence\": 0.0 a 1.0,\n  \"entities\": {\"produto\": \"nome ou null\", \"categoria\": \"categoria ou null\"},\n  \"data_needs\": [\"produtos\", \"financeiro\"] ou [],\n  \"filters\": {\"search_term\": \"termo ou null\", \"status\": \"RUPTURA|CRITICO|ATENCAO|SAUDAVEL|EXCESSO ou null\", \"limit\": 10},\n  \"requires_aggregation\": true ou false,\n  \"context_from_memory\": \"breve resumo do contexto anterior se relevante\",\n  \"original_question\": \"pergunta original\"\n}\n\n## EXEMPLOS\nEntrada: \"quero fazer um queimão desses produtos\"\nSaída: {\"intent\":\"campanha_estrategica\",\"route\":\"CAMPANHA\",\"requires_data\":true,...}\n\nEntrada: \"cria um post pro instagram sobre o cimento\"\nSaída: {\"intent\":\"campanha_marketing\",\"route\":\"MARKETING\",\"requires_data\":true,...}\n\nEntrada: \"pode criar assim mesmo\"\nSaída: {\"intent\":\"aprovar_campanha\",\"route\":\"GERAR_ATIVOS\",\"requires_data\":false,\"context_from_memory\":\"Usuário aprovou plano estratégico anterior\",...}\n\nEntrada: \"ok, gera a campanha\"\nSaída: {\"intent\":\"aprovar_campanha\",\"route\":\"GERAR_ATIVOS\",\"requires_data\":false,...}\n\nEntrada: \"obrigado pela ajuda\"\nSaída: {\"intent\":\"agradecimento\",\"route\":\"ESTOQUE\",\"requires_data\":false,...}\n\nEntrada: \"qual o estoque do cimento?\"\nSaída: {\"intent\":\"consulta_produto\",\"route\":\"ESTOQUE\",\"requires_data\":true,...}"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -2000,
+                3136
+            ],
+            "id": "ffeb7e3d-47df-4b24-a486-f8e0f9bbeba7",
+            "name": "Agente Analisador"
+        },
+        {
+            "parameters": {
+                "jsCode": "const output = $input.first().json.output || '';\nconst originalBody = $('Webhook').first().json.body || {};\n\n// DETECÇÃO DE AÇÃO DIRETA - Se body tem action: 'generate_campaign', força CAMPANHA\nif (originalBody.action === 'generate_campaign' && originalBody.products) {\n    return {json: {\n        success: true, \n        intent: 'campanha_estrategica', \n        route: 'CAMPANHA',\n        requires_data: false,  // produtos já vieram no body\n        confidence: 1.0, \n        entities: {}, \n        data_needs: [], \n        filters: {}, \n        requires_aggregation: false, \n        context_from_memory: null,\n        original_question: originalBody.context || 'Gerar campanha para produtos selecionados',\n        original_body: originalBody, \n        sessionId: originalBody.user_id || null,\n        produtos_diretos: originalBody.products  // passa os produtos direto\n    }};\n}\n\ntry {\n    let cleanOutput = output.replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```\\s*$/i, '').trim();\n    const parsed = JSON.parse(cleanOutput);\n    const requiresData = parsed.requires_data === true || (parsed.data_needs && parsed.data_needs.length > 0);\n    \n    // Validar route - usa o que o agente definiu ou fallback para ESTOQUE\n    const validRoutes = ['ESTOQUE', 'MARKETING', 'CAMPANHA', 'EMAIL', 'NEGOCIACAO', 'RELATORIO'];\n    const route = validRoutes.includes(parsed.route) ? parsed.route : 'ESTOQUE';\n    \n    return {json: {\n        success: true, \n        intent: parsed.intent || 'conversa', \n        route: route,\n        requires_data: requiresData, \n        confidence: parsed.confidence || 0.5, \n        entities: parsed.entities || {}, \n        data_needs: parsed.data_needs || [], \n        filters: parsed.filters || { limit: 10 }, \n        requires_aggregation: parsed.requires_aggregation || false, \n        context_from_memory: parsed.context_from_memory || null,\n        original_question: parsed.original_question || originalBody.message || '', \n        original_body: originalBody, \n        sessionId: originalBody.user_id || null\n    }};\n} catch (error) {\n    return {json: {\n        success: false, \n        intent: 'conversa', \n        route: 'ESTOQUE',\n        requires_data: false, \n        confidence: 0.3, \n        entities: {}, \n        data_needs: [], \n        filters: {}, \n        requires_aggregation: false, \n        context_from_memory: null,\n        original_question: originalBody.message || '', \n        original_body: originalBody, \n        sessionId: originalBody.user_id || null, \n        parse_error: error.message\n    }};\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1632,
+                3136
+            ],
+            "id": "6427145e-6f4f-4ca5-906a-191f75d205f8",
+            "name": "Parser Analisador"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.requires_data }}",
+                                        "rightValue": true,
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "PRECISA_DADOS"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.requires_data }}",
+                                        "rightValue": false,
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "CONVERSA"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.3,
+            "position": [
+                -1392,
+                3136
+            ],
+            "id": "762be62d-99b5-4ed8-b8fb-6ba7a1b09e30",
+            "name": "Precisa RAG?"
+        },
+        {
+            "parameters": {
+                "jsCode": "const allItems = $input.all();\nconst parserData = $('Parser Analisador').first().json;\nlet produtos = allItems.map(item => item.json).filter(p => p.tipo_registro === 'DETALHE');\n\n// Filtro por termo de busca\nconst searchTerm = parserData.filters?.search_term;\nif (searchTerm && produtos.length > 0) {\n    const searchPattern = searchTerm.replace(/%/g, '').toLowerCase();\n    const terms = searchPattern.split(/\\s+/).filter(t => t.length > 0);\n    produtos = produtos.filter(p => terms.every(term => (p.produto_descricao || '').toLowerCase().includes(term)));\n}\n\n// Filtro por status\nconst statusFilter = parserData.filters?.status;\nif (statusFilter && produtos.length > 0) {\n    produtos = produtos.filter(p => (p.status_ruptura || '').toUpperCase().includes(statusFilter.toUpperCase()));\n}\n\nconst limit = parserData.filters?.limit || 10;\nprodutos = produtos.slice(0, limit);\n\n// Incluir curva ABC nos produtos formatados\nconst produtosFormatados = produtos.map(p => ({\n    nome: p.produto_descricao, \n    id: p.id_produto, \n    estoque: p.estoque_atual, \n    demanda_dia: p.media_diaria_venda, \n    cobertura_dias: p.dias_de_cobertura, \n    status: p.status_ruptura, \n    preco: p.preco, \n    custo: p.custo,\n    curva: p.classe_abc,\n    margem: p.margem_percentual\n}));\n\nconst contextoDados = `\\n## Produtos Encontrados (${produtosFormatados.length})\\n${JSON.stringify(produtosFormatados.slice(0, 10), null, 2)}`;\n\nreturn {\n    json: {\n        route: parserData.route,\n        original_body: parserData.original_body, \n        payload_string: `# PERGUNTA DO USUÁRIO\\n${parserData.original_question}\\n\\n# DADOS REAIS DO SISTEMA SmartOrders${contextoDados}\\n\\n# INSTRUÇÕES\\nResponda usando APENAS os dados acima. Seja preciso e cite números.`, \n        sessionId: parserData.sessionId, \n        intent: parserData.intent,\n        produtos: produtosFormatados,\n        has_data: true, \n        timestamp: new Date().toISOString()\n    }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -912,
+                2976
+            ],
+            "id": "228b5ef3-8e36-4cf3-91cf-cbee2ef1956f",
+            "name": "Construir Contexto RAG"
+        },
+        {
+            "parameters": {
+                "jsCode": "const parserData = $('Parser Analisador').first().json;\n\nconst intentMessages = {\n    'agradecimento': 'O usuário está agradecendo. Responda de forma cordial.', \n    'esclarecimento': 'O usuário quer um esclarecimento. Se precisar de dados, peça que especifique.', \n    'conversa': 'Continue a conversa de forma natural.', \n    'email_marketing': 'O usuário quer ajuda com email marketing. Ajude a criar um email persuasivo.', \n    'negociacao': 'O usuário quer ajuda com negociação. Forneça estratégias e argumentos.', \n    'relatorio_geral': 'O usuário quer um relatório. Se não tiver dados, peça que especifique.',\n    'campanha_estrategica': 'O usuário quer criar uma campanha de liquidação. Analise o mix ABC dos produtos selecionados.'\n};\n\nconst instrucao = intentMessages[parserData.intent] || 'Responda de forma natural e conversacional.';\n\nreturn {\n    json: {\n        route: parserData.route,\n        original_body: parserData.original_body, \n        payload_string: `# MENSAGEM DO USUÁRIO\\n${parserData.original_question}\\n\\n# CONTEXTO\\nEsta é uma mensagem conversacional. NÃO há dados novos do banco.\\n\\n# INSTRUÇÕES\\n${instrucao}`, \n        sessionId: parserData.sessionId, \n        intent: parserData.intent, \n        has_data: false, \n        timestamp: new Date().toISOString()\n    }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -912,
+                3296
+            ],
+            "id": "2f07e7df-4c30-4de3-8382-27bbeb84a8e8",
+            "name": "Construir Contexto Conversa"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "ESTOQUE",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "ESTOQUE"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "MARKETING",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "MARKETING"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "CAMPANHA",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "CAMPANHA"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "NEGOCIACAO",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "NEGOCIACAO"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "RELATORIO",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "RELATORIO"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "EMAIL",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "EMAIL"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "GERAR_ATIVOS",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "GERAR_ATIVOS"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.3,
+            "position": [
+                -592,
+                3136
+            ],
+            "id": "switch-router-001",
+            "name": "Switch Router"
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "estoque",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -2832,
+                3136
+            ],
+            "id": "4989436f-e1d9-4342-b026-f34df51a6aee",
+            "name": "Webhook",
+            "webhookId": "6adda776-d2f2-42b4-a444-49d99993bf92"
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "value": "gpt-4.1-mini",
+                    "mode": "list",
+                    "cachedResultName": "gpt-4.1-mini"
+                },
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "position": [
+                -2048,
+                3408
+            ],
+            "id": "fac0072b-13b3-4d50-b3c9-dad5a9fa9fc3",
+            "name": "OpenAI Analisador (3.5)",
+            "credentials": {
+                "openAiApi": {
+                    "id": "IVVDt2jbGXhE7Oq0",
+                    "name": "API josé"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "=https://tfhwtejlsybilioiajbx.supabase.co/rest/v1/dados_estoque?tipo_registro=eq.DETALHE{{ $json.filters.search_term ? '&produto_descricao=ilike.*' + $json.filters.search_term.replace(/%/g, '').split(' ').join('*') + '*' : '' }}&limit=100",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaHd0ZWpsc3liaWxpb2lhamJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzM3OTUsImV4cCI6MjA4MDYwOTc5NX0.6Hc1b2h_g7DyGa9fPiOtGx0rL_BWE9xJ-kWBa8jSOrg"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaHd0ZWpsc3liaWxpb2lhamJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzM3OTUsImV4cCI6MjA4MDYwOTc5NX0.6Hc1b2h_g7DyGa9fPiOtGx0rL_BWE9xJ-kWBa8jSOrg"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                -1152,
+                2976
+            ],
+            "id": "b33e6358-c962-4d73-9a7a-c40bf9ea24b9",
+            "name": "Supabase: Buscar Dados"
+        },
+        {
+            "parameters": {
+                "modelName": "models/gemini-2.5-pro",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                -1952,
+                3568
+            ],
+            "id": "e7a34386-b074-4247-98f2-ce973b9ddaca",
+            "name": "Google Gemini Chat Model",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "zHnhnW0LvGSHuNSy",
+                    "name": "Metrics"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "sessionId",
+                            "value": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -2240,
+                3136
+            ],
+            "id": "98b4be38-f14f-4f9d-be95-db369f69ee6a",
+            "name": "Set Session Marketing"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Pega o body do Webhook\nconst body = $item(\"0\").$node[\"Webhook\"].json.body;\n\n// Função recursiva para converter qualquer tipo em string\nfunction toStringDeep(value) {\n  if (value === null || value === undefined) {\n    return String(value);\n  }\n\n  if (typeof value === 'object') {\n    // Converte objetos e arrays para JSON string\n    return JSON.stringify(value);\n  }\n\n  // Number, boolean, string, etc\n  return String(value);\n}\n\n// Converte tudo\nconst bodyAsString = toStringDeep(body);\n\nreturn [\n  {\n    json: {\n      body: bodyAsString\n    }\n  }\n];\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -2544,
+                3136
+            ],
+            "id": "1d9e0ea4-83a9-46cc-9ea6-57934ef4a967",
+            "name": "Code in JavaScript"
+        }
+    ],
+    "connections": {
+        "Memory Analisador": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agente Analisador",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Analisador": {
+            "main": [
+                [
+                    {
+                        "node": "Parser Analisador",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parser Analisador": {
+            "main": [
+                [
+                    {
+                        "node": "Precisa RAG?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Precisa RAG?": {
+            "main": [
+                [
+                    {
+                        "node": "Supabase: Buscar Dados",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Construir Contexto Conversa",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Construir Contexto RAG": {
+            "main": [
+                [
+                    {
+                        "node": "Switch Router",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Construir Contexto Conversa": {
+            "main": [
+                [
+                    {
+                        "node": "Switch Router",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Code in JavaScript",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Analisador (3.5)": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Analisador",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Supabase: Buscar Dados": {
+            "main": [
+                [
+                    {
+                        "node": "Construir Contexto RAG",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Analisador",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Set Session Marketing": {
+            "main": [
+                [
+                    {
+                        "node": "Agente Analisador",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Code in JavaScript": {
+            "main": [
+                [
+                    {
+                        "node": "Set Session Marketing",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "27e203b8d0ac73891032fa9f58c8cd38e53bbb56abd519cce7d9751638aae6d0"
+    }
+}

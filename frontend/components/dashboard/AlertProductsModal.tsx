@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Package, AlertTriangle, Skull, Flame, Loader2, ChevronDown, Wand2 } from "lucide-react";
 import { getStockDataPaginated } from "@/app/actions/inventory";
 import { useChat } from "@/contexts/ChatContext";
-import { EstoqueDetalhe } from "@/types/estoque";
+import { DadosEstoque } from "@/types/estoque";
 import { formatCurrency, parseNumber } from "@/lib/formatters";
 import { createBrowserClient } from "@supabase/ssr";
 
@@ -57,7 +57,7 @@ const alertConfig: Record<AlertType, {
 
 export function AlertProductsModal({ isOpen, onClose, alertType }: AlertProductsModalProps) {
     const { sendActionPlanMessage } = useChat();
-    const [items, setItems] = useState<EstoqueDetalhe[]>([]);
+    const [items, setItems] = useState<DadosEstoque[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);

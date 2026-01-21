@@ -1,0 +1,155 @@
+{
+    "instructions": "INSTRUÇÕES PARA APLICAR AS MUDANÇAS NO N8N",
+    "step_1_update_agente_analisador2": {
+        "description": "No node 'Agente Analisador2', adicionar o intent campanha_estrategica no systemMessage",
+        "find_in_system_message": "- campanha_marketing: campanhas de marketing/instagram",
+        "replace_with": "- campanha_marketing: campanhas de marketing/instagram\n- campanha_estrategica: seleção de produtos para criar campanha de liquidação com análise ABC"
+    },
+    "step_2_update_construir_contexto_rag1": {
+        "description": "No node 'Construir Contexto RAG1', atualizar a função mapIntentToRoute",
+        "new_code": "const allItems = $input.all();\nconst parserData = $('Parser Analisador2').first().json;\nlet produtos = allItems.map(item => item.json).filter(p => p.tipo_registro === 'DETALHE');\nconst searchTerm = parserData.filters?.search_term;\nif (searchTerm && produtos.length > 0) {\n    const searchPattern = searchTerm.replace(/%/g, '').toLowerCase();\n    const terms = searchPattern.split(/\\s+/).filter(t => t.length > 0);\n    produtos = produtos.filter(p => terms.every(term => (p.produto_descricao || '').toLowerCase().includes(term)));\n}\nconst statusFilter = parserData.filters?.status;\nif (statusFilter && produtos.length > 0) {\n    produtos = produtos.filter(p => (p.status_ruptura || '').toUpperCase().includes(statusFilter.toUpperCase()));\n}\nconst limit = parserData.filters?.limit || 10;\nprodutos = produtos.slice(0, limit);\nconst produtosFormatados = produtos.map(p => ({nome: p.produto_descricao, id: p.id_produto, estoque: p.estoque_atual, demanda_dia: p.media_diaria_venda, cobertura_dias: p.dias_de_cobertura, status: p.status_ruptura, preco: p.preco, custo: p.custo, curva: p.classe_abc}));\nconst contextoDados = `\\n## Produtos Encontrados (${produtosFormatados.length})\\n${JSON.stringify(produtosFormatados.slice(0, 10), null, 2)}`;\nfunction mapIntentToRoute(intent) {const map = {'campanha_marketing': 'MARKETING', 'campanha_estrategica': 'CAMPANHA', 'sugestao_compra': 'COMPRA', 'negociacao': 'NEGOCIACAO', 'relatorio_geral': 'RELATORIO'}; return map[intent] || 'ESTOQUE';}\nreturn {json: {route: mapIntentToRoute(parserData.intent), original_body: parserData.original_body, payload_string: `# PERGUNTA DO USUÁRIO\\n${parserData.original_question}\\n\\n# DADOS REAIS DO SISTEMA SmartOrders${contextoDados}\\n\\n# INSTRUÇÕES\\nResponda usando APENAS os dados acima. Seja preciso e cite números.`, sessionId: parserData.sessionId, intent: parserData.intent, has_data: true, timestamp: new Date().toISOString()}};"
+    },
+    "step_3_update_construir_contexto_conversa1": {
+        "description": "No node 'Construir Contexto Conversa1', atualizar a função mapIntentToRoute",
+        "new_code": "const parserData = $('Parser Analisador2').first().json;\nconst intentMessages = {'agradecimento': 'O usuário está agradecendo. Responda de forma cordial.', 'esclarecimento': 'O usuário quer um esclarecimento. Se precisar de dados, peça que especifique.', 'conversa': 'Continue a conversa de forma natural.', 'email_marketing': 'O usuário quer ajuda com email marketing. Ajude a criar um email persuasivo.', 'negociacao': 'O usuário quer ajuda com negociação. Forneça estratégias e argumentos.', 'relatorio_geral': 'O usuário quer um relatório. Se não tiver dados, peça que especifique.', 'campanha_estrategica': 'O usuário quer criar uma campanha de liquidação. Analise o mix ABC dos produtos.'};\nconst instrucao = intentMessages[parserData.intent] || 'Responda de forma natural e conversacional.';\nfunction mapIntentToRoute(intent) {const map = {'campanha_marketing': 'MARKETING', 'email_marketing': 'EMAIL', 'campanha_estrategica': 'CAMPANHA', 'sugestao_compra': 'COMPRA', 'negociacao': 'NEGOCIACAO', 'relatorio_geral': 'RELATORIO'}; return map[intent] || 'ESTOQUE';}\nreturn {json: {route: mapIntentToRoute(parserData.intent), original_body: parserData.original_body, payload_string: `# MENSAGEM DO USUÁRIO\\n${parserData.original_question}\\n\\n# CONTEXTO\\nEsta é uma mensagem conversacional. NÃO há dados novos do banco.\\n\\n# INSTRUÇÕES\\n${instrucao}`, sessionId: parserData.sessionId, intent: parserData.intent, has_data: false, timestamp: new Date().toISOString()}};"
+    },
+    "step_4_add_switch_router_condition": {
+        "description": "No node 'Switch Router2', adicionar 7ª condição para CAMPANHA",
+        "new_condition": {
+            "conditions": {
+                "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                },
+                "conditions": [
+                    {
+                        "leftValue": "={{ $json.route }}",
+                        "rightValue": "CAMPANHA",
+                        "operator": {
+                            "type": "string",
+                            "operation": "equals"
+                        }
+                    }
+                ],
+                "combinator": "and"
+            },
+            "renameOutput": true,
+            "outputKey": "CAMPANHA"
+        }
+    },
+    "step_5_new_nodes_to_add": {
+        "description": "Adicionar os novos nodes no workflow",
+        "nodes": [
+            {
+                "parameters": {
+                    "promptType": "define",
+                    "text": "={{ $json.payload_string }}",
+                    "needsFallback": true,
+                    "options": {
+                        "systemMessage": "# Agente Estratégico de Campanhas - SmartOrders\n\n## Sua Função\nAnalisar produtos selecionados para campanha e criar plano estratégico otimizado.\n\n## POR QUE NÃO FAZER LIQUIDAÇÃO SÓ COM CURVA C?\nProdutos Curva C têm baixa demanda natural. Uma campanha só com itens C:\n- Gera pouca atratividade e tráfego\n- Reforça percepção de \"produtos encalhados\"\n- Baixa conversão mesmo com descontos agressivos\n\nA estratégia correta é usar produtos \"chamariz\" (Curva A/B) para atrair clientes.\n\n## COMPOSIÇÃO IDEAL (REGRA DE OURO)\nPara cada 5-6 produtos C, inclua 1 produto A e 2 produtos B\n\n| Curva | % | Desconto | Papel |\n|-------|---|----------|-------|\n| A | 10-15% | 10-20% | CHAMARIZ |\n| B | 25-30% | 20-35% | SUPORTE |\n| C | 55-65% | 40-70% | QUEIMA |\n\n## VALIDAÇÕES OBRIGATÓRIAS\n- APENAS itens C → ALERTAR (baixa atratividade)\n- Sem item A → SUGERIR adicionar chamariz\n- Mix desbalanceado → RECOMENDAR ajustes\n\n## TIPOS DE CAMPANHA\n- flash_sale: 24-72h, 15% A + 30% B + 55% C\n- queimao: 1-2 semanas, 10% A + 25% B + 65% C\n- kit: Bundle (1 item A + 2 itens C), desconto 25-35%\n- progressivo: \"Leve 3 pague 2\", B + C\n\n## KITS SUGERIDOS (Material de Construção)\n- Kit Obra: Cimento (A) + Areia (B) + Argamassa (C) + Espaçador (C)\n- Kit Pintor: Tinta Premium (A) + Rolo (B) + Lixa (C) + Fita (C)\n- Kit Piso: Porcelanato (A) + Argamassa (B) + Rejunte (C) + Espaçador (C)\n\n## OUTPUT (JSON puro, sem markdown)\n{\n  \"status\": \"aprovado\" | \"ajuste_recomendado\" | \"ajuste_necessario\",\n  \"mix_atual\": { \"A\": 0, \"B\": 0, \"C\": 0, \"total\": 0 },\n  \"mix_percentual\": { \"A\": \"0%\", \"B\": \"0%\", \"C\": \"0%\" },\n  \"alertas\": [\"lista de alertas\"],\n  \"produtos\": [\n    { \"id\": 0, \"nome\": \"\", \"curva\": \"A\", \"estoque\": 0, \"preco\": 0, \"desconto_sugerido\": 15, \"papel\": \"chamariz\" }\n  ],\n  \"estimativas\": { \"faturamento_potencial\": 0, \"desconto_medio\": 0 },\n  \"tipo_campanha_sugerido\": \"flash_sale\",\n  \"duracao_sugerida\": \"3 dias\",\n  \"nome_sugerido\": \"Nome criativo\"\n}"
+                    }
+                },
+                "type": "@n8n/n8n-nodes-langchain.agent",
+                "typeVersion": 2.2,
+                "position": [
+                    -304,
+                    4944
+                ],
+                "id": "estrategico-campanhas-001",
+                "name": "Agente Estratégico Campanhas"
+            },
+            {
+                "parameters": {
+                    "jsCode": "try {\n    const output = $input.first().json.output || $input.first().json.response || '';\n    let cleanOutput = output\n        .replace(/^```json\\s*/i, '')\n        .replace(/^```\\s*/i, '')\n        .replace(/```\\s*$/i, '')\n        .trim();\n    \n    const plan = JSON.parse(cleanOutput);\n    \n    if (!plan.status) plan.status = 'ajuste_necessario';\n    if (!plan.produtos) plan.produtos = [];\n    if (!plan.alertas) plan.alertas = [];\n    \n    return {\n        json: {\n            type: 'campaign_plan',\n            success: true,\n            requires_approval: true,\n            plan: plan\n        }\n    };\n} catch (error) {\n    return {\n        json: {\n            type: 'campaign_plan',\n            success: false,\n            requires_approval: false,\n            error: 'Erro ao processar plano: ' + error.message,\n            raw_output: $input.first().json.output || ''\n        }\n    };\n}"
+                },
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    96,
+                    4944
+                ],
+                "id": "safe-executor-estrategico-001",
+                "name": "Safe Executor Estratégico"
+            }
+        ]
+    },
+    "step_6_new_connections": {
+        "description": "Adicionar as novas conexões",
+        "connections": {
+            "Switch Router2": {
+                "main": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    [
+                        {
+                            "node": "Agente Estratégico Campanhas",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Agente Estratégico Campanhas": {
+                "main": [
+                    [
+                        {
+                            "node": "Safe Executor Estratégico",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Safe Executor Estratégico": {
+                "main": [
+                    [
+                        {
+                            "node": "Respond to Webhook4",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "OpenAI Chat Model4": {
+                "ai_languageModel": [
+                    [
+                        {
+                            "node": "Agente Estratégico Campanhas",
+                            "type": "ai_languageModel",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Google Gemini Chat Model6": {
+                "ai_languageModel": [
+                    [
+                        {
+                            "node": "Agente Estratégico Campanhas",
+                            "type": "ai_languageModel",
+                            "index": 1
+                        }
+                    ]
+                ]
+            },
+            "Simple Memory4": {
+                "ai_memory": [
+                    [
+                        {
+                            "node": "Agente Estratégico Campanhas",
+                            "type": "ai_memory",
+                            "index": 0
+                        }
+                    ]
+                ]
+            }
+        }
+    }
+}

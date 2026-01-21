@@ -112,12 +112,12 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
 
                 if (!mounted) return;
 
-                if (!result?.detalhe) {
+                if (!result?.produtos) {
                     setProducts([]);
                     return;
                 }
 
-                const simpleProducts: SimpleProduct[] = result.detalhe
+                const simpleProducts: SimpleProduct[] = result.produtos
                     .filter((p: any) => p?.id_produto)
                     .map((p: any) => {
                         // Normalizar alerta do banco (ex: '💀 MORTO' -> 'MORTO')

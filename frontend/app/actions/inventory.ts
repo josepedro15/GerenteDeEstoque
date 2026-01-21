@@ -1,12 +1,12 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-import { EstoqueSumario, EstoqueDetalhe } from "@/types/estoque";
+import { DadosEstoque, ResumoEstoque } from "@/types/estoque";
 import { logger } from "@/lib/logger";
 
 export interface StockData {
-    sumario: EstoqueSumario[];
-    detalhe: EstoqueDetalhe[];
+    produtos: DadosEstoque[];
+    resumo: ResumoEstoque;
 }
 
 // Filtros para busca paginada
@@ -16,12 +16,12 @@ export interface StockFilters {
     search?: string;
     minCoverage?: number;
     maxCoverage?: number;
-    alerta?: string; // 'MORTO', 'LIQUIDAR', 'RUPTURA', etc.
+    alerta?: string;
 }
 
 // Resultado paginado
 export interface PaginatedStockResult {
-    items: EstoqueDetalhe[];
+    items: DadosEstoque[];
     totalCount: number;
     totalValue: number;
     currentPage: number;
@@ -31,7 +31,6 @@ export interface PaginatedStockResult {
 
 /**
  * Busca dados de estoque com paginação server-side
- * Ideal para listagens de produtos onde não precisa de todos os dados
  */
 export async function getStockDataPaginated(
     page = 1,
@@ -41,13 +40,12 @@ export async function getStockDataPaginated(
     try {
         const from = (page - 1) * pageSize;
 
-        // Construir query base
         let query = supabase
             .from('dados_estoque')
             .select('*', { count: 'exact' })
-            .eq('tipo_registro', 'DETALHE')
             .range(from, from + pageSize - 1)
-            .order('id', { ascending: true });
+            .order('prioridade_compra', { ascending: true })
+            .order('dias_de_cobertura', { ascending: true });
 
         // Aplicar filtros
         if (filters?.status) {
@@ -57,12 +55,11 @@ export async function getStockDataPaginated(
             query = query.eq('classe_abc', filters.abc);
         }
         if (filters?.search) {
-            query = query.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
+            query = query.or(`produto_descricao.ilike.%${filters.search}%`);
         }
         if (filters?.alerta) {
-            // Filtro especial para RUPTURA que usa status_ruptura
             if (filters.alerta === 'RUPTURA') {
-                query = query.or('status_ruptura.ilike.%RUPTURA%,status_ruptura.ilike.%CRÍTICO%');
+                query = query.or('status_ruptura.ilike.%Ruptura%,status_ruptura.ilike.%Crítico%');
             } else {
                 query = query.ilike('alerta_estoque', `%${filters.alerta}%`);
             }
@@ -78,60 +75,25 @@ export async function getStockDataPaginated(
         const totalCount = count || 0;
         const totalPages = Math.ceil(totalCount / pageSize);
 
-        // Calcular valor total dos itens - precisa paginar pois Supabase tem limite de 1000 por query
+        // Calcular valor total
         let totalValue = 0;
         try {
-            const VALUE_PAGE_SIZE = 1000;
-            let valueFrom = 0;
-            let hasMoreValues = true;
+            const { data: valueData } = await supabase
+                .from('dados_estoque')
+                .select('valor_estoque_custo');
 
-            while (hasMoreValues) {
-                let valueQuery = supabase
-                    .from('dados_estoque')
-                    .select('valor_estoque_custo')
-                    .eq('tipo_registro', 'DETALHE')
-                    .range(valueFrom, valueFrom + VALUE_PAGE_SIZE - 1);
-
-                // Aplicar os mesmos filtros para a query de valor total
-                if (filters?.status) {
-                    valueQuery = valueQuery.ilike('status_ruptura', `%${filters.status}%`);
-                }
-                if (filters?.abc) {
-                    valueQuery = valueQuery.eq('classe_abc', filters.abc);
-                }
-                if (filters?.search) {
-                    valueQuery = valueQuery.or(`produto_descricao.ilike.%${filters.search}%,id_produto.ilike.%${filters.search}%`);
-                }
-                if (filters?.alerta) {
-                    if (filters.alerta === 'RUPTURA') {
-                        valueQuery = valueQuery.or('status_ruptura.ilike.%RUPTURA%,status_ruptura.ilike.%CRÍTICO%');
-                    } else {
-                        valueQuery = valueQuery.ilike('alerta_estoque', `%${filters.alerta}%`);
-                    }
-                }
-
-                const { data: pageValues } = await valueQuery;
-
-                if (!pageValues || pageValues.length === 0) {
-                    hasMoreValues = false;
-                } else {
-                    totalValue += pageValues.reduce((sum, item) => {
-                        const value = parseFloat(String(item.valor_estoque_custo || 0));
-                        return sum + (isNaN(value) ? 0 : value);
-                    }, 0);
-
-                    valueFrom += VALUE_PAGE_SIZE;
-                    if (pageValues.length < VALUE_PAGE_SIZE) {
-                        hasMoreValues = false;
-                    }
-                }
+            if (valueData) {
+                totalValue = valueData.reduce((sum, item) => {
+                    const value = Number(item.valor_estoque_custo || 0);
+                    return sum + (isNaN(value) ? 0 : value);
+                }, 0);
             }
         } catch (valueError) {
             logger.debug("Não foi possível calcular valor total:", valueError);
         }
 
         return {
-            items: (data || []) as EstoqueDetalhe[],
+            items: (data || []) as DadosEstoque[],
             totalCount,
             totalValue,
             currentPage: page,
@@ -153,15 +115,11 @@ export async function getStockDataPaginated(
 
 /**
  * Busca TODOS os dados de estoque
- * Usado pelo dashboard que precisa calcular métricas sobre todos os produtos
- * @deprecated Para listagens, use getStockDataPaginated
  */
 export async function getStockData(): Promise<StockData> {
     try {
-        // Supabase has a default limit of 1000 rows per query
-        // We need to paginate to get all records
         const PAGE_SIZE = 1000;
-        let allData: any[] = [];
+        let allData: DadosEstoque[] = [];
         let from = 0;
         let hasMore = true;
 
@@ -180,9 +138,8 @@ export async function getStockData(): Promise<StockData> {
             if (!data || data.length === 0) {
                 hasMore = false;
             } else {
-                allData = [...allData, ...data];
+                allData = [...allData, ...data] as DadosEstoque[];
                 from += PAGE_SIZE;
-                // If we got less than PAGE_SIZE, we've reached the end
                 if (data.length < PAGE_SIZE) {
                     hasMore = false;
                 }
@@ -190,21 +147,60 @@ export async function getStockData(): Promise<StockData> {
         }
 
         if (allData.length === 0) {
-            return { sumario: [], detalhe: [] };
+            return {
+                produtos: [],
+                resumo: {
+                    total_produtos: 0,
+                    produtos_ruptura: 0,
+                    produtos_chegando: 0,
+                    produtos_criticos: 0,
+                    produtos_atencao: 0,
+                    produtos_ok: 0,
+                    valor_total_estoque: 0,
+                    valor_sugestao_compra: 0,
+                    total_classe_a: 0,
+                    total_classe_b: 0,
+                    total_classe_c: 0,
+                }
+            };
         }
 
-        // Filter by tipo_registro
-        const sumario = allData.filter(item => item.tipo_registro === 'SUMARIO') as EstoqueSumario[];
-        const detalhe = allData.filter(item => item.tipo_registro === 'DETALHE') as EstoqueDetalhe[];
+        const resumo: ResumoEstoque = {
+            total_produtos: allData.length,
+            produtos_ruptura: allData.filter(p => p.status_ruptura?.includes('Ruptura')).length,
+            produtos_chegando: allData.filter(p => p.status_ruptura?.includes('Chegando')).length,
+            produtos_criticos: allData.filter(p => p.status_ruptura?.includes('Crítico')).length,
+            produtos_atencao: allData.filter(p => p.status_ruptura?.includes('Atenção')).length,
+            produtos_ok: allData.filter(p => p.status_ruptura?.includes('Saudável')).length,
+            valor_total_estoque: allData.reduce((acc, p) => acc + (Number(p.valor_estoque_custo) || 0), 0),
+            valor_sugestao_compra: allData.reduce((acc, p) => acc + ((Number(p.sugestao_compra_ajustada) || 0) * (Number(p.custo) || 0)), 0),
+            total_classe_a: allData.filter(p => p.classe_abc === 'A').length,
+            total_classe_b: allData.filter(p => p.classe_abc === 'B').length,
+            total_classe_c: allData.filter(p => p.classe_abc === 'C').length,
+        };
 
-        logger.debug(`Loaded ${detalhe.length} products, ${sumario.length} summary records`);
-        return { sumario, detalhe };
+        logger.debug(`Loaded ${allData.length} products`);
+        return { produtos: allData, resumo };
     } catch (error) {
         logger.error("Database Error:", error);
-        return { sumario: [], detalhe: [] };
+        return {
+            produtos: [],
+            resumo: {
+                total_produtos: 0,
+                produtos_ruptura: 0,
+                produtos_chegando: 0,
+                produtos_criticos: 0,
+                produtos_atencao: 0,
+                produtos_ok: 0,
+                valor_total_estoque: 0,
+                valor_sugestao_compra: 0,
+                total_classe_a: 0,
+                total_classe_b: 0,
+                total_classe_c: 0,
+            }
+        };
     }
 }
-
 
 // Deprecated: kept for backward compatibility
 export async function getStockAnalysis() {
@@ -219,7 +215,5 @@ export interface Supplier {
 }
 
 export async function getSuppliers(): Promise<Supplier[]> {
-    // Placeholder to fix build. Future todo: migrate suppliers to new architecture if needed.
     return [];
 }
-

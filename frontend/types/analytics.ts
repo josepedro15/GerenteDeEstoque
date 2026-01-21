@@ -5,11 +5,15 @@ export interface DashboardMetrics {
         projectedProfit: number;
         averageMargin: number;
         totalSkuCount: number;
-        averageGiro: number; // NOVO
+        averageGiro: number;
+        // NOVO: Trânsito e Sugestão
+        totalTransitValue: number;
+        totalSugestaoAjustada: number;
     };
     risk: {
         ruptureCount: number;
         excessCount: number;
+        chegandoCount: number; // NOVO
         ruptureShare: number; // Percentage
         healthyShare: number; // Percentage
     };

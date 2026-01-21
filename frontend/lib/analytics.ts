@@ -1,4 +1,4 @@
-import { EstoqueDetalhe } from "@/types/estoque";
+import { DadosEstoque } from "@/types/estoque";
 import { DashboardMetrics, PurchaseSuggestion, PriorityActionItem } from "@/types/analytics";
 import { parseNumber, normalizeStatus } from "./formatters";
 
@@ -20,14 +20,14 @@ function normalizeTendencia(tendencia: string | null | undefined): string {
     return 'ESTAVEL';
 }
 
-export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMetrics {
+export function calculateDashboardMetrics(items: DadosEstoque[]): DashboardMetrics {
     // Filtrar apenas itens com id_produto válido
     const validItems = items.filter(item => item.id_produto !== null && item.id_produto !== undefined);
     const totalItems = validItems.length;
 
     // Inicializar contadores
     const statusCount: Record<string, number> = {
-        'RUPTURA': 0, 'CRÍTICO': 0, 'ATENÇÃO': 0, 'SAUDÁVEL': 0, 'EXCESSO': 0
+        'RUPTURA': 0, 'CHEGANDO': 0, 'CRÍTICO': 0, 'ATENÇÃO': 0, 'SAUDÁVEL': 0, 'EXCESSO': 0
     };
 
     const alertCount = { MORTO: 0, LIQUIDAR: 0, AVALIAR: 0, ATENCAO: 0, OK: 0 };
@@ -50,6 +50,8 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
     let totalRevenuePotential = 0;
     let totalGiro = 0;
     let giroCount = 0;
+    let totalTransitValue = 0;
+    let totalSugestaoAjustada = 0;
 
     // Processar cada item
     validItems.forEach(item => {
@@ -74,6 +76,12 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
             totalGiro += giro;
             giroCount++;
         }
+
+        // 1b. Trânsito e Sugestão Ajustada
+        const transitQty = parseNumber(item.estoque_transito);
+        const sugestaoAjust = parseNumber(item.sugestao_compra_ajustada);
+        totalTransitValue += transitQty * cost;
+        totalSugestaoAjustada += sugestaoAjust * cost;
 
         // 2. Status counts
         if (statusCount[status] !== undefined) {
@@ -112,6 +120,7 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
     const averageMargin = totalRevenuePotential > 0 ? (projectedProfit / totalRevenuePotential) * 100 : 0;
     const averageGiro = giroCount > 0 ? totalGiro / giroCount : 0;
     const ruptureCount = statusCount['RUPTURA'] + statusCount['CRÍTICO'];
+    const chegandoCount = statusCount['CHEGANDO'];
     const excessCount = statusCount['EXCESSO'];
     const healthyCount = statusCount['SAUDÁVEL'];
 
@@ -122,7 +131,7 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
             return s === 'RUPTURA' || s === 'CRÍTICO';
         })
         .map(i => ({
-            id: i.id_produto as string,
+            id: String(i.id_produto),
             name: i.produto_descricao || 'Sem descrição',
             value: parseNumber(i.media_diaria_venda) * parseNumber(i.preco),
             metricLabel: 'Perda Diária Est.',
@@ -136,7 +145,7 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
     const excessItems = validItems
         .filter(i => normalizeStatus(i.status_ruptura) === 'EXCESSO')
         .map(i => ({
-            id: i.id_produto as string,
+            id: String(i.id_produto),
             name: i.produto_descricao || 'Sem descrição',
             value: parseNumber(i.estoque_atual) * parseNumber(i.custo),
             metricLabel: 'Capital Parado',
@@ -155,7 +164,7 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
     const priorityActions: PriorityActionItem[] = validItems
         .filter(i => i.prioridade_compra && i.prioridade_compra !== '5-NENHUMA')
         .map(i => ({
-            id: i.id_produto as string,
+            id: String(i.id_produto),
             name: i.produto_descricao || 'Sem descrição',
             prioridade: i.prioridade_compra || '5-NENHUMA',
             classeAbc: i.classe_abc || 'C',
@@ -184,10 +193,13 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
             averageMargin,
             totalSkuCount: totalItems,
             averageGiro,
+            totalTransitValue,
+            totalSugestaoAjustada,
         },
         risk: {
             ruptureCount,
             excessCount,
+            chegandoCount,
             ruptureShare: totalItems > 0 ? (ruptureCount / totalItems) * 100 : 0,
             healthyShare: totalItems > 0 ? (healthyCount / totalItems) * 100 : 0,
         },
@@ -230,7 +242,7 @@ export function calculateDashboardMetrics(items: EstoqueDetalhe[]): DashboardMet
     };
 }
 
-export function generateSuggestions(items: EstoqueDetalhe[], targetDays = 60): PurchaseSuggestion[] {
+export function generateSuggestions(items: DadosEstoque[], targetDays = 60): PurchaseSuggestion[] {
     // Filtrar apenas itens com id_produto válido
     return items
         .filter(item => item.id_produto !== null && item.id_produto !== undefined)
@@ -265,7 +277,7 @@ export function generateSuggestions(items: EstoqueDetalhe[], targetDays = 60): P
             }
 
             return {
-                id: item.id_produto as string,
+                id: String(item.id_produto),
                 name: item.produto_descricao || 'Sem descrição',
                 currentStock: qty,
                 avgDailySales: daily,

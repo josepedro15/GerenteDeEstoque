@@ -5,13 +5,12 @@ import { parseNumber, normalizeStatus } from "@/lib/formatters";
 export const dynamic = 'force-dynamic';
 
 export default async function ProductsPage() {
-    const { detalhe } = await getStockData();
+    const { produtos } = await getStockData();
 
     // Transformação completa dos dados
-    const products: Product[] = detalhe
+    const products: Product[] = produtos
         .filter(item => item.id_produto)
         .map(item => {
-            // Usar normalizeStatus do formatters.ts
             const status = normalizeStatus(item.status_ruptura);
 
             return {
@@ -21,8 +20,14 @@ export default async function ProductsPage() {
 
                 // Estoque
                 estoque: parseNumber(item.estoque_atual),
+                estoqueTransito: parseNumber(item.estoque_transito),
+                estoqueProjetado: parseNumber(item.estoque_projetado),
                 cobertura: parseNumber(item.dias_de_cobertura),
+                coberturaProjetada: parseNumber(item.dias_cobertura_projetado),
                 mediaVenda: parseNumber(item.media_diaria_venda),
+
+                // Fornecedor
+                fornecedorPrincipal: String(item.fornecedor_principal || '-'),
 
                 // Financeiro
                 preco: parseNumber(item.preco),
@@ -38,14 +43,16 @@ export default async function ProductsPage() {
                 // Classificação
                 abc: String(item.classe_abc || 'C').toUpperCase().trim(),
                 status: status,
-
-                // Giro e Valor
                 giroMensal: parseNumber(item.giro_mensal),
+
+                // Valores de Estoque
                 valorEstoqueCusto: parseNumber(item.valor_estoque_custo),
                 valorEstoqueVenda: parseNumber(item.valor_estoque_venda),
+                valorTransito: parseNumber(item.valor_transito_custo),
 
-                // Sugestão
+                // Sugestão de Compra
                 sugestaoCompra: parseNumber(item.sugestao_compra_60d),
+                sugestaoAjustada: parseNumber(item.sugestao_compra_ajustada),
 
                 // Tendência
                 tendencia: String(item.tendencia || ''),
@@ -58,6 +65,9 @@ export default async function ProductsPage() {
                 // Alertas
                 prioridadeCompra: String(item.prioridade_compra || ''),
                 alertaEstoque: String(item.alerta_estoque || ''),
+
+                // Pedidos
+                pedidosAbertos: parseNumber(item.pedidos_abertos),
             };
         });
 
