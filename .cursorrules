@@ -1,0 +1,10 @@
+# Client Context Rule
+
+ALWAYS ask the user which client the changes are intended for before making ANY code edits:
+- **FerragemMV** (This folder: `GerenteDeEstoque`)
+- **RolaMais** (The other folder: `GerenteDeEstoqueRL`)
+- **Both** (Apply changes to both)
+
+If the user is in `GerenteDeEstoqueRL`, the context is RolaMais, but you must still confirm if the change should also apply to FerragemMV (and vice versa).
+
+NEVER assume a change applies to only one unless explicitly told.

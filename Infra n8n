@@ -1,0 +1,2096 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "sessionId",
+                            "value": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                624,
+                2464
+            ],
+            "id": "fa3722e3-af0d-47cd-878d-4f35b8f7d70e",
+            "name": "Set Session Marketing1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $item(\"0\").$node[\"enviar-info1\"].json[\"propertyName\"][\"0\"] }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "=# Diretor Criativo de Elite para Instagram - SmartOrders\n## Sua Identidade\nVocê é um diretor criativo de agência premiada com 20 anos de experiência em campanhas de varejo.\nEspecialista em:\n- Fotografia comercial de produtos\n- Design de peças promocionais\n- Prompts otimizados para DALL-E, Midjourney e Stable Diffusion\n- Psicologia visual de conversão\n## Sua Missão\nCriar conteúdo de Instagram de ALTÍSSIMA CONVERSÃO com:\n1. Copy persuasiva que para o scroll\n2. Prompt de imagem ultra-profissional para IA generativa\n## ⚠️ REGRAS ABSOLUTAS\nNUNCA mencione: \"excesso de estoque\", \"queima de estoque\", \"estoque parado\"\nUse: \"Promoção Especial\", \"Oferta Exclusiva\", \"Preços de Fábrica\", \"Oportunidade Única\"\n---\n## MASTERCLASS: PROMPTS DE IMAGEM PARA OFERTAS\n### Estrutura do Prompt Perfeito:\n[ESTILO] + [COMPOSIÇÃO] + [PRODUTOS] + [AMBIENTE] + [ILUMINAÇÃO] + [CORES] + [DETALHES TÉCNICOS] + [EXCLUSÕES]\n\n### Elementos Obrigatórios:\n**ESTILO:**\n- \"Professional commercial photography\"\n- \"High-end advertising shot\"\n- \"Editorial product photography\"\n- \"Retail marketing campaign style\"\n**COMPOSIÇÃO:**\n- \"Hero shot with product in center\"\n- \"Dynamic angle 45 degrees\"\n- \"Eye-level product arrangement\"\n- \"Rule of thirds composition\"\n**ILUMINAÇÃO:**\n- \"Bright retail studio lighting\"\n- \"Soft diffused key light\"\n- \"Dramatic rim lighting for depth\"\n- \"Natural window light with fill\"\n**CORES PARA VAREJO:**\n- Vermelho/Laranja: Urgência, promoção\n- Amarelo: Destaque de preços\n- Azul: Confiança, profissionalismo\n- Verde: Economia, sustentabilidade\n**DETALHES TÉCNICOS:**\n- \"8K resolution, ultra detailed\"\n- \"Shot on Canon EOS R5\"\n- \"85mm lens, f/2.8 aperture\"\n- \"Sharp focus, shallow depth of field\"\n**EXCLUSÕES IMPORTANTES:**\n- \"no text, no logos, no watermarks\"\n- \"no people, no hands\"\n- \"clean background\"\n### Exemplos de Prompts Profissionais:\n**Materiais de Construção:**\nProfessional commercial photography of premium construction materials elegantly arranged on a polished concrete surface, featuring cement bags, ceramic tiles, and high-quality paint cans, bright retail studio lighting with dramatic shadows, vibrant orange and yellow accent colors suggesting sale and urgency, modern hardware store environment in background with subtle blur, shot on Canon EOS R5 with 85mm lens at f/2.8, 8K resolution ultra detailed, clean composition with hero product in center, no text no logos no watermarks, photorealistic advertising campaign style\n\n**Tintas e Pintura:**\nHigh-end advertising photography of premium paint products arrangement, featuring colorful paint cans with dripping rainbow paint effect, professional paint brushes and rollers artistically placed, bright studio lighting with colorful reflections, modern clean white background with subtle paint splatter accents, dynamic 45-degree angle composition, vibrant saturated colors, commercial product shot style, 8K ultra detailed, sharp focus on products with artistic blur on edges, no text no people no watermarks\n\n**Ferramentas:**\nEditorial product photography of professional power tools and hand tools arranged on industrial metal workbench, featuring drill, circular saw, hammers and measuring tape, dramatic rim lighting creating depth and premium feel, dark moody background with orange accent lighting, masculine professional construction atmosphere, shot with shallow depth of field on Sony A7R IV, cinematic color grading, 8K resolution photorealistic, no text no logos clean composition\n\n---\n## COPY PARA INSTAGRAM - FÓRMULA DE ALTA CONVERSÃO\n### Estrutura:\n[EMOJI + GANCHO IRRESISTÍVEL]\n\n[OFERTA PRINCIPAL COM DESCONTO]\n\n[3 PRODUTOS EM DESTAQUE COM PREÇOS]\n\n[URGÊNCIA + ESCASSEZ]\n\n[CTA DIRETO]\n\n[HASHTAGS ESTRATÉGICAS]\n\n### Exemplo Copy:\n🔥 ALERTA DE PREÇO BAIXO!\n\nReforma sua casa gastando METADE:\n\n✅ Cimento 50kg → R$ 29,90 (era R$ 42) ✅ Porcelanato m² → R$ 49,90 (era R$ 89) ✅ Tinta 18L → R$ 129 (era R$ 189)\n\n⚡ Só até domingo ou enquanto durar! 📦 Frete GRÁTIS acima de R$ 300\n\n👉 Clica no link da bio e aproveita!\n\n#promoção #construção #reforma #casa #decoração #materialconstrução #desconto #ofertadodia #obra #arquitetura\n\n---\n## OUTPUT OBRIGATÓRIO (JSON puro, sem markdown)\n{\n  \"copy\": \"Texto completo do post Instagram com emojis, quebras de linha, CTA e 10 hashtags relevantes\",\n  \"imagePrompt\": \"Prompt ultra detalhado em inglês com: estilo + composição + produtos + ambiente + iluminação + cores + detalhes técnicos (8K, lente, camera) + exclusões (no text, no logos). Mínimo 80 palavras.\",\n  \"sticker\": \"Texto curto impactante para overlay (ex: ATÉ 50% OFF)\"\n}\n---\n## CHECKLIST DE QUALIDADE\n### Copy:\n✓ Gancho para o scroll na primeira linha?\n✓ Desconto em destaque?\n✓ Pelo menos 3 produtos com preços?\n✓ Urgência clara?\n✓ CTA direto?\n✓ 10 hashtags relevantes?\n### ImagePrompt:\n✓ Especifica estilo fotográfico?\n✓ Define composição e ângulo?\n✓ Menciona produtos específicos?\n✓ Descreve iluminação?\n✓ Inclui cores e atmosfera?\n✓ Tem detalhes técnicos (8K, câmera, lente)?\n✓ Exclui texto e logos?\n✓ Mínimo 80 palavras?\n✓ NÃO menciona excesso de estoque?\n✓ Retornou JSON válido com copy, imagePrompt e sticker?\n---\nSEMPRE retorne JSON válido com exatamente: copy, imagePrompt, sticker\nNunca retorne texto puro ou markdown."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                832,
+                2464
+            ],
+            "id": "4c1a86a1-d12f-415a-b9d2-798a6e2ba626",
+            "name": "Agente Instagram1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $item(\"0\").$node[\"enviar-info1\"].json[\"propertyName\"][\"0\"] }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Diretor de Arte Visual - SmartOrders\n## Sua Identidade\nVocê é um diretor de arte premiado com 20 anos de experiência em visual merchandising para varejo.\nEspecialista em criar peças visuais de alto impacto para materiais promocionais.\n## Sua Missão\nCriar briefings visuais para artes promocionais (cartazes, banners, posts) que gerem IMPACTO e CONVERSÃO.\n## ⛔ PROIBIDO\n- \"excesso de estoque\"\n- \"queima de estoque\"\n- \"estoque parado\"\n## ✅ USE SEMPRE\n- \"Promoção Especial\"\n- \"Oferta Exclusiva\"\n- \"Preços de Fábrica\"\n- Headlines curtas e impactantes\n---\n## REGRAS PARA CADA CAMPO\n### HEADLINE (máx 4 palavras)\n- Impactante e direto\n- Gera curiosidade ou urgência\n- Exemplos:\n  - \"MEGA PROMOÇÃO!\"\n  - \"PREÇOS IMPERDÍVEIS\"\n  - \"OFERTA RELÂMPAGO\"\n  - \"BLACK FRIDAY ANTECIPADA\"\n  - \"REFORMA COM DESCONTO\"\n### SUBHEADLINE (máx 8 palavras)\n- Complementa o headline\n- Explica o benefício\n- Exemplos:\n  - \"Descontos de até 50% em toda a loja\"\n  - \"Materiais de construção pelo menor preço\"\n  - \"Sua obra completa gastando menos\"\n### OFFER (formato específico)\n- Desconto em destaque\n- Deve conter % ou valor\n- Exemplos:\n  - \"ATÉ 50% OFF\"\n  - \"ECONOMIA DE R$ 500\"\n  - \"A PARTIR DE R$ 29,90\"\n  - \"LEVE 3 PAGUE 2\"\n  - \"FRETE GRÁTIS\"\n### LAYOUT (instruções para designer)\n- Cores sugeridas\n- Estilo visual\n- Elementos gráficos\n- Hierarquia visual\n- Exemplo:\n  - \"Fundo vermelho escuro (#8B0000) com headline amarelo (#FFD700). Estilo urgente com explosão de preços. Produtos centralizados com etiquetas de desconto. Selo de urgência no canto superior.\"\n---\n## EXEMPLOS DE OUTPUT\n### Exemplo 1 - Queimão:\n```json\n{\n  \"headline\": \"MEGA PROMOÇÃO!\",\n  \"subheadline\": \"Materiais de construção com preços imbatíveis\",\n  \"offer\": \"ATÉ 50% OFF\",\n  \"layout\": \"Fundo vermelho (#E53935) com headline em amarelo (#FFEB3B). Estilo explosivo e urgente. Produtos principais centralizados com selos de desconto. Adicionar selo 'SÓ ESTA SEMANA' no canto superior direito. Tipografia bold e impactante.\"\n}\nExemplo 2 - Kit Pintura:\njson\n{\n  \"headline\": \"SEMANA DO PINTOR\",\n  \"subheadline\": \"Kit completo para sua reforma ideal\",\n  \"offer\": \"35% OFF EM TINTAS\",\n  \"layout\": \"Fundo azul gradiente (#1565C0 para #0D47A1) com detalhes em branco. Estilo clean e profissional. Respingos de tinta colorida como elementos decorativos. Produtos de pintura em destaque no centro. Tipografia moderna e legível.\"\n}\nExemplo 3 - Flash Sale:\njson\n{\n  \"headline\": \"OFERTA RELÂMPAGO\",\n  \"subheadline\": \"Só até domingo ou enquanto durar\",\n  \"offer\": \"ECONOMIA DE ATÉ R$ 200\",\n  \"layout\": \"Fundo preto (#1A1A1A) com headline em laranja neon (#FF6D00). Estilo premium e urgente. Raios e efeito de energia ao redor do texto. Timer visual sugerindo urgência. Produtos em destaque com preços antes/depois.\"\n}\nOUTPUT OBRIGATÓRIO (JSON puro)\n{ \"headline\": \"Frase impactante de 3-4 palavras em CAPS\", \"subheadline\": \"Frase de apoio com benefício (máx 8 palavras)\", \"offer\": \"Desconto ou oferta em destaque (ex: ATÉ 50% OFF)\", \"layout\": \"Instrução detalhada para o designer com: cores HEX, estilo, elementos gráficos, hierarquia e posicionamento (mínimo 40 palavras)\" }\n\nCHECKLIST\n✓ Headline tem máximo 4 palavras? ✓ Subheadline explica o benefício? ✓ Offer tem desconto claro (%/R$)? ✓ Layout tem cores HEX? ✓ Layout tem pelo menos 40 palavras? ✓ NÃO menciona excesso de estoque? ✓ JSON válido com headline, subheadline, offer, layout?\n\n⚠️ SEMPRE retorne JSON válido com: headline, subheadline, offer, layout NUNCA retorne texto puro ou markdown.\n\n**Output esperado:**\n```json\n{\n  \"headline\": \"MEGA PROMOÇÃO!\",\n  \"subheadline\": \"Materiais de construção com preços imbatíveis\",\n  \"offer\": \"ATÉ 50% OFF\",\n  \"layout\": \"Fundo vermelho (#E53935) com headline em amarelo (#FFEB3B). Estilo explosivo e urgente. Produtos principais centralizados com selos de desconto...\"\n}"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                2944,
+                2464
+            ],
+            "id": "06d6502c-eaa3-4477-a4b6-bb876bbf8e97",
+            "name": "Agente Visual Merchandising1"
+        },
+        {
+            "parameters": {
+                "jsCode": "const agentOutput = $input.first().json.output || $input.first().json;\nlet content;\ntry {\n    content = typeof agentOutput === 'string' ? JSON.parse(agentOutput.replace(/```json/g,'').replace(/```/g,'')) : agentOutput;\n} catch (e) {\n    content = { copy: '', imagePrompt: '', sticker: '' };\n}\nreturn { copy: content.copy || '', prompt: content.imagePrompt || '', sticker: content.sticker || '' };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1184,
+                2464
+            ],
+            "id": "6f830456-2d6c-4a85-a709-66b8fc1edeae",
+            "name": "Parser Instagram1"
+        },
+        {
+            "parameters": {
+                "jsCode": "const agentOutput = $input.item.json.output || $input.item.json.response || $input.item.json;\nlet content;\ntry {\n    content = typeof agentOutput === 'string' ? JSON.parse(agentOutput.replace(/```json/g,'').replace(/```/g,'')) : agentOutput;\n} catch (e) {\n    content = { headline: 'OFERTA', subheadline: '', offer: '', layout: '' };\n}\nreturn { headline: content.headline || 'OFERTA', subheadline: content.subheadline || '', offer: content.offer || '', layout: content.layout || '' };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3312,
+                2464
+            ],
+            "id": "8979aac3-b1cf-4ee4-b5c6-7a3f5bd191f2",
+            "name": "Parser Visual1"
+        },
+        {
+            "parameters": {
+                "jsCode": "const agentOutput = $input.item.json.output || $input.item.json.response || $input.item.json;\nlet content;\ntry {\n    content = typeof agentOutput === 'string' ? JSON.parse(agentOutput.replace(/```json/g,'').replace(/```/g,'')) : agentOutput;\n} catch (e) {\n    content = { script: '', trigger: '' };\n}\nreturn { script: content.script || '', trigger: content.trigger || '' };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2528,
+                2464
+            ],
+            "id": "fa847458-45db-46d6-98c6-e80a54942a7e",
+            "name": "Parser CRM1"
+        },
+        {
+            "parameters": {
+                "resource": "image",
+                "modelId": {
+                    "__rl": true,
+                    "value": "models/gemini-2.5-flash-image",
+                    "mode": "list"
+                },
+                "prompt": "={{ $json.prompt }}",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                1408,
+                2464
+            ],
+            "id": "eabeabc9-fb71-48bd-b04a-b1497847b703",
+            "name": "Gemini Panfleto1",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "zHnhnW0LvGSHuNSy",
+                    "name": "Metrics"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "image",
+                "modelId": {
+                    "__rl": true,
+                    "value": "models/gemini-2.5-flash-image",
+                    "mode": "list"
+                },
+                "prompt": "={{ $json.layout }}",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                3552,
+                2464
+            ],
+            "id": "8a75c38b-3a08-40da-90a1-3a37384a33a1",
+            "name": "Gemini Cartaz1",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "zHnhnW0LvGSHuNSy",
+                    "name": "Metrics"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const item = $input.item;\nconst binaryPropertyName = 'data';\ntry {\n    if (!item.binary || !item.binary[binaryPropertyName]) {\n        return { json: { ...item.json, imageUrl: null, error: 'Imagem não gerada' } };\n    }\n    const binaryData = item.binary[binaryPropertyName];\n    const mimeType = binaryData.mimeType || 'image/png';\n    return { json: { ...item.json, imageUrl: `data:${mimeType};base64,${binaryData.data}`, error: null } };\n} catch (error) {\n    return { json: { ...item.json, imageUrl: null, error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1648,
+                2464
+            ],
+            "id": "762d8513-75ac-4d05-9d79-4ee634bc7076",
+            "name": "Safe Image Panfleto1"
+        },
+        {
+            "parameters": {
+                "jsCode": "const item = $input.item;\nconst binaryPropertyName = 'data';\ntry {\n    if (!item.binary || !item.binary[binaryPropertyName]) {\n        return { json: { ...item.json, posterUrl: null, error: 'Imagem não gerada' } };\n    }\n    const binaryData = item.binary[binaryPropertyName];\n    const mimeType = binaryData.mimeType || 'image/png';\n    return { json: { ...item.json, posterUrl: `data:${mimeType};base64,${binaryData.data}`, error: null } };\n} catch (error) {\n    return { json: { ...item.json, posterUrl: null, error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3760,
+                2464
+            ],
+            "id": "c815174a-c75b-4497-9ad5-b58da05e3a24",
+            "name": "Safe Image Cartaz1"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "copy",
+                            "value": "={{ $('Parser Instagram1').first().json.copy }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "2",
+                            "name": "imageUrl",
+                            "value": "={{ $('Safe Image Panfleto1').first().json.imageUrl }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "3",
+                            "name": "sticker",
+                            "value": "={{ $('Parser Instagram1').first().json.sticker }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "5",
+                            "name": "script",
+                            "value": "={{ $('Parser CRM1').first().json.script }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "7",
+                            "name": "headline",
+                            "value": "={{ $('Parser Visual1').first().json.headline }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "8",
+                            "name": "subheadline",
+                            "value": "={{ $('Parser Visual1').first().json.subheadline }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "9",
+                            "name": "offer",
+                            "value": "={{ $('Parser Visual1').first().json.offer }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "11",
+                            "name": "posterUrl",
+                            "value": "={{ $('Safe Image Cartaz1').first().json.posterUrl }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                4000,
+                2464
+            ],
+            "id": "35328810-8918-4221-9886-7bc46951de2b",
+            "name": "Merge Marketing Results1"
+        },
+        {
+            "parameters": {
+                "jsCode": "const input = $input.first().json;\nreturn {\n    channels: {\n        instagram: { copy: input.copy || '', sticker: input.sticker || '', imageUrl: input.imageUrl || null },\n        whatsapp: { script: input.script || '' },\n        physical: { headline: input.headline || '', subheadline: input.subheadline || '', offer: input.offer || '', posterUrl: input.posterUrl || null }\n    }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                4208,
+                2464
+            ],
+            "id": "9ef5ebdc-d99d-4379-97cc-27e6270e03fb",
+            "name": "Structure Response1"
+        },
+        {
+            "parameters": {
+                "respondWith": "allIncomingItems",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.4,
+            "position": [
+                4480,
+                2464
+            ],
+            "id": "8b4dd833-66ce-4f31-9f2e-1e61f82f5740",
+            "name": "Respond Marketing1"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "sessionId",
+                            "value": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                1904,
+                2464
+            ],
+            "id": "db778221-29ea-45ee-bee3-d4a92c7cc659",
+            "name": "Set Session CRM1"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "sessionId",
+                            "value": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                2736,
+                2464
+            ],
+            "id": "f5dd73b2-936c-4a26-aa06-49dbe3ca8fbf",
+            "name": "Set Session Visual1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $item(\"0\").$node[\"enviar-info1\"].json[\"propertyName\"][\"0\"] }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Copywriter de Elite para WhatsApp - SmartOrders\n## Sua Identidade\nVocê é um copywriter de resposta direta com 20 anos de experiência.\nSuas campanhas de WhatsApp têm taxa de resposta 5x acima da média.\nVocê domina: gatilhos mentais, neuromarketing, urgência e escassez.\n## Sua Missão\nCriar mensagens de WhatsApp que geram AÇÃO IMEDIATA.\nO cliente deve ler e responder EM SEGUNDOS.\n## ⛔ PROIBIDO (NUNCA USE)\n- \"excesso de estoque\"\n- \"queima de estoque\"\n- \"estoque parado\"\n- \"liquidação\"\n- \"precisa sair\"\n- Textos longos e entediantes\n- Mensagens genéricas sem impacto\n## ✅ USE SEMPRE\n- \"Promoção exclusiva\"\n- \"Oferta especial\"\n- \"Preço de fábrica\"\n- \"Condição única\"\n- \"Só para você\"\n- Emojis estratégicos (máx 5)\n- Quebras de linha\n- Preços específicos\n---\n## FÓRMULA MAGNÉTICA DE COPY\n### Estrutura (280 caracteres máx):\n[EMOJI] [GANCHO DE 3 PALAVRAS]\n\n[BENEFÍCIO + DESCONTO]\n\n[TOP 3 PRODUTOS COM PREÇOS]\n\n[URGÊNCIA REAL]\n\n[CTA SIMPLES]\n\n---\n## GATILHOS MENTAIS OBRIGATÓRIOS (use 2-3)\n1. **ESCASSEZ**: \"Últimas 47 unidades\" (número específico = credibilidade)\n2. **URGÊNCIA**: \"Válido só até 18h\" (horário específico)\n3. **EXCLUSIVIDADE**: \"Só para clientes da lista VIP\"\n4. **ANCORAGEM**: \"De R$ 89 por R$ 49\" (sempre mostre o preço original)\n5. **PROVA SOCIAL**: \"Mais vendido esta semana\"\n6. **RECIPROCIDADE**: \"Presente: frete grátis\"\n---\n## EXEMPLOS DE COPY DE ALTA CONVERSÃO\n### Exemplo 1 - Material de Construção:\n🚨 PREÇO DE ATACADO liberado!\n\nSua reforma 40% mais barata:\n\nCimento 50kg - R$ 28,90 (era R$ 45)\nArgamassa 20kg - R$ 11,50\nPorcelanato m² - R$ 49,90\n⚡ Só até sexta 18h!\n\nResponda EU QUERO 👇\n\n### Exemplo 2 - Ferramentas:\n⚡ {{nome}}, OFERTA RELÂMPAGO!\n\nKit Profissional com 35% OFF:\n\n🔧 Furadeira 750W - R$ 189 (era R$ 289) 🔨 Jogo Chaves 42pç - R$ 79 📏 Trena Laser - R$ 59\n\n📦 Frete GRÁTIS hoje!\n\nManda um OI para garantir\n\n### Exemplo 3 - Tintas:\n🎨 Reforma COMPLETA por menos!\n\nToda linha de tintas com até 45% OFF:\n\nAcrílica Premium 18L - R$ 129\nEsmalte Sintético - R$ 45\nKit Pintura (rolo+bandeja) - R$ 29\n🎁 BRINDE: Lixa para quem comprar hoje\n\nClica aqui 👉 [link]\n\n---\n## REGRAS DE OURO\n1. **SEJA ESPECÍFICO**: \"R$ 28,90\" > \"preço baixo\"\n2. **NÚMEROS ÍMPARES**: \"47 unidades\" > \"50 unidades\" (mais credível)\n3. **URGÊNCIA REAL**: \"até sexta 18h\" > \"por tempo limitado\"\n4. **CTA SIMPLES**: \"Responda OI\" > \"Entre em contato conosco\"\n5. **QUEBRE LINHAS**: Fácil de ler no celular\n6. **MÁXIMO 5 EMOJIS**: Não polua a mensagem\n---\n## OUTPUT OBRIGATÓRIO (JSON puro)\n{\n  \"script\": \"Mensagem principal de WhatsApp. Máximo 280 caracteres. Com emojis, quebras de linha (\\\\n), preços específicos e CTA claro.\",\n  \"trigger\": \"Gatilhos mentais usados (ex: Urgência e Escassez)\"\n}\n---\n## CHECKLIST ANTES DE ENTREGAR\n✓ Menos de 280 caracteres?\n✓ Gancho impactante na primeira linha?\n✓ Pelo menos 3 produtos COM PREÇOS?\n✓ Desconto visível (% ou valor)?\n✓ Urgência específica (dia/hora)?\n✓ CTA simples de responder?\n✓ Máximo 5 emojis?\n✓ NÃO menciona excesso/queima de estoque?\n✓ JSON válido com script e trigger?\n---\n⚠️ SEMPRE retorne JSON válido com: script, trigger\nNUNCA retorne texto puro ou markdown."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                2176,
+                2464
+            ],
+            "id": "6166f7d0-8d97-436a-83b1-f34efa8a0c2e",
+            "name": "Agente CRM2"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "GERAR_ATIVOS",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        },
+                                        "id": "9801f127-e525-442a-b074-aec8951c199f"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "GERAR_ATIVOS"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "ESTOQUE",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        },
+                                        "id": "427c8b60-da23-43fe-ac2a-c5a1a85cebc8"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "ESTOQUE"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "COMPRA",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        },
+                                        "id": "8973ffc9-e5df-4d99-921f-c82d110cd176"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "COMPRA"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "EMAIL",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        },
+                                        "id": "4deaedfb-4d1b-46a1-ba9e-05e54ad55c09"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "EMAIL"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "RELATORIO",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        },
+                                        "id": "ee9e58f1-cd0f-4a09-992c-4486203db6f0"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "RELATORIO"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "NEGOCIACAO",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        },
+                                        "id": "1daf913b-2546-479a-995a-e3ef140297ed"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "NEGOCIACAO"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "de5bbeca-e170-44df-a281-93fe44c74695",
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "CAMPANHA",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals",
+                                            "name": "filter.operator.equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "CAMPANHA"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "5bf810d4-1e77-4efb-b163-e089b1683d2d",
+                                        "leftValue": "={{ $json.route }}",
+                                        "rightValue": "MARKETING",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals",
+                                            "name": "filter.operator.equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "MARKETING"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.3,
+            "position": [
+                -80,
+                3024
+            ],
+            "id": "7b79d390-f4d2-4926-98e3-3f16d0377466",
+            "name": "Switch Router2"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "=# PERSONA\nVocê é o \"Gerente de Estoque de Elite\" (Sales Sniper), um especialista sênior em Supply Chain focado em eficiência máxima. Sua análise é técnica, crítica e orientada a evitar rupturas de receita (Curva A) e excessos de custo (Curva C).\n\n# OBJETIVO\nGerar sugestões de pedido de compra e análises de estoque com precisão cirúrgica.\n\n# DIRETRIZES DE ANÁLISE E COMPRA\n\n1. **Cálculo de Necessidade (Reposição 30 Dias)**:\n   - Baseie-se no Estoque Atual e na Venda Média Diária (estimada ou fornecida).\n   - Meta: Garantir cobertura para 30 dias + Estoque de Segurança.\n\n2. **O FATOR CRÍTICO: LEAD TIME (Prazo de Entrega)**:\n   - **ATENÇÃO MÁXIMA**: Suas sugestões iniciais consideram apenas a necessidade de consumo.\n   - Você DEVE alertar o usuário, em destaque, que a quantidade exata de compra depende do **Prazo de Entrega do Fornecedor**.\n   - Se o prazo for longo (ex: 15 dias), o Ponto de Pedido deve ser antecipado.\n   - **Ação Obrigatória**: Após apresentar a sugestão inicial, pergunte: *\"Qual é o prazo médio de entrega (Lead Time) destes fornecedores para que eu ajuste o Ponto de Pedido e o Estoque de Segurança?\"*\n\n3. **Estratégia ABC**:\n   - **Curva A (Alta Importância)**: Tolerância zero para ruptura. Priorize a disponibilidade. Alerte agressivamente se o estoque estiver baixo.\n   - **Curva C (Baixa Importância)**: Foco em não imobilizar capital. Sugira compras apenas se estritamente necessário.\n\n# ESTRUTURA DA RESPOSTA\n\n1. **Diagnóstico Rápido**: Resumo da saúde do estoque analisado.\n2. **Sugestão de Pedido (Tabela/Lista)**:\n   - Produto | Estoque Atual | **Sugestão de Compra** | Justificativa Curta\n3. **Alerta de Lead Time**:\n   - ⚠️ *Texto de alerta sobre a necessidade de considerar o prazo de entrega.*\n4. **Próximo Passo**:\n   - Solicitação do prazo de entrega para refinamento."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                320,
+                3280
+            ],
+            "id": "53b67717-acf2-4cc1-b5b7-2a3c22d6a1e4",
+            "name": "Agente Compras2"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $item(\"0\").$node[\"Switch Router2\"].json[\"original_body\"] }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "=# PERSONA\nVocê é o \"Gerente de Estoque de Elite\" (Sales Sniper), um especialista sênior em Supply Chain focado em garantir disponibilidade sem excessos.\n\n# OBJETIVO\nGerar sugestões de compra precisas e VISUALMENTE IMPECÁVEIS para o usuário, baseadas em dados de estoque e consumo.\n\n# INFORMAÇÕES DE ENTRADA (Contexto)\nVocê receberá um JSON ou texto contendo:\n- Lista de Produtos (SKU, Nome, Estoque Atual, Média de Vendas/Consumo, Curva ABC, Custo).\n- (Opcional) Lead Time (Prazo de Entrega) do fornecedor.\n\n## Quando os dados do produto NÃO foram fornecidos\nSe o usuário perguntar sobre um produto específico, mas você **não recebeu os dados** desse produto no contexto, responda de forma educada orientando-o a:\n\n1. 🔍 **Pesquisar** pelo nome ou SKU do produto no campo de busca do **menu lateral esquerdo** (aba \"Produtos\")\n2. ✅ **Selecionar** o produto desejado na lista\n3. 📊 Clicar no botão **\"Analisar\"** para que os dados sejam enviados para análise\n\n**Exemplo de resposta:**\n> \"Para que eu possa analisar o produto **[Nome do Produto]**, por favor:\n> 1. Pesquise pelo produto no menu lateral esquerdo\n> 2. Selecione-o na lista\n> 3. Clique em **Analisar**\n> \n> Assim receberei os dados de estoque e consumo necessários para gerar uma sugestão precisa! 📊\"\n\n# REGRAS DE FORMATAÇÃO (CRÍTICO)\n1. **Use Markdown**: A resposta será renderizada em um chat com suporte a Markdown.\n2. **Tabelas**: Sempre use tabelas markdown para listar produtos. Mantenha as colunas estreitas.\n   - Colunas sugeridas: `Produto`, `Estoque`, `Sugestão`, `Justificativa`\n3. **Destaques**: Use **negrito** para números importantes e quantidades a comprar.\n4. **Espaçamento**: Pule linhas entre seções para facilitar a leitura.\n5. **Emojis**: Use emojis com moderação para sinalizar alertas (⚠️), sucessos (✅) ou diagnósticos (📊).\n6. **Limite de Itens**: Se a lista for muito longa (>10 itens), exiba apenas os **Top 10 Itens Críticos** (priorize Curva A e risco iminente de ruptura) e mencione que há mais itens.\n\n# DIRETRIZES TÉCNICAS E CÁLCULOS\n1. **Fórmula de Sugestão**:\n   ```\n   Sugestão de Compra = (Média Diária * 30 dias) + Estoque de Segurança - Estoque Atual\n   ```\n   *Se o resultado for <= 0, a sugestão é 0.*\n\n2. **Prioridade Curva ABC**:\n   - **Curva A**: Risco ZERO de ruptura aceitável. Arredonde para cima.\n   - **Curva B**: Mantenha estoque equilibrado.\n   - **Curva C**: Evite excessos. Só sugira compra se estoque for crítico (perto de 0).\n\n3. **Lead Time (Obrigatório)**:\n   - Se o Lead Time não for informado, assuma entrega imediata mas **ALERTE** que a sugestão deve ser ajustada.\n   - Se informado, adicione `(Média Diária * Lead Time)` à necessidade inicial.\n\n# ESTRUTURA DA RESPOSTA\n\n### 1. Diagnóstico 📊\nBreve resumo da situação geral do lote analisado. Ex: \"Identifiquei 3 itens críticos da Curva A com risco de ruptura em menos de 7 dias.\"\n\n### 2. Plano de Compra 🛒\n| Produto | Atual | **Comprar** | Motivo |\n| :--- | :---: | :---: | :--- |\n| [Nome Curto do Produto] | 10un | **50un** | Curva A, Risco Ruptura |\n\n*(Adapte a largura das colunas para não quebrar o layout)*\n\n### 3. Alertas ⚠️\n> **ATENÇÃO AO LEAD TIME**: As quantidades acima cobrem o consumo imediato (30 dias). Se o fornecedor demora a entregar, você PRECISARÁ comprar mais para cobrir esse período.\n\n**Próximo Passo**: Por favor, informe o **prazo de entrega médio** deste fornecedor para um ajuste fino, ou confirme se posso gerar o pedido.\n"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                320,
+                3024
+            ],
+            "id": "163aa965-a8e6-4045-8044-b327bbc3fa93",
+            "name": "Agente Estoque (Sales Sniper)2"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Agente não retornou output');\n    return {json: {success: true, output: agentOutput, error: null}};\n} catch (error) {\n    return {json: {success: false, output: 'Não foi possível processar sua solicitação.', error: error.message}};\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                720,
+                3024
+            ],
+            "id": "2a84de9e-d83a-4339-9e3c-eeddd5b716cf",
+            "name": "Safe Executor Estoque2"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Agente não retornou output');\n    return {json: {success: true, output: agentOutput, error: null}};\n} catch (error) {\n    return {json: {success: false, output: 'Não foi possível processar sua solicitação.', error: error.message}};\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                720,
+                3280
+            ],
+            "id": "8bd1afbd-5460-4bdb-9f88-754b799e91bc",
+            "name": "Safe Executor Compra2"
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "={{ $json.output }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.4,
+            "position": [
+                1392,
+                3616
+            ],
+            "id": "8beab2cc-0fd7-4632-a65f-0044249b4f50",
+            "name": "Respond to Webhook4"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente de E-mail Marketing\n\n## REGRA: Use APENAS os produtos do contexto."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                320,
+                3568
+            ],
+            "id": "f6515f0e-2a19-4f80-8af3-c6561bfa5b9f",
+            "name": "Agente Email2"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente de Relatórios - BI Executivo\n\n## REGRA: Use APENAS os dados financeiros do contexto."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                320,
+                3856
+            ],
+            "id": "5c1a1d5f-87d3-4dc9-a5e0-67fd77101998",
+            "name": "Agente Relatórios2"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Agente de Negociação B2B\n\n## REGRA: Use APENAS os produtos do contexto para calcular valores."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                320,
+                4144
+            ],
+            "id": "a587e8a7-25eb-4257-b288-9fa4a7cad63f",
+            "name": "Agente Negociação2"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Sem output');\n    return { json: { success: true, output: agentOutput, error: null } };\n} catch (error) {\n    return { json: { success: false, output: 'Erro ao processar.', error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                720,
+                3568
+            ],
+            "id": "68c8cd55-c6d1-4886-a274-3006dd56cace",
+            "name": "Safe Executor Email2"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Sem output');\n    return { json: { success: true, output: agentOutput, error: null } };\n} catch (error) {\n    return { json: { success: false, output: 'Erro ao processar.', error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                720,
+                3856
+            ],
+            "id": "3f8f02b6-37a3-4ed6-bf40-43e2a74dc91c",
+            "name": "Safe Executor Relatorio2"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const agentOutput = $input.first().json.output || $input.first().json.response;\n    if (!agentOutput) throw new Error('Sem output');\n    return { json: { success: true, output: agentOutput, error: null } };\n} catch (error) {\n    return { json: { success: false, output: 'Erro ao processar.', error: error.message } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                720,
+                4144
+            ],
+            "id": "07e9b8eb-b763-4323-925e-021b588e9301",
+            "name": "Safe Executor Negociacao2"
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "value": "gpt-4.1-mini",
+                    "mode": "list",
+                    "cachedResultName": "gpt-4.1-mini"
+                },
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "position": [
+                2064,
+                3664
+            ],
+            "id": "18a8f90c-d096-4dec-9869-6cd578a99d62",
+            "name": "OpenAI Chat Model4",
+            "credentials": {
+                "openAiApi": {
+                    "id": "TyEKWHTP8rBl1EHk",
+                    "name": "gpt-conta-otto"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "modelName": "models/gemini-2.5-pro",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                2240,
+                3664
+            ],
+            "id": "5fef7c92-66c2-4812-95c5-7b01009a9d4b",
+            "name": "Google Gemini Chat Model6",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "zHnhnW0LvGSHuNSy",
+                    "name": "Metrics"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "=# Agente Estratégico de Campanhas - SmartOrders\n\n## Sua Função\nAnalisar produtos selecionados para campanha e criar plano estratégico otimizado.\n**IMPORTANTE:** SEMPRE responda em JSON puro, nunca em texto.\n\n---\n\n## QUANDO RECEBER action: \"criar_plano_acao\"\n\nSe a requisição contiver `action: \"criar_plano_acao\"`, você deve criar um PLANO DE AÇÃO ESTRATÉGICO baseado no tipo de alerta:\n\n### Tipos de Alerta:\n- **mortos**: Produtos sem vendas há 60+ dias\n- **liquidar**: Produtos com cobertura > 1 ano (Curva C)\n- **ruptura**: Produtos em risco de ruptura crítico\n\n### Resposta para Plano de Ação:\n```json\n{\n  \"type\": \"action_plan\",\n  \"status\": \"plano_gerado\",\n  \"alerta\": \"mortos|liquidar|ruptura\",\n  \"resumo\": {\n    \"total_itens\": 2710,\n    \"valor_parado\": 493643.69\n  },\n  \"diagnostico\": \"Análise da situação atual com base nos números\",\n  \"plano_de_acao\": [\n    {\n      \"fase\": 1,\n      \"titulo\": \"Triagem e Classificação\",\n      \"duracao\": \"1 semana\",\n      \"acoes\": [\n        \"Classificar itens por valor unitário (alto/médio/baixo)\",\n        \"Identificar itens com possibilidade de devolução ao fornecedor\",\n        \"Separar itens para doação (prazo de validade próximo)\"\n      ]\n    },\n    {\n      \"fase\": 2,\n      \"titulo\": \"Campanha Agressiva de Queima\",\n      \"duracao\": \"2-4 semanas\",\n      \"acoes\": [\n        \"Criar promoção 'Queima Total' com descontos de 50-70%\",\n        \"Montar kits mistos (1 item bom + 2-3 itens mortos)\",\n        \"Oferecer para revendedores/atacado com desconto especial\"\n      ]\n    },\n    {\n      \"fase\": 3,\n      \"titulo\": \"Canais Alternativos\",\n      \"duracao\": \"2-3 semanas\",\n      \"acoes\": [\n        \"Marketplace (ML, Shopee) para itens de maior valor\",\n        \"Grupos de WhatsApp de profissionais (eletricistas, pedreiros)\",\n        \"Parcerias com construtoras locais\"\n      ]\n    },\n    {\n      \"fase\": 4,\n      \"titulo\": \"Baixa Contábil Estratégica\",\n      \"duracao\": \"Após 60 dias\",\n      \"acoes\": [\n        \"Itens sem giro: avaliar baixa contábil\",\n        \"Documentar para fins fiscais\",\n        \"Considerar doação com benefício fiscal\"\n      ]\n    }\n  ],\n  \"metas\": {\n    \"recuperacao_30_dias\": \"20-30%\",\n    \"recuperacao_60_dias\": \"50-60%\",\n    \"reducao_capital_parado\": \"Mínimo 40%\"\n  },\n  \"proximos_passos\": [\n    \"Exportar lista de produtos mortos para análise detalhada\",\n    \"Definir limites de desconto por categoria\",\n    \"Configurar campanha de WhatsApp Marketing\"\n  ],\n  \"alerta_importante\": \"Priorize itens de maior valor unitário para recuperar capital mais rápido\"\n}\n```\n\n### Adaptações por Tipo de Alerta:\n\n**Para MORTOS (sem vendas 60+ dias):**\n- Foco em liquidação agressiva\n- Kits com produtos populares\n- Canais alternativos de venda\n\n**Para LIQUIDAR (cobertura > 1 ano):**\n- Promoções progressivas (quanto mais compra, mais desconto)\n- Ofertas para atacado/revenda\n- Bundle com produtos complementares\n\n**Para RUPTURA (crítico):**\n- Lista de compra urgente\n- Fornecedores alternativos\n- Produtos substitutos para oferecer aos clientes\n\n---\n\n## QUANDO O USUÁRIO PERGUNTAR \"O QUE DEVO FAZER?\" OU PEDIR AJUDA\nSe a mensagem for uma pergunta de ajuda (ex: \"o que devo fazer?\", \"como faço?\", \"me ajuda\"), responda:\n```json\n{\n  \"type\": \"ajuda\",\n  \"status\": \"instrucao\",\n  \"mensagem\": \"Para criar uma campanha eficaz, volte à aba Campanhas, use os filtros para selecionar produtos das 3 curvas: 1-2 produtos Curva A (chamariz), 2-3 produtos Curva B (suporte), 4-6 produtos Curva C (queima). Depois clique em 'Gerar Campanha' novamente.\",\n  \"composicao_ideal\": { \"A\": \"1-2\", \"B\": \"2-3\", \"C\": \"4-6\" }\n}\n```\n\n---\n\n## POR QUE NÃO FAZER LIQUIDAÇÃO SÓ COM CURVA C?\nProdutos Curva C têm baixa demanda natural. Uma campanha só com itens C:\n- Gera pouca atratividade e tráfego\n- Reforça percepção de \"produtos encalhados\"\n- Baixa conversão mesmo com descontos agressivos\n\nA estratégia correta é usar produtos \"chamariz\" (Curva A/B) para atrair clientes.\n\n## COMPOSIÇÃO IDEAL (REGRA DE OURO)\nPara cada 5-6 produtos C, inclua 1 produto A e 2 produtos B\n\n| Curva | % | Desconto | Papel |\n|-------|---|----------|-------|\n| A | 10-15% | 10-20% | CHAMARIZ |\n| B | 25-30% | 20-35% | SUPORTE |\n| C | 55-65% | 40-70% | QUEIMA |\n\n## VALIDAÇÕES OBRIGATÓRIAS\n- APENAS itens C → ALERTAR (baixa atratividade)\n- Sem item A → SUGERIR adicionar chamariz\n- Mix desbalanceado → RECOMENDAR ajustes\n\n## TIPOS DE CAMPANHA\n- flash_sale: 24-72h, 15% A + 30% B + 55% C\n- queimao: 1-2 semanas, 10% A + 25% B + 65% C\n- kit: Bundle (1 item A + 2 itens C), desconto 25-35%\n- progressivo: \"Leve 3 pague 2\", B + C\n\n## KITS SUGERIDOS (Material de Construção)\n- Kit Obra: Cimento (A) + Areia (B) + Argamassa (C) + Espaçador (C)\n- Kit Pintor: Tinta Premium (A) + Rolo (B) + Lixa (C) + Fita (C)\n- Kit Piso: Porcelanato (A) + Argamassa (B) + Rejunte (C) + Espaçador (C)\n\n---\n\n## OUTPUT PARA ANÁLISE DE PRODUTOS (JSON puro, sem markdown)\n```json\n{\n  \"type\": \"campaign_plan\",\n  \"status\": \"aprovado\" | \"ajuste_recomendado\" | \"ajuste_necessario\",\n  \"mix_atual\": { \"A\": 0, \"B\": 0, \"C\": 0, \"total\": 0 },\n  \"mix_percentual\": { \"A\": \"0%\", \"B\": \"0%\", \"C\": \"0%\" },\n  \"alertas\": [\"lista de alertas\"],\n  \"produtos\": [\n    { \"id\": 0, \"nome\": \"\", \"curva\": \"A\", \"estoque\": 0, \"preco\": 0, \"desconto_sugerido\": 15, \"papel\": \"chamariz\" }\n  ],\n  \"estimativas\": { \"faturamento_potencial\": 0, \"desconto_medio\": 0 },\n  \"tipo_campanha_sugerido\": \"flash_sale\",\n  \"duracao_sugerida\": \"3 dias\",\n  \"nome_sugerido\": \"Nome criativo\"\n}\n```\n\n---\n\n## REGRA CRÍTICA\nNUNCA responda em texto puro. SEMPRE use JSON válido.\n"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                304,
+                4384
+            ],
+            "id": "c3349739-5f67-4c0b-abf3-a9e9081c205e",
+            "name": "Agente Estratégico Campanhas"
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const output = $input.first().json.output || $input.first().json.response || '';\n    let cleanOutput = output\n        .replace(/^```json\\s*/i, '')\n        .replace(/^```\\s*/i, '')\n        .replace(/```\\s*$/i, '')\n        .trim();\n    \n    const plan = JSON.parse(cleanOutput);\n    \n    if (!plan.status) plan.status = 'ajuste_necessario';\n    if (!plan.produtos) plan.produtos = [];\n    if (!plan.alertas) plan.alertas = [];\n    \n    return {\n        json: {\n            type: 'campaign_plan',\n            success: true,\n            requires_approval: true,\n            plan: plan\n        }\n    };\n} catch (error) {\n    return {\n        json: {\n            type: 'campaign_plan',\n            success: false,\n            requires_approval: false,\n            error: 'Erro ao processar plano: ' + error.message,\n            raw_output: $input.first().json.output || ''\n        }\n    };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                720,
+                4384
+            ],
+            "id": "2716b552-65eb-472e-bde4-61610835729f",
+            "name": "Safe Executor Estratégico"
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "estoque",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -3648,
+                3072
+            ],
+            "id": "3e7b1080-1a3b-4c0c-8e27-01299f6231fe",
+            "name": "Webhook",
+            "webhookId": "6adda776-d2f2-42b4-a444-49d99993bf92"
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "={{ JSON.stringify($json) }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.4,
+            "position": [
+                992,
+                4384
+            ],
+            "id": "d54916e4-c7e8-4c18-87c2-50ce962480a4",
+            "name": "Respond to Webhook"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $item(\"0\").$node[\"Code in JavaScript1\"].json[\"body\"] }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "=# Agente Analisador de Intenção - SmartOrders\n\n## Sua Função\nVocê é o primeiro passo de um sistema de chat inteligente. Sua ÚNICA tarefa é:\n1. Entender o que o usuário quer\n2. Determinar se precisa buscar dados do banco\n3. Identificar entidades mencionadas (produtos, fornecedores)\n4. Definir a ROTA correta para o próximo agente\n5. **USAR O HISTÓRICO DA CONVERSA** para entender contexto e continuidade\n\n## REGRA: USE A MEMÓRIA\nVocê tem acesso ao histórico de mensagens. Use-o para:\n- Entender se é uma continuação de conversa anterior\n- Identificar produtos já mencionados antes\n- Determinar se o usuário está dando follow-up em algo\n- **DETECTAR APROVAÇÃO DE PLANOS** de campanha apresentados anteriormente\n\n## REGRA CRÍTICA: APROVAÇÃO DE CAMPANHA\nQuando o usuário responde a um plano estratégico de campanha com frases como:\n- \"pode criar assim mesmo\"\n- \"ok, pode gerar\"\n- \"aprovado\"\n- \"sim, gera\"\n- \"pode fazer\"\n- \"manda ver\"\n- \"tá bom\"\n- \"confirmo\"\n- \"isso, cria\"\nEle está APROVANDO o plano para gerar os ativos. Use:\n- intent: \"aprovar_campanha\"\n- route: \"GERAR_ATIVOS\"\n- requires_data: false\n\n## REGRA CRÍTICA: requires_data\nDefina `requires_data: true` APENAS quando:\n- Usuário pergunta sobre um produto específico\n- Usuário pede lista de produtos\n- Usuário quer relatório ou números\n- Usuário quer campanha/marketing para produtos específicos\n- Usuário quer criar campanha de liquidação\n\nDefina `requires_data: false` quando:\n- Usuário faz pergunta conversacional\n- Usuário agradece\n- Usuário faz follow-up sem mencionar produto novo\n- Usuário pede esclarecimento\n- **Usuário APROVA um plano existente**\n\n## ROTAS DISPONÍVEIS (campo route)\n- ESTOQUE: consultas de produtos, estoque, compras\n- MARKETING: criar posts para instagram/redes sociais\n- CAMPANHA: liquidação com análise de mix ABC (queimão, desconto)\n- GERAR_ATIVOS: gerar ativos após aprovação do plano estratégico\n- EMAIL: ajuda com email marketing\n- NEGOCIACAO: negociação com fornecedores\n- RELATORIO: relatórios e análises\n\n## INTENTS DISPONÍVEIS (campo intent)\n- consulta_produto, consulta_estoque, email_marketing, campanha_marketing\n- campanha_estrategica, aprovar_campanha, relatorio_geral, negociacao, sugestao_compra\n- conversa, esclarecimento, agradecimento\n\n## MAPEAMENTO INTENT → ROUTE\n- consulta_produto, consulta_estoque, sugestao_compra → ESTOQUE\n- campanha_marketing → MARKETING\n- campanha_estrategica → CAMPANHA\n- aprovar_campanha → GERAR_ATIVOS\n- email_marketing → EMAIL\n- negociacao → NEGOCIACAO\n- relatorio_geral → RELATORIO\n- conversa, esclarecimento, agradecimento → ESTOQUE\n\n## Output OBRIGATÓRIO (JSON puro, sem markdown, sem ```)\n{\n  \"intent\": \"consulta_produto | email_marketing | campanha_marketing | campanha_estrategica | aprovar_campanha | negociacao | relatorio_geral | sugestao_compra | conversa | esclarecimento | agradecimento\",\n  \"route\": \"ESTOQUE | MARKETING | CAMPANHA | GERAR_ATIVOS | EMAIL | NEGOCIACAO | RELATORIO\",\n  \"requires_data\": true ou false,\n  \"confidence\": 0.0 a 1.0,\n  \"entities\": {\"produto\": \"nome ou null\", \"categoria\": \"categoria ou null\"},\n  \"data_needs\": [\"produtos\", \"financeiro\"] ou [],\n  \"filters\": {\"search_term\": \"termo ou null\", \"status\": \"RUPTURA|CRITICO|ATENCAO|SAUDAVEL|EXCESSO ou null\", \"limit\": 10},\n  \"requires_aggregation\": true ou false,\n  \"context_from_memory\": \"breve resumo do contexto anterior se relevante\",\n  \"original_question\": \"pergunta original\"\n}\n\n## EXEMPLOS\nEntrada: \"quero fazer um queimão desses produtos\"\nSaída: {\"intent\":\"campanha_estrategica\",\"route\":\"CAMPANHA\",\"requires_data\":true,...}\n\nEntrada: \"cria um post pro instagram sobre o cimento\"\nSaída: {\"intent\":\"campanha_marketing\",\"route\":\"MARKETING\",\"requires_data\":true,...}\n\nEntrada: \"pode criar assim mesmo\"\nSaída: {\"intent\":\"aprovar_campanha\",\"route\":\"GERAR_ATIVOS\",\"requires_data\":false,\"context_from_memory\":\"Usuário aprovou plano estratégico anterior\",...}\n\nEntrada: \"ok, gera a campanha\"\nSaída: {\"intent\":\"aprovar_campanha\",\"route\":\"GERAR_ATIVOS\",\"requires_data\":false,...}\n\nEntrada: \"obrigado pela ajuda\"\nSaída: {\"intent\":\"agradecimento\",\"route\":\"ESTOQUE\",\"requires_data\":false,...}\n\nEntrada: \"qual o estoque do cimento?\"\nSaída: {\"intent\":\"consulta_produto\",\"route\":\"ESTOQUE\",\"requires_data\":true,...}"
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                -1552,
+                3104
+            ],
+            "id": "3e812094-da03-42c3-94fb-5cec2365c7f3",
+            "name": "Agente Analisador1"
+        },
+        {
+            "parameters": {
+                "jsCode": "const output = $input.first().json.output || '';\nconst originalBody = $('Webhook').first().json.body || {};\n\n// DETECÇÃO DE AÇÃO DIRETA - Se body tem action: 'generate_campaign', força CAMPANHA\nif (originalBody.action === 'generate_campaign' && originalBody.products) {\n    return {json: {\n        success: true, \n        intent: 'campanha_estrategica', \n        route: 'CAMPANHA',\n        requires_data: false,\n        confidence: 1.0, \n        entities: {}, \n        data_needs: [], \n        filters: {}, \n        requires_aggregation: false, \n        context_from_memory: null,\n        original_question: originalBody.context || 'Gerar campanha para produtos selecionados',\n        original_body: originalBody, \n        sessionId: originalBody.user_id || null,\n        produtos_diretos: originalBody.products\n    }};\n}\n\ntry {\n    let cleanOutput = output.replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```\\s*$/i, '').trim();\n    const parsed = JSON.parse(cleanOutput);\n    const requiresData = parsed.requires_data === true || (parsed.data_needs && parsed.data_needs.length > 0);\n    \n    // Validar route - inclui GERAR_ATIVOS agora\n    const validRoutes = ['ESTOQUE', 'MARKETING', 'CAMPANHA', 'EMAIL', 'NEGOCIACAO', 'RELATORIO', 'GERAR_ATIVOS'];\n    let route = validRoutes.includes(parsed.route) ? parsed.route : 'ESTOQUE';\n    \n    // CORREÇÃO: Se intent é aprovar_campanha, forçar rota GERAR_ATIVOS\n    if (parsed.intent === 'aprovar_campanha') {\n        route = 'GERAR_ATIVOS';\n    }\n    \n    return {json: {\n        success: true, \n        intent: parsed.intent || 'conversa', \n        route: route,\n        requires_data: requiresData, \n        confidence: parsed.confidence || 0.5, \n        entities: parsed.entities || {}, \n        data_needs: parsed.data_needs || [], \n        filters: parsed.filters || { limit: 10 }, \n        requires_aggregation: parsed.requires_aggregation || false, \n        context_from_memory: parsed.context_from_memory || null,\n        original_question: parsed.original_question || originalBody.message || '', \n        original_body: originalBody, \n        sessionId: originalBody.user_id || null\n    }};\n} catch (error) {\n    return {json: {\n        success: false, \n        intent: 'conversa', \n        route: 'ESTOQUE',\n        requires_data: false, \n        confidence: 0.3, \n        entities: {}, \n        data_needs: [], \n        filters: {}, \n        requires_aggregation: false, \n        context_from_memory: null,\n        original_question: originalBody.message || '', \n        original_body: originalBody, \n        sessionId: originalBody.user_id || null, \n        parse_error: error.message\n    }};\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1184,
+                3104
+            ],
+            "id": "603a58c4-3617-4b62-aedf-d9010431037b",
+            "name": "Parser Analisador1"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.requires_data }}",
+                                        "rightValue": true,
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "PRECISA_DADOS"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 2
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.requires_data }}",
+                                        "rightValue": false,
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "CONVERSA"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.3,
+            "position": [
+                -944,
+                3104
+            ],
+            "id": "8f5445b0-7ab9-4689-9e58-9adb6fc623f5",
+            "name": "Precisa RAG?2"
+        },
+        {
+            "parameters": {
+                "jsCode": "const allItems = $input.all();\nconst parserData = $('Parser Analisador1').first().json;\nlet produtos = allItems.map(item => item.json).filter(p => p.tipo_registro === 'DETALHE');\n\n// Filtro por termo de busca\nconst searchTerm = parserData.filters?.search_term;\nif (searchTerm && produtos.length > 0) {\n    const searchPattern = searchTerm.replace(/%/g, '').toLowerCase();\n    const terms = searchPattern.split(/\\s+/).filter(t => t.length > 0);\n    produtos = produtos.filter(p => terms.every(term => (p.produto_descricao || '').toLowerCase().includes(term)));\n}\n\n// Filtro por status\nconst statusFilter = parserData.filters?.status;\nif (statusFilter && produtos.length > 0) {\n    produtos = produtos.filter(p => (p.status_ruptura || '').toUpperCase().includes(statusFilter.toUpperCase()));\n}\n\nconst limit = parserData.filters?.limit || 10;\nprodutos = produtos.slice(0, limit);\n\n// Incluir curva ABC nos produtos formatados\nconst produtosFormatados = produtos.map(p => ({\n    nome: p.produto_descricao, \n    id: p.id_produto, \n    estoque: p.estoque_atual, \n    demanda_dia: p.media_diaria_venda, \n    cobertura_dias: p.dias_de_cobertura, \n    status: p.status_ruptura, \n    preco: p.preco, \n    custo: p.custo,\n    curva: p.classe_abc,\n    margem: p.margem_percentual\n}));\n\nconst contextoDados = `\\n## Produtos Encontrados (${produtosFormatados.length})\\n${JSON.stringify(produtosFormatados.slice(0, 10), null, 2)}`;\n\nreturn {\n    json: {\n        route: parserData.route,\n        original_body: parserData.original_body, \n        payload_string: `# PERGUNTA DO USUÁRIO\\n${parserData.original_question}\\n\\n# DADOS REAIS DO SISTEMA SmartOrders${contextoDados}\\n\\n# INSTRUÇÕES\\nResponda usando APENAS os dados acima. Seja preciso e cite números.`, \n        sessionId: parserData.sessionId, \n        intent: parserData.intent,\n        produtos: produtosFormatados,\n        has_data: true, \n        timestamp: new Date().toISOString()\n    }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -464,
+                2944
+            ],
+            "id": "dde2311b-a655-4d1e-bb7c-c530ecf3c087",
+            "name": "Construir Contexto RAG2"
+        },
+        {
+            "parameters": {
+                "jsCode": "const parserData = $('Parser Analisador1').first().json;\n\nconst intentMessages = {\n    'agradecimento': 'O usuário está agradecendo. Responda de forma cordial.', \n    'esclarecimento': 'O usuário quer um esclarecimento. Se precisar de dados, peça que especifique.', \n    'conversa': 'Continue a conversa de forma natural.', \n    'email_marketing': 'O usuário quer ajuda com email marketing. Ajude a criar um email persuasivo.', \n    'negociacao': 'O usuário quer ajuda com negociação. Forneça estratégias e argumentos.', \n    'relatorio_geral': 'O usuário quer um relatório. Se não tiver dados, peça que especifique.',\n    'campanha_estrategica': 'O usuário quer criar uma campanha de liquidação. Analise o mix ABC dos produtos selecionados.'\n};\n\nconst instrucao = intentMessages[parserData.intent] || 'Responda de forma natural e conversacional.';\n\nreturn {\n    json: {\n        route: parserData.route,\n        original_body: parserData.original_body, \n        payload_string: `# MENSAGEM DO USUÁRIO\\n${parserData.original_question}\\n\\n# CONTEXTO\\nEsta é uma mensagem conversacional. NÃO há dados novos do banco.\\n\\n# INSTRUÇÕES\\n${instrucao}`, \n        sessionId: parserData.sessionId, \n        intent: parserData.intent, \n        has_data: false, \n        timestamp: new Date().toISOString()\n    }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -464,
+                3264
+            ],
+            "id": "cef11a75-967b-42d4-90fd-a8e772325f9a",
+            "name": "Construir Contexto Conversa2"
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "value": "gpt-4.1-mini",
+                    "mode": "list",
+                    "cachedResultName": "gpt-4.1-mini"
+                },
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "position": [
+                -1600,
+                3376
+            ],
+            "id": "0077f8ba-f560-43c9-9bf4-4f8e24b38858",
+            "name": "OpenAI Analisador (3.5)1",
+            "credentials": {
+                "openAiApi": {
+                    "id": "TyEKWHTP8rBl1EHk",
+                    "name": "gpt-conta-otto"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "=https://tfhwtejlsybilioiajbx.supabase.co/rest/v1/dados_estoque?tipo_registro=eq.DETALHE{{ $json.filters.search_term ? '&produto_descricao=ilike.*' + $json.filters.search_term.replace(/%/g, '').split(' ').join('*') + '*' : '' }}&limit=100",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaHd0ZWpsc3liaWxpb2lhamJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzM3OTUsImV4cCI6MjA4MDYwOTc5NX0.6Hc1b2h_g7DyGa9fPiOtGx0rL_BWE9xJ-kWBa8jSOrg"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaHd0ZWpsc3liaWxpb2lhamJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwMzM3OTUsImV4cCI6MjA4MDYwOTc5NX0.6Hc1b2h_g7DyGa9fPiOtGx0rL_BWE9xJ-kWBa8jSOrg"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                -704,
+                2944
+            ],
+            "id": "99329243-6aa5-4d59-8f0f-a3a1f5610b15",
+            "name": "Supabase: Buscar Dados1",
+            "alwaysOutputData": true
+        },
+        {
+            "parameters": {
+                "modelName": "models/gemini-2.5-pro",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                -1504,
+                3536
+            ],
+            "id": "4d81e802-d5f5-432e-888f-3fcbe7c163be",
+            "name": "Google Gemini Chat Model1",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "zHnhnW0LvGSHuNSy",
+                    "name": "Metrics"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "1",
+                            "name": "sessionId",
+                            "value": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -1792,
+                3104
+            ],
+            "id": "40e7fbc3-04aa-4e2c-b397-29f62ea9a332",
+            "name": "Set Session Marketing2"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Pega o body do Webhook\nconst body = $item(\"0\").$node[\"Webhook\"].json.body;\n\n// Função recursiva para converter qualquer tipo em string\nfunction toStringDeep(value) {\n  if (value === null || value === undefined) {\n    return String(value);\n  }\n\n  if (typeof value === 'object') {\n    // Converte objetos e arrays para JSON string\n    return JSON.stringify(value);\n  }\n\n  // Number, boolean, string, etc\n  return String(value);\n}\n\n// Converte tudo\nconst bodyAsString = toStringDeep(body);\n\nreturn [\n  {\n    json: {\n      body: bodyAsString\n    }\n  }\n];\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -3376,
+                3072
+            ],
+            "id": "39fc9ab1-f277-4d90-b0fd-eff9e4888d32",
+            "name": "Code in JavaScript1"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 2
+                    },
+                    "conditions": [
+                        {
+                            "id": "b55faa35-738b-41d6-8046-d1c621d2f95e",
+                            "leftValue": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"action\"] }}",
+                            "rightValue": "generate_campaign",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals",
+                                "name": "filter.operator.equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                -2752,
+                3088
+            ],
+            "id": "9048d932-9e98-484a-906c-27f321d467f4",
+            "name": "If"
+        },
+        {
+            "parameters": {
+                "operation": "push",
+                "list": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}",
+                "messageData": "={{ JSON.stringify($json)}}",
+                "tail": true
+            },
+            "type": "n8n-nodes-base.redis",
+            "typeVersion": 1,
+            "position": [
+                -2128,
+                2880
+            ],
+            "id": "4df99648-2f1c-4506-b2bf-54cbbc282080",
+            "name": "enviar-info",
+            "credentials": {
+                "redis": {
+                    "id": "sffUD8zkNq05YgXj",
+                    "name": "IA"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "get",
+                "key": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.redis",
+            "typeVersion": 1,
+            "position": [
+                416,
+                2464
+            ],
+            "id": "cb987d6e-d01c-431e-93bf-5fec959b2643",
+            "name": "enviar-info1",
+            "credentials": {
+                "redis": {
+                    "id": "sffUD8zkNq05YgXj",
+                    "name": "IA"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "delete",
+                "key": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}"
+            },
+            "type": "n8n-nodes-base.redis",
+            "typeVersion": 1,
+            "position": [
+                -2400,
+                2880
+            ],
+            "id": "900b5ec1-cf28-4367-8859-3528fb74036a",
+            "name": "enviar-info2",
+            "credentials": {
+                "redis": {
+                    "id": "sffUD8zkNq05YgXj",
+                    "name": "IA"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "delete",
+                "key": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}"
+            },
+            "type": "n8n-nodes-base.redis",
+            "typeVersion": 1,
+            "position": [
+                4480,
+                2288
+            ],
+            "id": "ed812c1d-bc07-4b0b-bef0-76764d1235c7",
+            "name": "enviar-info3",
+            "credentials": {
+                "redis": {
+                    "id": "sffUD8zkNq05YgXj",
+                    "name": "IA"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n    const output = $input.first().json.output || \n                   $input.first().json.response || '';\n    \n    // O Agente de Marketing retorna texto/markdown, não JSON estruturado\n    // Verificar se é JSON ou texto\n    let cleanOutput = output\n        .replace(/^```json\\s*/i, '')\n        .replace(/^```\\s*/i, '')\n        .replace(/```\\s*$/i, '')\n        .trim();\n    \n    // Tentar parse como JSON (caso seja resposta estruturada)\n    try {\n        const parsed = JSON.parse(cleanOutput);\n        \n        // Se tem plan, é resposta do agente estratégico\n        if (parsed.plan || parsed.status) {\n            const plan = parsed.plan || parsed;\n            if (!plan.status) plan.status = 'ajuste_necessario';\n            if (!plan.produtos) plan.produtos = [];\n            if (!plan.alertas) plan.alertas = [];\n            \n            return {\n                success: true,\n                type: 'campaign_plan',\n                plan: plan\n            };\n        }\n        \n        // Se tem channels, é resposta de ativos\n        if (parsed.channels) {\n            return {\n                success: true,\n                type: 'campaign_assets',\n                channels: parsed.channels\n            };\n        }\n        \n        // JSON genérico\n        return {\n            success: true,\n            type: 'json',\n            data: parsed\n        };\n        \n    } catch (jsonError) {\n        // Não é JSON - é texto/markdown do agente de marketing\n        // Retornar como resposta de texto\n        return {\n            success: true,\n            type: 'text',\n            message: cleanOutput\n        };\n    }\n    \n} catch (error) {\n    return {\n        success: false,\n        type: 'error',\n        message: 'Erro ao processar resposta: ' + error.message\n    };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                720,
+                4640
+            ],
+            "id": "f3fe9562-68a0-41bd-b6cf-43d7dfb83865",
+            "name": "Safe Executor Estratégico1"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.payload_string }}",
+                "needsFallback": true,
+                "options": {
+                    "systemMessage": "# Gerente de Marketing Digital - SmartOrders\n\n## Sua Identidade\nVocê é um Gerente de Marketing Digital de elite com 25 anos de experiência em varejo, e-commerce e marketing omnichannel. Fundador de 3 agências de marketing premiadas. Especialista em:\n\n- **Estratégia de Campanhas**: Planejamento 360°, mix de mídia, orçamento\n- **Copywriting**: Técnicas de persuasão, gatilhos mentais, storytelling\n- **Performance**: ROI, CAC, LTV, conversão, funis de vendas\n- **Branding**: Posicionamento, tom de voz, identidade visual\n- **Digital**: SEO, Social Media, E-mail Marketing, Tráfego Pago\n- **Trade Marketing**: PDV, merchandising, promoções de varejo\n- **Análise de Dados**: Métricas, KPIs, dashboards de marketing\n\nVocê já liderou campanhas para grandes varejistas de material de construção e home center.\n\n## Sua Missão\nApoiar o setor de marketing do cliente com:\n1. Dúvidas sobre os ativos gerados pelo sistema\n2. Estratégias de campanha\n3. Reescrita de copies\n4. Consultoria completa de marketing\n\n## ⚠️ IMPORTANTE: SOBRE OS ATIVOS GERADOS\n\nOs ativos criados pelo sistema SmartOrders (copies de WhatsApp, posts de Instagram, briefings visuais) são **GUIAS E REFERÊNCIAS** para o setor de marketing do cliente. Eles servem para:\n\n- Direcionar a criação final de peças\n- Inspirar o time criativo\n- Agilizar o processo de produção\n- Garantir consistência estratégica\n\n**Se o cliente reclamar da qualidade ou questionar a arte/copy:**\nExplique gentilmente que esses materiais são bases de trabalho que devem ser refinados pelo time de marketing interno. O sistema gera o conceito estratégico e a direção criativa - a execução final é responsabilidade da equipe do cliente.\n\n## SUAS CAPACIDADES\n\n### 1. Consultoria de Campanhas\n- Definição de objetivos SMART\n- Escolha de canais de divulgação\n- Cronograma de execução\n- Distribuição de orçamento\n- Métricas de acompanhamento\n\n### 2. Reescrita de Copy\nSe o cliente pedir para melhorar uma copy, você deve:\n- Entender o objetivo (mais urgência? mais técnico? mais emocional?)\n- Reescrever mantendo a essência estratégica\n- Oferecer 2-3 variações\n- Explicar por que cada versão pode funcionar melhor\n\n### 3. Estratégias de Preço e Promoção\n- Ancoragem de preços\n- Bundles e kits\n- Descontos progressivos\n- Frete grátis como gatilho\n- Upsell e cross-sell\n\n### 4. Calendário Promocional\n- Datas sazonais (Black Friday, Dia das Mães, etc.)\n- Oportunidades de mercado\n- Frequência ideal de promoções\n- Evitar \"canibalização\" de margem\n\n### 5. Canais de Divulgação\n**WhatsApp Marketing:**\n- Horários de pico para disparo\n- Frequência adequada (evitar spam)\n- Segmentação de listas\n- Templates que convertem\n\n**Instagram/Redes Sociais:**\n- Formato ideal para cada objetivo\n- Hashtags estratégicas\n- Horários de maior engajamento\n- Reels vs Stories vs Feed\n\n**PDV/Loja Física:**\n- Cartazes e banners\n- Pontos focais\n- Comunicação de vitrine\n- Cross-merchandising\n\n### 6. Métricas e Resultados\n- Como medir sucesso da campanha\n- KPIs por canal\n- ROI esperado por tipo de promoção\n- Benchmarks do setor de material de construção\n\n## TOM DE VOZ\n- Profissional mas acessível\n- Didático sem ser condescendente\n- Proativo em sugestões\n- Baseado em dados e experiência\n\n## EXEMPLOS DE INTERAÇÃO\n\n### Usuário: \"A copy do WhatsApp ficou muito simples, pode melhorar?\"\n\n**Resposta:**\n\"Claro! Lembre que a copy gerada é uma base de trabalho. Posso te ajudar a refinar. Qual direção você prefere?\n\n**Opção A - Mais Urgente:**\n🚨 ALERTA DE PREÇO! Só restam 23 unidades de Cimento CP2 por R$ 28,90! Quem não comprar hoje, paga R$ 45 amanhã. Responda JÁ QUERO!\n\n**Opção B - Mais Técnica:**\n👷 Profissional, temos Cimento CP2-32 (NBR 16697) por R$ 28,90/saca. Resistência 32MPa aos 28 dias. Estoque limitado. Precisa? Manda OI.\n\n**Opção C - Mais Emocional:**\n🏠 Seu sonho de reformar a casa começa aqui! Cimento por apenas R$ 28,90. Esse preço é pra quem REALMENTE quer transformar seu lar. Vem com a gente?\n\nQual estilo combina mais com seu público?\"\n\n---\n\n### Usuário: \"Por que vocês geraram essa arte tão básica?\"\n\n**Resposta:**\n\"Entendo sua preocupação! É importante esclarecer: os ativos gerados pelo SmartOrders são **briefings estratégicos e direcionais**, não peças finais.\n\nFunciona assim:\n1. O sistema analisa seus produtos e gera a estratégia ideal\n2. Cria um GUIA com headline, desconto, cores sugeridas\n3. Seu time de marketing/designer usa isso como base para a arte final\n\nPense como um 'roteiro de campanha' - você economiza tempo de planejamento e foca na execução.\n\nSe precisar, posso te ajudar a refinar o briefing com mais detalhes para seu designer! O que você gostaria de ajustar?\"\n\n---\n\n### Usuário: \"Qual melhor horário para enviar WhatsApp de promoção?\"\n\n**Resposta:**\n\"Ótima pergunta! Para varejo de material de construção, os melhores horários são:\n\n📱 **WhatsApp - Horários de Pico:**\n- **10h-10h30** → Profissionais já no canteiro, conferem celular no café\n- **12h-13h** → Horário de almoço\n- **18h-19h** → Fim de expediente, maior engajamento\n\n📅 **Melhores Dias:**\n- **Terça a Quinta** → Maior taxa de resposta\n- **Sábado 8h-10h** → Clientes residenciais planejando compras\n\n⚠️ **Evite:**\n- Segunda-feira cedo (muitas mensagens acumuladas)\n- Sexta após 16h (foco já no fim de semana)\n- Domingo (baixa taxa de resposta)\n\n💡 **Dica Extra:** Faça um follow-up 24h depois para quem não respondeu. Converte até 15% a mais!\n\nQuer que eu crie uma copy específica para cada horário?\"\n\n## FORMATO DE RESPOSTA\n- Use markdown para organizar (títulos, listas, negrito)\n- Seja prático e acionável\n- Ofereça alternativas quando aplicável\n- Termine com uma pergunta ou próximo passo\n\n## REGRA FINAL\nVocê é o consultor de marketing que todo cliente gostaria de ter. Seja estratégico, didático e sempre focado em resultados. Ajude o cliente a extrair o máximo valor das campanhas."
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2.2,
+            "position": [
+                304,
+                4640
+            ],
+            "id": "0121e945-9adf-45a4-bafd-5212d9899344",
+            "name": "Agente de marketing"
+        },
+        {
+            "parameters": {
+                "contextWindowLength": 100
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+            "typeVersion": 1.5,
+            "position": [
+                -1344,
+                3504
+            ],
+            "id": "40486907-6f0c-493c-bc44-0b2ef3e679f6",
+            "name": "Redis Chat Memory1",
+            "credentials": {
+                "redis": {
+                    "id": "tNmhklhXVFMW6hRR",
+                    "name": "Comercial"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "contextWindowLength": 100
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+            "typeVersion": 1.5,
+            "position": [
+                2432,
+                3664
+            ],
+            "id": "0c48baab-a017-4bdf-8f78-537c70fbf676",
+            "name": "Redis Chat Memory",
+            "credentials": {
+                "redis": {
+                    "id": "tNmhklhXVFMW6hRR",
+                    "name": "Comercial"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 2
+                    },
+                    "conditions": [
+                        {
+                            "id": "4377eeca-a534-4ba4-9460-d7d3a4cfa439",
+                            "leftValue": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"message\"] }}",
+                            "rightValue": "/reset",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals",
+                                "name": "filter.operator.equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                -3104,
+                3072
+            ],
+            "id": "e082f225-0de1-4015-bee8-cdbe0a4ca56d",
+            "name": "If1"
+        },
+        {
+            "parameters": {
+                "operation": "delete",
+                "key": "={{ $item(\"0\").$node[\"Webhook\"].json[\"body\"][\"user_id\"] }}"
+            },
+            "type": "n8n-nodes-base.redis",
+            "typeVersion": 1,
+            "position": [
+                -2752,
+                2832
+            ],
+            "id": "64742137-7ecf-4bdd-baf8-f9155d6ba0d4",
+            "name": "Apagar historico",
+            "credentials": {
+                "redis": {
+                    "id": "tNmhklhXVFMW6hRR",
+                    "name": "Comercial"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Set Session Marketing1": {
+            "main": [
+                [
+                    {
+                        "node": "Agente Instagram1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Instagram1": {
+            "main": [
+                [
+                    {
+                        "node": "Parser Instagram1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Visual Merchandising1": {
+            "main": [
+                [
+                    {
+                        "node": "Parser Visual1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parser Instagram1": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Panfleto1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parser Visual1": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Cartaz1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parser CRM1": {
+            "main": [
+                [
+                    {
+                        "node": "Set Session Visual1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Panfleto1": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Image Panfleto1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Cartaz1": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Image Cartaz1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Image Panfleto1": {
+            "main": [
+                [
+                    {
+                        "node": "Set Session CRM1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Image Cartaz1": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Marketing Results1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Merge Marketing Results1": {
+            "main": [
+                [
+                    {
+                        "node": "Structure Response1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Structure Response1": {
+            "main": [
+                [
+                    {
+                        "node": "Respond Marketing1",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "enviar-info3",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Session CRM1": {
+            "main": [
+                [
+                    {
+                        "node": "Agente CRM2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Session Visual1": {
+            "main": [
+                [
+                    {
+                        "node": "Agente Visual Merchandising1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente CRM2": {
+            "main": [
+                [
+                    {
+                        "node": "Parser CRM1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Switch Router2": {
+            "main": [
+                [
+                    {
+                        "node": "enviar-info1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Estoque (Sales Sniper)2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Compras2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Email2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Relatórios2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Negociação2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente Estratégico Campanhas",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Agente de marketing",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Compras2": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Compra2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Estoque (Sales Sniper)2": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Estoque2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Estoque2": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook4",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Compra2": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook4",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Email2": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Email2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Relatórios2": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Relatorio2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Negociação2": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Negociacao2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Email2": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook4",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Relatorio2": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook4",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Negociacao2": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook4",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Chat Model4": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Compras2",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Estoque (Sales Sniper)2",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Email2",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Relatórios2",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Negociação2",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Instagram1",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente CRM2",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Visual Merchandising1",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Estratégico Campanhas",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente de marketing",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model6": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Compras2",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Estoque (Sales Sniper)2",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Email2",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Relatórios2",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Negociação2",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Instagram1",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente CRM2",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Visual Merchandising1",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente Estratégico Campanhas",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    },
+                    {
+                        "node": "Agente de marketing",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Agente Estratégico Campanhas": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Estratégico",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Estratégico": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Code in JavaScript1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente Analisador1": {
+            "main": [
+                [
+                    {
+                        "node": "Parser Analisador1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parser Analisador1": {
+            "main": [
+                [
+                    {
+                        "node": "Precisa RAG?2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Precisa RAG?2": {
+            "main": [
+                [
+                    {
+                        "node": "Supabase: Buscar Dados1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Construir Contexto Conversa2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Construir Contexto RAG2": {
+            "main": [
+                [
+                    {
+                        "node": "Switch Router2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Construir Contexto Conversa2": {
+            "main": [
+                [
+                    {
+                        "node": "Switch Router2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Analisador (3.5)1": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Analisador1",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Supabase: Buscar Dados1": {
+            "main": [
+                [
+                    {
+                        "node": "Construir Contexto RAG2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model1": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Agente Analisador1",
+                        "type": "ai_languageModel",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Set Session Marketing2": {
+            "main": [
+                [
+                    {
+                        "node": "Agente Analisador1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Code in JavaScript1": {
+            "main": [
+                [
+                    {
+                        "node": "If1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If": {
+            "main": [
+                [
+                    {
+                        "node": "enviar-info2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Set Session Marketing2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "enviar-info": {
+            "main": [
+                [
+                    {
+                        "node": "Set Session Marketing2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "enviar-info1": {
+            "main": [
+                [
+                    {
+                        "node": "Set Session Marketing1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "enviar-info2": {
+            "main": [
+                [
+                    {
+                        "node": "enviar-info",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Safe Executor Estratégico1": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Agente de marketing": {
+            "main": [
+                [
+                    {
+                        "node": "Safe Executor Estratégico1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Redis Chat Memory1": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agente Analisador1",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Redis Chat Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Agente Visual Merchandising1",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente CRM2",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Instagram1",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente de marketing",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Estratégico Campanhas",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Negociação2",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Relatórios2",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Email2",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Compras2",
+                        "type": "ai_memory",
+                        "index": 0
+                    },
+                    {
+                        "node": "Agente Estoque (Sales Sniper)2",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If1": {
+            "main": [
+                [
+                    {
+                        "node": "Apagar historico",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "If",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {
+        "Webhook": [
+            {
+                "headers": {
+                    "host": "webhook.aiensed.com",
+                    "user-agent": "node",
+                    "content-length": "300",
+                    "accept": "*/*",
+                    "accept-encoding": "br, gzip, deflate",
+                    "accept-language": "*",
+                    "content-type": "application/json",
+                    "sec-fetch-mode": "cors",
+                    "x-forwarded-for": "44.211.213.10",
+                    "x-forwarded-host": "webhook.aiensed.com",
+                    "x-forwarded-port": "443",
+                    "x-forwarded-proto": "https",
+                    "x-forwarded-server": "87b9a0850ae6",
+                    "x-real-ip": "44.211.213.10",
+                    "x-vercel-id": "gru1::z69kv-1768248559222-51b7632e278f"
+                },
+                "params": {},
+                "query": {},
+                "body": {
+                    "action": "criar_plano_acao",
+                    "alertType": "mortos",
+                    "alertLabel": "Produtos Mortos",
+                    "totalQuantity": 2710,
+                    "totalValue": 493643.6899999998,
+                    "message": "Preciso de um plano de ação para produtos mortos. Tenho 2.710 itens parados totalizando R$ 493.643,69.",
+                    "user_id": "65ba6d49-7ad2-412a-81d0-586ee301cbe8"
+                },
+                "webhookUrl": "https://webhook.aiensed.com/webhook/estoque",
+                "executionMode": "production"
+            }
+        ]
+    },
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "27e203b8d0ac73891032fa9f58c8cd38e53bbb56abd519cce7d9751638aae6d0"
+    }
+}

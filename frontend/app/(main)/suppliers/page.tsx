@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import {
     Search, ChevronLeft, ChevronRight, Truck, AlertTriangle,
     ArrowUpDown, ArrowUp, ArrowDown, Download, Users, Package,
-    DollarSign, Activity, AlertOctagon, TrendingUp, Info, Eye
+    DollarSign, Activity, AlertOctagon, TrendingUp, Info, Eye, ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -433,6 +433,7 @@ export default function SuppliersPage() {
                                                 <span className="text-muted-foreground">-</span>
                                             )}
                                         </td>
+                                        {/* Custo e Preço removidos por brevidade ou manter se quiser. Mantendo para context. */}
                                         <td className="px-3 py-2 text-right text-muted-foreground">{formatCurrency(prod.custo || 0)}</td>
                                         <td className="px-3 py-2 text-right">{formatCurrency(prod.preco || 0)}</td>
                                         <td className={cn(
@@ -461,6 +462,17 @@ export default function SuppliersPage() {
                         </div>
                     </div>
                 )}
+
+                {/* Footer Actions */}
+                <div className="p-4 border-t mt-auto flex justify-end gap-2 bg-muted/20 -mx-6 -mb-6 mt-6 rounded-b-lg">
+                    <Button variant="outline" onClick={handleCloseModal}>Fechar</Button>
+                    <Button
+                        onClick={() => window.location.href = `/orders/create?supplier=${encodeURIComponent(selectedSupplier!)}`}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                    >
+                        <ShoppingCart size={16} /> Gerar Pedido Inteligente (IA)
+                    </Button>
+                </div>
             </Modal>
         </div>
     );

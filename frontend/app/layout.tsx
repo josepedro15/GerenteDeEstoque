@@ -4,6 +4,7 @@ import "./globals.css";
 import { ChatProvider } from "@/contexts/ChatContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BranchProvider } from "@/contexts/BranchContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,9 @@ export default function RootLayout({
         <ThemeProvider>
           <BranchProvider>
             <ChatProvider>
-              {children}
+              <SidebarProvider>
+                {children}
+              </SidebarProvider>
             </ChatProvider>
           </BranchProvider>
         </ThemeProvider>

@@ -9,6 +9,9 @@ const mockMetrics = {
     averageMargin: 40,
     totalSkuCount: 500,
     ruptureShare: 5.5,
+    averageGiro: 15,
+    totalTransitValue: 20000,
+    totalSugestaoAjustada: 50000,
 };
 
 describe('KPIGrid', () => {
@@ -56,7 +59,11 @@ describe('KPIGrid', () => {
             averageMargin: 0,
             totalSkuCount: 0,
             ruptureShare: 0,
+            averageGiro: 0,
+            totalTransitValue: 0,
+            totalSugestaoAjustada: 0,
         };
+
 
         render(<KPIGrid metrics={zeroMetrics} />);
 

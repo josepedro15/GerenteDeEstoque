@@ -3,20 +3,22 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { sendMessage } from "@/app/actions/chat";
-import { getChatHistory, saveChatMessage, clearChatSession } from "@/app/actions/chatHistory";
-import { Send, Bot, User, Maximize2, Minimize2, ExternalLink, Trash2, Loader2 } from "lucide-react";
+import { StrategicPlanCard } from './StrategicPlanCard';
+import { CampaignCard } from './CampaignCard';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
+import { getOrCreateSessionId, fetchAuthenticatedUserId } from '@/lib/chat-session';
+import { getChatHistory, clearChatSession } from '@/app/actions/chatHistory';
+import { Send, Bot, User, Maximize2, Minimize2, ExternalLink, Trash2, Loader2, Sparkles, Check, CheckCircle, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { useChat } from "@/contexts/ChatContext";
+import { useChat as useSidebarChat } from "@/contexts/ChatContext";
+import { useChat } from "@ai-sdk/react";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
-import { CampaignCard } from "@/components/chat/CampaignCard";
-import { StrategicPlanCard } from "@/components/chat/StrategicPlanCard";
-import { saveCampaign, generateCampaign } from "@/app/actions/marketing";
-import { uploadImageToStorage } from "@/lib/storage";
-import { createBrowserClient } from "@supabase/ssr";
-import { sendActionPlanRequest } from "@/app/actions/action-plan";
+// import { saveCampaign, generateCampaign } from "@/app/actions/marketing"; // Unused in this file based on logic, but kept if needed
+// import { uploadImageToStorage } from "@/lib/storage";
+// import { createBrowserClient } from "@supabase/ssr";
+// import { sendActionPlanRequest } from "@/app/actions/action-plan";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface Message {
     id: string;
@@ -28,74 +30,261 @@ interface Message {
     planData?: any;
 }
 
-// Gera ou recupera sessionId do localStorage
-function getOrCreateSessionId(): string {
-    if (typeof window === 'undefined') return crypto.randomUUID();
+// Helper auxiliar para parsear o conteúdo da mensagem
+function parseMessageContent(content: string) {
+    if (!content) return { type: 'text', content: '' };
 
-    const stored = localStorage.getItem('chat_session_id');
-    if (stored) return stored;
+    // Tenta encontrar JSON no conteúdo
+    try {
+        const jsonMatch = content.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
 
-    const newId = crypto.randomUUID();
-    localStorage.setItem('chat_session_id', newId);
-    return newId;
+        if (jsonMatch) {
+            const jsonStr = jsonMatch[0];
+            const parsed = JSON.parse(jsonStr);
+
+            if (parsed.type === 'campaign_plan' && parsed.plan) {
+                return { type: 'campaign_plan', planData: parsed.plan, original: parsed, content: content.replace(jsonStr, '').trim() };
+            }
+            if (parsed.channels) {
+                return { type: 'campaign', campaignData: { campaign: parsed, products: [] }, original: parsed, content: content.replace(jsonStr, '').trim() };
+            }
+            if (parsed.type === 'error') {
+                return { type: 'text', content: parsed.message || 'Erro' };
+            }
+        }
+    } catch (e) {
+        // Ignora erro de parse e retorna texto
+    }
+    return { type: 'text', content };
 }
 
-// Busca userId do usuário autenticado via Supabase
-async function fetchAuthenticatedUserId(): Promise<string | null> {
-    if (typeof window === 'undefined') return null;
+// Clean markdown content
+const cleanContent = (text: string): string => {
+    let cleaned = text;
+    cleaned = cleaned.replace(/^```markdown\s*/, '').replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
+    return cleaned;
+};
+
+// Enhanced formatting for tool results
+const formatToolResult = (result: any, resultId: string) => {
+    if (!result) return null;
 
     try {
-        const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
-        const { data: { user } } = await supabase.auth.getUser();
-        return user?.id || null;
-    } catch (error) {
-        console.error('Erro ao buscar usuário autenticado:', error);
-        return null;
-    }
-}
+        // If result is a string, check if it's our formatted stock data
+        if (typeof result === 'string') {
+            if (result.startsWith('- ')) {
+                // Stock data list
+                return (
+                    <div key={resultId} className="bg-slate-50 p-3 rounded-md text-sm my-2 border border-slate-200">
+                        <p className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                            <Package size={16} /> Análise de Estoque:
+                        </p>
+                        <ul className="space-y-2">
+                            {result.split('\n').map((line: string, i: number) => {
+                                // Extract key metrics for highlighting
+                                const parts = line.split('Status:');
+                                const mainInfo = parts[0];
+                                const status = parts[1]?.trim();
 
-
-export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPage?: boolean; hideHeader?: boolean }) {
-    const { isOpen, closeChat } = useChat();
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [input, setInput] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-    const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
-    const [sessionId, setSessionId] = useState<string>("");
-    const [userId, setUserId] = useState<string>("");
-    const [userAvatar, setUserAvatar] = useState<string | null>(null);
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const router = useRouter();
-    const hasLoadedHistory = useRef(false);
-
-    // Inicializa IDs no cliente
-    useEffect(() => {
-        setSessionId(getOrCreateSessionId());
-
-        // Buscar userId do usuário autenticado
-        fetchAuthenticatedUserId().then(id => {
-            if (id) {
-                setUserId(id);
-            } else {
-                console.warn('Usuário não autenticado - funcionalidades de histórico desabilitadas');
+                                return (
+                                    <li key={i} className="bg-white p-2 rounded border border-slate-100 shadow-sm">
+                                        <div className="text-slate-700 text-xs text-wrap">{mainInfo}</div>
+                                        {status && (
+                                            <div className={`text-xs font-bold mt-1 px-2 py-0.5 rounded-full inline-block ${status.includes('Ruptura') ? 'bg-red-100 text-red-700' :
+                                                status.includes('Crítico') ? 'bg-orange-100 text-orange-700' :
+                                                    'bg-green-100 text-green-700'
+                                                }`}>
+                                                {status}
+                                            </div>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                );
             }
-        });
+            // Fallback for simple strings
+            return (
+                <div key={resultId} className="bg-slate-50 p-3 rounded-md text-sm my-2 text-slate-600 border border-slate-200">
+                    <span className="font-semibold block mb-1">Resultado:</span>
+                    {result}
+                </div>
+            );
+        }
 
-        // Carregar avatar do localStorage
-        const stored = localStorage.getItem("user_profile");
-        if (stored) {
-            const profile = JSON.parse(stored);
-            if (profile.avatar) {
-                setUserAvatar(profile.avatar);
+        // Handle specific object responses (Marketing, CRM, Instagram)
+        if (typeof result === 'object') {
+            if (result.status === 'ready_for_generation') {
+                return (
+                    <div key={resultId} className="bg-blue-50 p-3 rounded-md text-sm my-2 border border-blue-100 text-blue-800">
+                        <CheckCircle size={16} className="inline mr-2" />
+                        Campanha preparada: <strong>{result.context}</strong>
+                    </div>
+                );
+            }
+            if (result.action === 'generate_instagram') {
+                return (
+                    <div key={resultId} className="bg-purple-50 p-3 rounded-md text-sm my-2 border border-purple-100 text-purple-800">
+                        <Loader2 size={16} className="inline mr-2 animate-spin" />
+                        Gerando conteúdo para Instagram...
+                    </div>
+                );
+            }
+            if (result.action === 'generate_whatsapp') {
+                return (
+                    <div key={resultId} className="bg-green-50 p-3 rounded-md text-sm my-2 border border-green-100 text-green-800">
+                        <Loader2 size={16} className="inline mr-2 animate-spin" />
+                        Gerando mensagem CRM...
+                    </div>
+                );
             }
         }
 
-        // Listener para atualizações de perfil
+    } catch (e) {
+        console.error("Error formatting tool result:", e);
+    }
+
+    return (
+        <div key={resultId} className="text-xs text-slate-400 italic mt-1">
+            Processado.
+        </div>
+    );
+};
+
+
+export function ChatInterface({ fullPage = false, hideHeader = false, userId: propUserId, sessionId: propSessionId }: { fullPage?: boolean; hideHeader?: boolean; userId?: string; sessionId?: string }) {
+    const { isOpen, closeChat } = useSidebarChat();
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const [sessionId, setSessionId] = useState<string>(propSessionId || "");
+    const [userId, setUserId] = useState<string>(propUserId || "");
+    const [userAvatar, setUserAvatar] = useState<string | null>(null);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+    const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
+
+    // Debug logging for ChatInterface props
+    console.log("[ChatInterface] Render with userId:", userId, "sessionId:", sessionId);
+
+    // AI SDK v5+ adaptation
+    // We map 'status' to 'isLoading'. 'useChat' in this version might not manage input state, so we do it locally.
+    // 'sendMessage' maps to 'append'. 'regenerate' maps to 'reload'.
+    // @ts-ignore
+    const { messages, status, sendMessage: append, regenerate: reload, stop, setMessages } = useChat({
+        // @ts-ignore
+        api: typeof window !== 'undefined' ? `${window.location.origin}/api/chat` : '/api/chat',
+        // @ts-ignore
+        body: { userId, sessionId },
+        // maxSteps: 5, // Removing maxSteps as it might conflict with types
+        onError: (error) => {
+            console.error("AI Chat Error:", error);
+        }
+    });
+
+    const isLoading = status === 'streaming' || status === 'submitted';
+
+    // Removed unused input state handling since PromptInputBox is uncontrolled
+
+    const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
+
+    // Sync props with state
+    useEffect(() => {
+        if (propUserId) setUserId(propUserId);
+    }, [propUserId]);
+
+    useEffect(() => {
+        if (propSessionId && propSessionId !== sessionId) {
+            setSessionId(propSessionId);
+            setHasLoadedHistory(false);
+        }
+    }, [propSessionId]);
+
+    // Session Initialization
+    useEffect(() => {
+        const initializeSession = async () => {
+            let currentUserId: string | null = userId;
+
+            if (!currentUserId) {
+                currentUserId = await fetchAuthenticatedUserId();
+                if (currentUserId) setUserId(currentUserId);
+            }
+
+            if (!currentUserId) {
+                console.warn("Usuário não autenticado");
+                setIsLoadingHistory(false);
+                return;
+            }
+
+            let currentSessionId = sessionId;
+            if (!currentSessionId && !propSessionId) {
+                currentSessionId = getOrCreateSessionId();
+                setSessionId(currentSessionId);
+            }
+
+            try {
+                setIsLoadingHistory(true);
+                const history = await getChatHistory(currentUserId, 100);
+                let targetSession = null;
+
+                if (propSessionId) {
+                    targetSession = history.find((s: any) => s.session_id === propSessionId);
+                } else if (history && history.length > 0) {
+                    targetSession = history[0];
+                    if (targetSession.session_id) {
+                        setSessionId(targetSession.session_id);
+                        localStorage.setItem('chat_session_id', targetSession.session_id);
+                    }
+                }
+
+                if (targetSession) {
+                    const formattedMessages = targetSession.messages.map((m: any) => {
+                        let content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+                        // Metadata handling logic if needed...
+                        return {
+                            id: m.id || crypto.randomUUID(),
+                            role: m.role,
+                            content: content,
+                            parts: [], // Ensure parts exist for UIMessage compatibility
+                            createdAt: m.timestamp ? new Date(m.timestamp) : undefined
+                        } as any;
+                    });
+                    // @ts-ignore
+                    setMessages(formattedMessages);
+                } else {
+                    // @ts-ignore
+                    setMessages([{
+                        id: "welcome",
+                        role: "assistant",
+                        content: "Olá! Posso ajudar com análises de estoque ou sugestões de compra?",
+                        parts: [],
+                        createdAt: new Date()
+                    } as any]);
+                }
+            } catch (e) {
+                console.error("History load error", e);
+                // @ts-ignore
+                setMessages([{
+                    id: "welcome",
+                    role: "assistant",
+                    content: "Olá! Posso ajudar com análises de estoque ou sugestões de compra?",
+                    parts: [],
+                    createdAt: new Date()
+                } as any]);
+            } finally {
+                setIsLoadingHistory(false);
+                setHasLoadedHistory(true);
+            }
+        };
+
+        if (!hasLoadedHistory || (propSessionId && propSessionId !== sessionId)) {
+            initializeSession();
+        }
+    }, [hasLoadedHistory, propSessionId, userId]);
+
+    // Profile Avatar
+    useEffect(() => {
         const handleProfileUpdate = () => {
             const stored = localStorage.getItem("user_profile");
             if (stored) {
@@ -103,937 +292,165 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 setUserAvatar(profile.avatar || null);
             }
         };
-
+        handleProfileUpdate();
         window.addEventListener("user-profile-updated", handleProfileUpdate);
         return () => window.removeEventListener("user-profile-updated", handleProfileUpdate);
     }, []);
 
-    // Carrega histórico do banco de dados (com timeout)
+    // Auto-scroll
     useEffect(() => {
-        if (!userId || hasLoadedHistory.current) return;
-
-        // Timeout de segurança - garante que o chat não fique travado
-        const timeout = setTimeout(() => {
-            if (isLoadingHistory) {
-                console.warn("Timeout no carregamento do histórico");
-                setIsLoadingHistory(false);
-                setMessages([{
-                    id: "welcome",
-                    role: "assistant",
-                    content: "Olá! Posso ajudar com análises de estoque ou sugestões de compra?"
-                }]);
-                hasLoadedHistory.current = true;
-            }
-        }, 3000);
-
-        async function loadHistory() {
-            setIsLoadingHistory(true);
-            try {
-                const sessions = await getChatHistory(userId, 100);
-
-                if (sessions && sessions.length > 0) {
-                    // Pega a sessão mais recente
-                    const latestSession = sessions[0];
-
-                    // Atualiza o sessionId para continuar na mesma sessão
-                    setSessionId(latestSession.session_id);
-                    localStorage.setItem('chat_session_id', latestSession.session_id);
-
-                    // Carrega mensagens históricas
-                    const historicMessages: Message[] = latestSession.messages.map(m => ({
-                        id: m.id,
-                        role: m.role,
-                        content: m.content,
-                        timestamp: m.timestamp
-                    }));
-
-                    setMessages(historicMessages);
-                } else {
-                    // Primeira vez - mostra mensagem de boas-vindas
-                    setMessages([{
-                        id: "welcome",
-                        role: "assistant",
-                        content: "Olá! Posso ajudar com análises de estoque ou sugestões de compra?"
-                    }]);
-                }
-
-                hasLoadedHistory.current = true;
-            } catch (error) {
-                console.error("Erro ao carregar histórico:", error);
-                setMessages([{
-                    id: "welcome",
-                    role: "assistant",
-                    content: "Olá! Posso ajudar com análises de estoque ou sugestões de compra?"
-                }]);
-                hasLoadedHistory.current = true;
-            } finally {
-                clearTimeout(timeout);
-                setIsLoadingHistory(false);
-            }
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
         }
-
-        loadHistory();
-
-        return () => clearTimeout(timeout);
-    }, [userId]);
-
+    }, [messages, isLoading, status]);
 
     const handleOpenPage = () => {
         closeChat();
         router.push('/chat');
     };
 
-    // Clean markdown content - remove JSON routing metadata and markdown code fences
-    const cleanContent = (text: string): string => {
-        let cleaned = text;
-
-        // Remove markdown code fences
-        cleaned = cleaned.replace(/^```markdown\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
-
-        // Detectar e remover JSON de roteamento no início (formato: "json {...}" ou "{...}")
-        const trimmed = cleaned.trim();
-
-        // Verificar se começa com "json" seguido de {
-        const jsonPrefixMatch = trimmed.match(/^json\s*(\{)/i);
-        const startsWithBrace = trimmed.startsWith('{');
-
-        if (jsonPrefixMatch || startsWithBrace) {
-            // Encontrar onde o JSON começa
-            const jsonStartIndex = trimmed.indexOf('{');
-
-            if (jsonStartIndex !== -1) {
-                // Balancear chaves para encontrar o fim do JSON
-                let braceCount = 0;
-                let jsonEndIndex = -1;
-
-                for (let i = jsonStartIndex; i < trimmed.length; i++) {
-                    if (trimmed[i] === '{') braceCount++;
-                    else if (trimmed[i] === '}') braceCount--;
-
-                    if (braceCount === 0) {
-                        jsonEndIndex = i;
-                        break;
-                    }
-                }
-
-                if (jsonEndIndex !== -1) {
-                    // Extrair o conteúdo após o JSON
-                    const afterJson = trimmed.substring(jsonEndIndex + 1).trim();
-
-                    // Se há conteúdo significativo após o JSON, usar esse conteúdo
-                    if (afterJson.length > 20) {
-                        // Remover possíveis artefatos de formatação
-                        cleaned = afterJson
-                            .replace(/^---\s*/, '')
-                            .replace(/^\s*```\s*/, '')
-                            .trim();
-                    }
-                }
-            }
+    const handleSendMessage = async (text: string) => {
+        if (!text.trim()) return;
+        // Check if append exists, otherwise fallback? 
+        // Typescript might complain if append is missing from useChat return type.
+        // If so, we might need 'sendMessage' or checking imports.
+        // Assuming 'append' works for now as it remains in many versions.
+        if (append) {
+            await append({
+                role: 'user',
+                content: text
+            } as any);
         }
-
-        return cleaned;
     };
 
-    // Limpar conversa
-    // Lógica de limpar conversa (sem confirm)
     const clearChatAction = useCallback(async () => {
-        if (!userId || !sessionId) {
-            console.warn("Tentativa de limpar chat sem userId/sessionId");
-            return;
-        }
-
+        if (!userId || !sessionId) return;
         try {
-            // Enviar comando de reset para o webhook
-            try {
-                await sendMessage('/reset');
-            } catch (err) {
-                console.error("Erro ao enviar /reset para webhook:", err);
-            }
-
             await clearChatSession(userId, sessionId);
-
-            // Cria nova sessão
             const newSessionId = crypto.randomUUID();
             localStorage.setItem('chat_session_id', newSessionId);
             setSessionId(newSessionId);
-
-            // Reseta mensagens
             setMessages([{
                 id: "welcome",
                 role: "assistant",
-                content: "Conversa limpa! Como posso ajudar?"
-            }]);
+                content: "Conversa limpa! Como posso ajudar?",
+                parts: [],
+                createdAt: new Date()
+            } as any]);
         } catch (error) {
             console.error("Erro ao limpar histórico:", error);
         }
-    }, [userId, sessionId]);
+    }, [userId, sessionId, setMessages]);
 
-    // Handler para botão interno (com confirm)
     const handleClearChatClick = useCallback(() => {
         if (window.confirm("Tem certeza que deseja limpar o histórico desta conversa?")) {
             clearChatAction();
         }
     }, [clearChatAction]);
 
-    // Listener para limpar histórico via evento customizado (do header da página)
+    // Events
     useEffect(() => {
-        const handleClearEvent = () => {
-            // Evento externo já teve confirmação
-            clearChatAction();
-        };
-
+        const handleClearEvent = () => clearChatAction();
         window.addEventListener('chat:clear-history', handleClearEvent);
         return () => window.removeEventListener('chat:clear-history', handleClearEvent);
     }, [clearChatAction]);
 
-    // Listen to "Explain Product" events
+    // Handle Product Event
     useEffect(() => {
         const handleProductEvent = async (e: CustomEvent) => {
             const data = e.detail;
+            if (!data) return;
+
             let prompt = "";
+            const nivelServico = data.nivel_servico || 0;
+            const capital = data.capital_estoque || 0;
 
-            if (data.is_dashboard_analysis) {
-                const capital = data.financeiro?.total_estoque || 0;
-                const nivelServico = data.risco?.share_audavel || 0;
-
-                prompt = `Analise o estado geral do meu estoque atual. Tenho ${data.risco?.itens_ruptura || 0} itens em ruptura, ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(capital)} em capital investido e nível de serviço de ${nivelServico.toFixed(1)}%. O que devo priorizar?`;
+            if (data.source === 'dashboard' || data.is_dashboard_analysis) {
+                const rupturas = data.risco?.itens_ruptura || 0;
+                prompt = `Analise o estado geral do estoque.Ruptura: ${rupturas} itens.Capital Investido: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(capital)}. Nível de Serviço: ${nivelServico}%.O que priorizar ? `;
             } else {
-                prompt = `Explique por que o sistema sugeriu comprar ${data.quantidade_sugerida || data.sugestao || 0} un do produto "${data.nome_produto || data.nome}" (SKU: ${data.codigo_produto || data.sku}).`;
+                prompt = `Explique por que o sistema sugeriu comprar ${data.quantidade_sugerida || data.sugestao || 0} un do produto "${data.nome_produto || data.nome}"(SKU: ${data.codigo_produto || data.sku}).`;
             }
 
-            const userMsg: Message = {
-                id: Date.now().toString(),
-                role: "user",
-                content: prompt
-            };
-            setMessages(prev => [...prev, userMsg]);
-            setIsLoading(true);
-
-            // Salva mensagem do usuário no banco
-            if (userId && sessionId) {
-                await saveChatMessage(userId, sessionId, 'user', prompt, { source: 'product_event', data });
-            }
-
-            try {
-                const response = await sendMessage(prompt, data);
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: response
-                };
-                setMessages(prev => [...prev, aiMsg]);
-
-                // Salva resposta da IA no banco
-                if (userId && sessionId) {
-                    await saveChatMessage(userId, sessionId, 'assistant', response);
-                }
-            } catch (error) {
-                console.error(error);
-                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao analisar dados.' }]);
-            } finally {
-                setIsLoading(false);
-            }
+            handleSendMessage(prompt);
         };
-
         window.addEventListener("chat:send-product", handleProductEvent as unknown as EventListener);
         return () => window.removeEventListener("chat:send-product", handleProductEvent as unknown as EventListener);
-    }, [userId, sessionId]);
+    }, [append]); // Depend on append or handleSendMessage
 
-    // Listener para análise em lote (vindo da sidebar)
+    // Handle Batch Event
     useEffect(() => {
         const handleBatchEvent = async (e: CustomEvent) => {
             const { mode, products } = e.detail;
-
             if (!products || products.length === 0) return;
 
-            let prompt = "";
-
-            // Formatar lista de produtos para o prompt
             const productsList = products.map((p: any) =>
-                `- ${p.nome} (SKU: ${p.codigo_produto || p.id}): Estoque ${p.estoque_atual} un, ABC ${p.abc}, ${p.status}`
+                `* ${p.nome || p.nome_produto || 'Produto Sem Nome'} (SKU: ${p.codigo_produto || p.id}): Estoque ${p.estoque_atual || p.estoque} un, ABC ${p.abc || 'N/A'}, ${p.status || 'N/A'}`
             ).join('\n');
 
+            let prompt = "";
             if (mode === 'analysis') {
-                prompt = `Atue como um Especialista em Estoque. Realize uma análise técnica detalhada dos seguintes ${products.length} produtos:\n\n${productsList}\n\nREGRAS:\n1. Diagnóstico: Analise o nível de cobertura atual e identifique riscos iminentes (ruptura ou excesso).\n2. Classificação: Verifique se a curva ABC informada condiz com a movimentação recente (se houver dados).\n3. Ação Sugerida: Para cada item, sugira "Manter", "Promover" (se excesso) ou "Repor" (se ruptura).\n4. ALERTA: Não gere pedido de compra agora. Apenas apresente o cenário para tomada de decisão.\nUse tabelas para apresentar os dados.`;
+                prompt = `Atue como um Especialista em Estoque.Realize uma análise técnica detalhada dos seguintes ${products.length} produtos: \n\n${productsList} \n\nREGRAS: \n1.Diagnóstico: Analise o nível de cobertura atual.\n2.Sugira ações para cada item.\n3.Não gere pedido agora.`;
             } else if (mode === 'purchase') {
-                prompt = `Gere ordens de compra para os seguintes produtos:\n\n${productsList}\n\nConsidere reposição para 30 dias.`;
+                prompt = `Gere ordens de compra para os seguintes produtos: \n\n${productsList} \n\nConsidere reposição para 30 dias.`;
             }
-
-            // Simular mensagem do usuário
-            const userMsg: Message = {
-                id: Date.now().toString(),
-                role: "user",
-                content: prompt
-            };
-            setMessages(prev => [...prev, userMsg]);
-            setIsLoading(true);
-
-            // Salvar no histórico
-            if (userId && sessionId) {
-                saveChatMessage(userId, sessionId, 'user', prompt, { source: 'batch_action', data: { mode, products } }).catch(console.error);
-            }
-
-            try {
-                // Enviar para API
-                const response = await sendMessage(prompt, {
-                    products,
-                    type: 'batch_analysis'
-                });
-
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: response
-                };
-                setMessages(prev => [...prev, aiMsg]);
-
-                if (userId && sessionId) {
-                    saveChatMessage(userId, sessionId, 'assistant', response).catch(console.error);
-                }
-            } catch (error) {
-                console.error(error);
-                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao processar análise em lote.' }]);
-            } finally {
-                setIsLoading(false);
-            }
+            handleSendMessage(prompt);
         };
-
         window.addEventListener("chat:analyze-batch", handleBatchEvent as unknown as EventListener);
         return () => window.removeEventListener("chat:analyze-batch", handleBatchEvent as unknown as EventListener);
-    }, [userId, sessionId]);
+    }, [append]);
 
-    // Listener para plano de ação (vindo do modal de alertas)
+    // Handle Action Plan
     useEffect(() => {
         const handleActionPlanEvent = async (e: CustomEvent) => {
             const data = e.detail;
-
             if (!data) return;
-
-            // Adiciona mensagem do usuário
-            const userMsg: Message = {
-                id: Date.now().toString(),
-                role: "user",
-                content: data.message
-            };
-            setMessages(prev => [...prev, userMsg]);
-            setIsLoading(true);
-
-            // Salvar no histórico
-            if (userId && sessionId) {
-                saveChatMessage(userId, sessionId, 'user', data.message, { source: 'action_plan', data }).catch(console.error);
-            }
-
-            try {
-                // Enviar para webhook específico de plano de ação (adicionando user_id)
-                const payloadWithUser = { ...data, user_id: userId };
-                const result = await sendActionPlanRequest(payloadWithUser);
-
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: result.message
-                };
-                setMessages(prev => [...prev, aiMsg]);
-
-                if (userId && sessionId) {
-                    saveChatMessage(userId, sessionId, 'assistant', result.message).catch(console.error);
-                }
-            } catch (error) {
-                console.error(error);
-                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao gerar plano de ação. Tente novamente.' }]);
-            } finally {
-                setIsLoading(false);
-            }
+            handleSendMessage(data.message);
         };
-
         window.addEventListener("chat:send-action-plan", handleActionPlanEvent as unknown as EventListener);
         return () => window.removeEventListener("chat:send-action-plan", handleActionPlanEvent as unknown as EventListener);
-    }, [userId, sessionId]);
+    }, [append]);
 
-    // Listener para campanhas geradas
+    // Handle Campaign Generated (Legacy?)
     useEffect(() => {
         const handleCampaignEvent = async (e: CustomEvent) => {
             const { campaign, products } = e.detail;
-
-            // Adiciona mensagem do usuário
-            const userMsg: Message = {
-                id: Date.now().toString(),
-                role: "user",
-                content: `Gere uma campanha de marketing para ${products?.length || 0} produto(s) com excesso de estoque.`
-            };
-
-            // VERIFICAR TIPO DE RESPOSTA:
-            // - Agente Estratégico: { type: "campaign_plan", ... } ou { success: true, campaign: { type: "campaign_plan", ... } }
-            // - Agente de Ativos: { channels: {...} } ou { success: true, channels: {...} }
-            // - Resposta de Ajuda: { plan: { type: "ajuda", mensagem: "..." } }
-
-            // Normalizar: a resposta pode vir direta ou aninhada em "campaign"
-            const actualCampaign = campaign?.campaign || campaign;
-
-            // VERIFICAR SE É RESPOSTA DE AJUDA (exibir como texto simples)
-            const isHelpResponse = actualCampaign?.plan?.type === 'ajuda' ||
-                actualCampaign?.plan?.status === 'instrucao' ||
-                actualCampaign?.type === 'ajuda';
-
-            if (isHelpResponse) {
-                const helpMessage = actualCampaign?.plan?.mensagem ||
-                    actualCampaign?.mensagem ||
-                    'Para criar uma campanha eficaz, selecione produtos das 3 curvas (A, B e C) e clique em Gerar Campanha.';
-
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: `💡 **Dica:**\n\n${helpMessage}`,
-                    type: 'text'
-                };
-
-                setMessages(prev => [...prev, userMsg, aiMsg]);
-
-                if (userId && sessionId) {
-                    saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
-                    saveChatMessage(userId, sessionId, 'assistant', helpMessage).catch(console.error);
-                }
-                return;
-            }
-
-            const isPlan = actualCampaign?.type === 'campaign_plan' || actualCampaign?.requires_approval === true;
-            const hasChannels = actualCampaign?.channels && Object.keys(actualCampaign.channels).length > 0;
-
-            console.log("📊 Tipo de resposta:", { isPlan, hasChannels, campaignType: actualCampaign?.type });
-
-            if (isPlan) {
-                // PLANO ESTRATÉGICO - exibir como texto no chat
-                const planStatus = actualCampaign?.plan?.status || 'ajuste_recomendado';
-                // Garantir que são arrays
-                const planAlerts = Array.isArray(actualCampaign?.alertas)
-                    ? actualCampaign.alertas
-                    : (Array.isArray(actualCampaign?.plan?.alertas) ? actualCampaign.plan.alertas : []);
-                const planProducts = Array.isArray(actualCampaign?.produtos)
-                    ? actualCampaign.produtos
-                    : (Array.isArray(actualCampaign?.plan?.produtos) ? actualCampaign.plan.produtos : []);
-
-                // Formatar mensagem do plano
-                let planMessage = "📋 **Plano Estratégico de Campanha**\n\n";
-
-                if (planStatus === 'ajuste_recomendado') {
-                    planMessage += "⚠️ **Ajuste Recomendado**\n\n";
-                } else if (planStatus === 'aprovado') {
-                    planMessage += "✅ **Plano Aprovado**\n\n";
-                }
-
-                // Adicionar alertas
-                if (planAlerts.length > 0) {
-                    planMessage += "**Alertas:**\n";
-                    planAlerts.forEach((alert: any) => {
-                        planMessage += `• ${String(alert)}\n`;
-                    });
-                    planMessage += "\n";
-                }
-
-                // Adicionar produtos analisados
-                if (planProducts.length > 0) {
-                    planMessage += "**Produtos analisados:**\n";
-                    planProducts.slice(0, 5).forEach((p: any) => {
-                        const curva = p?.curva || p?.abc_curve || '?';
-                        const papel = p?.papel || 'Queima';
-                        const desconto = p?.desconto_sugerido || 0;
-                        planMessage += `• ${p?.nome || p?.name || 'Produto'} (Curva ${curva}) - ${papel} - ${desconto}% OFF\n`;
-                    });
-                    if (planProducts.length > 5) {
-                        planMessage += `  ... e mais ${planProducts.length - 5} produtos\n`;
-                    }
-                    planMessage += "\n";
-                }
-
-                // Adicionar mix e sugestões
-                const mix = actualCampaign?.plan?.mix_atual || actualCampaign?.mix_percentual || actualCampaign?.plan?.mix_percentual;
-                if (mix) {
-                    planMessage += `**Mix ABC:** A: ${mix.A || 0}% | B: ${mix.B || 0}% | C: ${mix.C || 0}%\n\n`;
-                }
-
-                // Adicionar nome sugerido e duração
-                if (actualCampaign?.nome_sugerido) {
-                    planMessage += `**Nome sugerido:** ${actualCampaign.nome_sugerido}\n`;
-                }
-                if (actualCampaign?.duracao_sugerida) {
-                    planMessage += `**Duração:** ${actualCampaign.duracao_sugerida}\n`;
-                }
-
-                // Formatar planData na estrutura esperada pelo StrategicPlanCard
-                const formattedPlan = {
-                    status: planStatus as 'aprovado' | 'ajuste_recomendado' | 'ajuste_necessario',
-                    mix_atual: actualCampaign?.plan?.mix_atual || { A: 0, B: 0, C: 0, total: 0 },
-                    mix_percentual: actualCampaign?.plan?.mix_percentual || actualCampaign?.mix_percentual || { A: '0%', B: '0%', C: '0%' },
-                    alertas: planAlerts,
-                    produtos: planProducts,
-                    estimativas: actualCampaign?.estimativas || actualCampaign?.plan?.estimativas || { faturamento_potencial: 0, desconto_medio: 0 },
-                    tipo_campanha_sugerido: actualCampaign?.tipo_campanha_sugerido || actualCampaign?.plan?.tipo_campanha_sugerido || 'queimao',
-                    duracao_sugerida: actualCampaign?.duracao_sugerida || actualCampaign?.plan?.duracao_sugerida || '7 dias',
-                    nome_sugerido: actualCampaign?.nome_sugerido || actualCampaign?.plan?.nome_sugerido || 'Promoção Especial'
-                };
-
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: planMessage,
-                    type: 'campaign_plan',
-                    planData: formattedPlan
-                };
-
-                setMessages(prev => [...prev, userMsg, aiMsg]);
-
-                // Salvar no histórico do chat
-                if (userId && sessionId) {
-                    saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
-                    saveChatMessage(userId, sessionId, 'assistant', planMessage).catch(console.error);
-                }
-
-            } else if (hasChannels) {
-                // ATIVOS FINAIS - exibir como materiais de campanha
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: "Campanha gerada com sucesso! Veja os materiais abaixo:",
-                    type: 'campaign',
-                    campaignData: { campaign: actualCampaign, products }
-                };
-
-                setMessages(prev => [...prev, userMsg, aiMsg]);
-
-                // Salvar campanha no banco de campanhas
-                if (userId) {
-                    console.log("🔄 Tentando salvar campanha...", { userId, productsCount: products?.length });
-                    try {
-                        // Extrair dados de texto
-                        const lightCampaign = {
-                            channels: {
-                                instagram: {
-                                    copy: actualCampaign?.channels?.instagram?.copy || '',
-                                    imagePrompt: actualCampaign?.channels?.instagram?.imagePrompt || ''
-                                },
-                                whatsapp: {
-                                    script: actualCampaign?.channels?.whatsapp?.script || '',
-                                    trigger: actualCampaign?.channels?.whatsapp?.trigger || ''
-                                },
-                                physical: {
-                                    headline: actualCampaign?.channels?.physical?.headline || '',
-                                    subheadline: actualCampaign?.channels?.physical?.subheadline || '',
-                                    offer: actualCampaign?.channels?.physical?.offer || ''
-                                }
-                            }
-                        };
-
-                        const lightProducts = (products || []).slice(0, 10).map((p: any) => ({
-                            id: p.id || '',
-                            nome: p.nome || '',
-                            preco: p.preco || 0,
-                            estoque: p.estoque || 0
-                        }));
-
-                        // Extrair imagens base64
-                        const instagramImageBase64 = actualCampaign?.channels?.instagram?.imageUrl
-                            || actualCampaign?.channels?.instagram?.imageBase64
-                            || actualCampaign?.channels?.instagram?.image
-                            || undefined;
-                        const physicalImageBase64 = actualCampaign?.channels?.physical?.posterUrl
-                            || actualCampaign?.channels?.physical?.posterBase64
-                            || actualCampaign?.channels?.physical?.poster
-                            || actualCampaign?.channels?.physical?.image
-                            || undefined;
-
-                        console.log("🖼️ Instagram image encontrada:", instagramImageBase64 ? `(${Math.round(instagramImageBase64.length / 1024)}KB)` : 'NÃO');
-                        console.log("🖼️ Physical image encontrada:", physicalImageBase64 ? `(${Math.round(physicalImageBase64.length / 1024)}KB)` : 'NÃO');
-
-                        // Upload imagens do CLIENTE para Storage
-                        const timestamp = Date.now();
-                        let instagramImageUrl: string | undefined = undefined;
-                        let physicalImageUrl: string | undefined = undefined;
-
-                        if (instagramImageBase64 && instagramImageBase64.length > 100) {
-                            console.log("📤 Uploading Instagram image do cliente...");
-                            const url = await uploadImageToStorage(instagramImageBase64, `${userId}/${timestamp}_instagram.png`);
-                            if (url) instagramImageUrl = url;
-                        }
-
-                        if (physicalImageBase64 && physicalImageBase64.length > 100) {
-                            console.log("📤 Uploading Physical image do cliente...");
-                            const url = await uploadImageToStorage(physicalImageBase64, `${userId}/${timestamp}_physical.png`);
-                            if (url) physicalImageUrl = url;
-                        }
-
-                        // Chamar saveCampaign
-                        const result = await saveCampaign(
-                            userId,
-                            lightCampaign,
-                            lightProducts,
-                            undefined,
-                            undefined,
-                            instagramImageUrl,
-                            physicalImageUrl
-                        );
-                        console.log("📝 Resultado saveCampaign:", result);
-                        if (result.success) {
-                            console.log("✅ Campanha salva com sucesso! ID:", result.id);
-                        } else {
-                            console.error("❌ Falha ao salvar campanha:", result.error);
-                        }
-                    } catch (err) {
-                        console.error("❌ Erro ao salvar campanha:", err);
-                    }
-                } else {
-                    console.warn("⚠️ userId não disponível, campanha não será salva");
-                }
-
-                // Salvar no histórico do chat
-                if (userId && sessionId) {
-                    saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
-                    saveChatMessage(userId, sessionId, 'assistant', 'Campanha gerada com sucesso!').catch(console.error);
-                }
-            } else {
-                // RESPOSTA DESCONHECIDA ou ERRO - exibir como texto
-                const errorContent = campaign?.error || campaign?.message || JSON.stringify(campaign, null, 2);
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: `Resposta recebida:\n\n${errorContent}`,
-                    type: 'text'
-                };
-
-                setMessages(prev => [...prev, userMsg, aiMsg]);
-
-                if (userId && sessionId) {
-                    saveChatMessage(userId, sessionId, 'user', userMsg.content).catch(console.error);
-                    saveChatMessage(userId, sessionId, 'assistant', errorContent).catch(console.error);
-                }
-            }
+            const aiMsg = {
+                id: crypto.randomUUID(),
+                role: 'assistant',
+                content: JSON.stringify({ type: 'campaign_plan', plan: campaign, generated: true }),
+                parts: [],
+                createdAt: new Date()
+            } as any;
+            // @ts-ignore
+            setMessages(prev => [...prev, aiMsg]);
         };
-
         window.addEventListener("chat:campaign-generated", handleCampaignEvent as unknown as EventListener);
         return () => window.removeEventListener("chat:campaign-generated", handleCampaignEvent as unknown as EventListener);
-    }, [userId, sessionId]);
+    }, [setMessages]);
 
-    // Auto-scroll quando mensagens mudam
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-    }, [messages, isOpen]);
-
-    // Função para enviar mensagem via PromptInputBox
-    const handleSendMessage = async (userContent: string) => {
-        if (!userContent.trim() || isLoading) return;
-
-        const userMsg: Message = {
-            id: Date.now().toString(),
-            role: "user",
-            content: userContent.trim()
-        };
-
-        setMessages(prev => [...prev, userMsg]);
-        setIsLoading(true);
-
-        // Salva mensagem do usuário no banco (não bloqueia a UI)
-        if (userId && sessionId) {
-            saveChatMessage(userId, sessionId, 'user', userContent.trim()).catch(console.error);
-        }
-
-        try {
-            const response = await sendMessage(userContent.trim());
-
-            // Tenta detectar se é uma resposta de plano estratégico ou campanha (JSON)
-            try {
-                // Limpar resposta - extrair JSON válido
-                let jsonString = response;
-                let textContent = '';
-
-                // NOVA LÓGICA: Detectar formato "json {...}" seguido de markdown
-                // Este é o formato do roteador n8n que retorna metadados + conteúdo
-                if (response.toLowerCase().startsWith('json')) {
-                    // Encontrar onde o JSON termina (balanceando chaves)
-                    const jsonStartIndex = response.indexOf('{');
-                    if (jsonStartIndex !== -1) {
-                        let braceCount = 0;
-                        let jsonEndIndex = -1;
-
-                        for (let i = jsonStartIndex; i < response.length; i++) {
-                            if (response[i] === '{') braceCount++;
-                            else if (response[i] === '}') braceCount--;
-
-                            if (braceCount === 0) {
-                                jsonEndIndex = i;
-                                break;
-                            }
-                        }
-
-                        if (jsonEndIndex !== -1) {
-                            // Extrair conteúdo após o JSON
-                            textContent = response.substring(jsonEndIndex + 1).trim();
-
-                            // Se tem conteúdo textual após o JSON, exibir o texto ao invés do JSON
-                            if (textContent && textContent.length > 50) {
-                                // Remover possíveis artefatos de formatação
-                                textContent = textContent
-                                    .replace(/^---\s*/, '')
-                                    .replace(/^\s*```\s*/, '')
-                                    .trim();
-
-                                const aiMsg: Message = {
-                                    id: (Date.now() + 1).toString(),
-                                    role: "assistant",
-                                    content: textContent
-                                };
-                                setMessages(prev => [...prev, aiMsg]);
-
-                                if (userId && sessionId) {
-                                    saveChatMessage(userId, sessionId, 'assistant', textContent).catch(console.error);
-                                }
-                                setIsLoading(false);
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                // Encontrar primeiro { ou [ que indica início de JSON
-                const jsonStartBrace = response.indexOf('{');
-                const jsonStartBracket = response.indexOf('[');
-                let jsonStart = -1;
-
-                if (jsonStartBrace !== -1 && jsonStartBracket !== -1) {
-                    jsonStart = Math.min(jsonStartBrace, jsonStartBracket);
-                } else if (jsonStartBrace !== -1) {
-                    jsonStart = jsonStartBrace;
-                } else if (jsonStartBracket !== -1) {
-                    jsonStart = jsonStartBracket;
-                }
-
-                if (jsonStart > 0) {
-                    jsonString = response.substring(jsonStart);
-                }
-
-                // Remover caracteres após o último } ou ]
-                const lastBrace = jsonString.lastIndexOf('}');
-                const lastBracket = jsonString.lastIndexOf(']');
-                const jsonEnd = Math.max(lastBrace, lastBracket);
-
-                if (jsonEnd !== -1 && jsonEnd < jsonString.length - 1) {
-                    // Guardar texto após o JSON para possível exibição
-                    textContent = jsonString.substring(jsonEnd + 1).trim();
-                    jsonString = jsonString.substring(0, jsonEnd + 1);
-                }
-
-                console.log("🔍 Tentando parse de JSON:", jsonString.substring(0, 100) + "...");
-                let parsed = JSON.parse(jsonString);
-
-                // Se n8n retornar um array (comum em 'All Incoming Items'), pega o primeiro item
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    parsed = parsed[0];
-                }
-
-                // DETECTAR RESPOSTA DE ROTEAMENTO N8N (tem intent, route, entities, etc.)
-                if (parsed.intent || parsed.route || parsed.entities) {
-                    // Esta é uma resposta de roteamento, não o conteúdo real
-                    // Verificar se tem content_from_memory ou original_question
-                    const displayContent = parsed.content_from_memory ||
-                        parsed.original_question ||
-                        textContent ||
-                        'Processando sua solicitação...';
-
-                    // Se tiver texto após o JSON, mostrar esse texto
-                    if (textContent && textContent.length > 20) {
-                        const aiMsg: Message = {
-                            id: (Date.now() + 1).toString(),
-                            role: "assistant",
-                            content: textContent
-                        };
-                        setMessages(prev => [...prev, aiMsg]);
-
-                        if (userId && sessionId) {
-                            saveChatMessage(userId, sessionId, 'assistant', textContent).catch(console.error);
-                        }
-                        setIsLoading(false);
-                        return;
-                    }
-                }
-
-                // VERIFICAR SE É RESPOSTA DE AJUDA (exibir como texto simples)
-                const isHelpResponse = parsed?.plan?.type === 'ajuda' ||
-                    parsed?.plan?.status === 'instrucao' ||
-                    parsed?.type === 'ajuda';
-
-                if (isHelpResponse) {
-                    const helpMessage = parsed?.plan?.mensagem ||
-                        parsed?.mensagem ||
-                        'Para criar uma campanha eficaz, selecione produtos das 3 curvas (A, B e C) e clique em Gerar Campanha.';
-
-                    const aiMsg: Message = {
-                        id: (Date.now() + 1).toString(),
-                        role: "assistant",
-                        content: `💡 **Dica:**\n\n${helpMessage}`
-                    };
-                    setMessages(prev => [...prev, aiMsg]);
-
-                    if (userId && sessionId) {
-                        saveChatMessage(userId, sessionId, 'assistant', helpMessage).catch(console.error);
-                    }
-                    setIsLoading(false);
-                    return;
-                }
-
-                if (parsed.type === 'campaign_plan' && parsed.plan) {
-                    // Validar que plan tem estrutura correta para StrategicPlanCard
-                    const validStatuses = ['aprovado', 'ajuste_recomendado', 'ajuste_necessario'];
-                    if (!validStatuses.includes(parsed.plan.status)) {
-                        // Status inválido - exibir como texto
-                        throw new Error('Invalid plan status for StrategicPlanCard');
-                    }
-
-                    const aiMsg: Message = {
-                        id: (Date.now() + 1).toString(),
-                        role: "assistant",
-                        content: "Analisei os produtos e preparei um plano estratégico para sua campanha:",
-                        type: 'campaign_plan',
-                        planData: parsed.plan
-                    };
-                    setMessages(prev => [...prev, aiMsg]);
-
-                    if (userId && sessionId) {
-                        saveChatMessage(userId, sessionId, 'assistant', 'Plano estratégico gerado').catch(console.error);
-                    }
-                    setIsLoading(false);
-                    return;
-                }
-
-                // VERIFICAR SE É CAMPANHA COM CHANNELS (ativos finais)
-                if (parsed.channels && Object.keys(parsed.channels).length > 0) {
-                    const aiMsg: Message = {
-                        id: (Date.now() + 1).toString(),
-                        role: "assistant",
-                        content: "Campanha gerada com sucesso! Veja os materiais abaixo:",
-                        type: 'campaign',
-                        campaignData: { campaign: parsed, products: [] }
-                    };
-                    setMessages(prev => [...prev, aiMsg]);
-
-                    if (userId && sessionId) {
-                        saveChatMessage(userId, sessionId, 'assistant', 'Campanha gerada com materiais').catch(console.error);
-                    }
-                    setIsLoading(false);
-                    return;
-                }
-            } catch (e) {
-                // Não é JSON ou tem estrutura inválida, continua como texto normal
-                console.log("⚠️ Parse JSON falhou, usando resposta como texto:", e);
-            }
-
-            // LÓGICA FINAL: Se a resposta começa com JSON de roteamento, extrair apenas o texto
-            let finalContent = response;
-
-            // Detectar padrão: json {...} seguido de texto OU {...} seguido de texto
-            const jsonMatch = response.match(/^(json\s*)?\{[\s\S]*?\}([\s\S]*)/i);
-            if (jsonMatch && jsonMatch[2]) {
-                const textAfterJson = jsonMatch[2].trim();
-                if (textAfterJson.length > 10) {
-                    // Usar o texto após o JSON
-                    finalContent = textAfterJson;
-                    console.log("✅ Extraído texto após JSON:", finalContent.substring(0, 100) + "...");
-                }
-            }
-
-            const aiMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                role: "assistant",
-                content: finalContent
-            };
-            setMessages(prev => [...prev, aiMsg]);
-
-            // Salva resposta da IA no banco (não bloqueia a UI)
-            if (userId && sessionId) {
-                saveChatMessage(userId, sessionId, 'assistant', finalContent).catch(console.error);
-            }
-        } catch (error) {
-            console.error(error);
-            const errorMsg: Message = {
-                id: 'error-' + Date.now(),
-                role: 'assistant',
-                content: 'Desculpe, ocorreu um erro. Tente novamente.'
-            };
-            setMessages(prev => [...prev, errorMsg]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || isLoading) return;
-        handleSendMessage(input.trim());
-        setInput("");
-    };
-
-    // Função para aprovar plano estratégico e gerar ativos
     const handleApproveAndGenerate = async (products: any[]) => {
         setIsGeneratingAssets(true);
-
-        // Adiciona mensagem do usuário
-        const userMsg: Message = {
-            id: Date.now().toString(),
-            role: "user",
-            content: "✅ Plano aprovado! Gere os ativos da campanha."
-        };
-        setMessages(prev => [...prev, userMsg]);
-
         try {
-            // Extrai IDs dos produtos
-            const productIds = products.map(p => String(p.id));
-            console.log("🚀 Gerando ativos para produtos:", productIds);
-
-            // Chama generateCampaign com os produtos do plano e contexto de aprovação
-            const result = await generateCampaign(productIds, {
-                action: 'generate',
-                context: 'aprovado'
-            });
-            console.log("📦 Resultado generateCampaign:", result);
-
-            // Dispara evento para handleCampaignEvent processar
-            window.dispatchEvent(new CustomEvent('chat:campaign-generated', {
-                detail: {
-                    campaign: result,
-                    products: products.map(p => ({
-                        id: p.id,
-                        nome: p.nome,
-                        preco: p.preco || 0,
-                        estoque: p.estoque || 0
-                    }))
-                }
-            }));
+            handleSendMessage("✅ Plano aprovado! Gere os ativos da campanha.");
         } catch (error) {
-            console.error("❌ Erro ao gerar campanha:", error);
-            const errorMsg: Message = {
-                id: 'error-' + Date.now(),
-                role: 'assistant',
-                content: 'Desculpe, ocorreu um erro ao gerar os ativos da campanha. Tente novamente.'
-            };
-            setMessages(prev => [...prev, errorMsg]);
+            console.error("Erro ao solicitar ativos:", error);
         } finally {
             setIsGeneratingAssets(false);
         }
     };
 
+
     return (
         <div className={cn(
             "flex flex-col overflow-hidden",
-            fullPage
-                ? "w-full h-full absolute inset-0"
-                : "h-full"
+            fullPage ? "w-full h-full absolute inset-0" : "h-full"
         )}>
-            {/* Header - só mostra no widget flutuante quando hideHeader é false */}
             {!fullPage && !hideHeader && (
                 <div className="flex items-center justify-between p-3 border-b border-border bg-accent">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="font-medium text-foreground text-sm">Assistente IA</span>
+                        <span className="font-medium text-foreground text-sm">Assistente IA (v2)</span>
                         {isLoadingHistory && (
                             <Loader2 size={12} className="animate-spin text-blue-400" />
                         )}
@@ -1063,13 +480,12 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={closeChat}>
                             <span className="sr-only">Fechar</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                            <User size={16} />
                         </Button>
                     </div>
                 </div>
             )}
 
-            {/* Messages Area */}
             <div
                 ref={scrollRef}
                 className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-3 sm:px-4 md:px-8 lg:px-16 py-4 space-y-4"
@@ -1082,120 +498,149 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         </div>
                     ) : (
                         <>
-                            {messages.map((msg) => (
-                                <div
-                                    key={msg.id}
-                                    className={cn(
-                                        "flex gap-3 max-w-[80%]",
-                                        msg.role === "user" ? "ml-auto flex-row-reverse" : ""
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden",
-                                        msg.role === "assistant" ? "bg-blue-500/20 text-blue-400" : "bg-accent text-foreground"
-                                    )}>
-                                        {msg.role === "assistant" ? (
-                                            <Bot size={18} />
-                                        ) : userAvatar ? (
-                                            <img
-                                                src={userAvatar}
-                                                alt="Avatar"
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <User size={18} />
+                            {messages.map((m) => {
+                                const msg = m as any;
+                                const { type, planData, campaignData, content } = parseMessageContent(msg.content);
+                                const isAssistant = msg.role === 'assistant';
+
+                                return (
+                                    <div
+                                        key={msg.id}
+                                        className={cn(
+                                            "flex gap-3 max-w-[80%]",
+                                            !isAssistant ? "ml-auto flex-row-reverse" : ""
                                         )}
-                                    </div>
-                                    <div className={cn(
-                                        "rounded-2xl px-4 py-2 text-sm overflow-hidden",
-                                        msg.role === "assistant"
-                                            ? "bg-card border border-border text-foreground rounded-tl-none"
-                                            : "bg-blue-600 text-foreground rounded-tr-none"
-                                    )}>
-                                        {msg.role === "assistant" ? (
-                                            <>
-                                                <ReactMarkdown
-                                                    remarkPlugins={[remarkGfm]}
-                                                    components={{
-                                                        p: ({ children }) => <p className="mb-2 last:mb-0 text-foreground leading-relaxed">{children}</p>,
-                                                        strong: ({ children }) => <span className="font-semibold text-blue-500">{children}</span>,
-                                                        ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1 text-foreground">{children}</ul>,
-                                                        ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1 text-foreground">{children}</ol>,
-                                                        li: ({ children }) => <li>{children}</li>,
-                                                        table: ({ children }) => <div className="overflow-x-auto my-4 border rounded-lg"><table className="min-w-full divide-y divide-border">{children}</table></div>,
-                                                        thead: ({ children }) => <thead className="bg-muted/50">{children}</thead>,
-                                                        tbody: ({ children }) => <tbody className="divide-y divide-border bg-card">{children}</tbody>,
-                                                        tr: ({ children }) => <tr className="hover:bg-muted/30 transition-colors">{children}</tr>,
-                                                        th: ({ children }) => <th className="px-4 py-3 text-left font-medium text-muted-foreground text-sm">{children}</th>,
-                                                        td: ({ children }) => <td className="px-4 py-3 text-sm text-foreground">{children}</td>,
-                                                        h1: ({ children }) => <h1 className="text-xl font-bold mb-3 text-foreground mt-4 first:mt-0 max-w-full break-words">{children}</h1>,
-                                                        h2: ({ children }) => <h2 className="text-lg font-bold mb-2 text-foreground mt-3 first:mt-0 max-w-full break-words">{children}</h2>,
-                                                        h3: ({ children }) => <h3 className="text-base font-semibold mb-2 text-blue-500 mt-2 max-w-full break-words">{children}</h3>,
-                                                        h4: ({ children }) => <h4 className="text-sm font-semibold mb-1 text-blue-500 mt-2 max-w-full break-words">{children}</h4>,
-                                                        hr: () => <hr className="my-3 border-border" />,
-                                                        blockquote: ({ children }) => <blockquote className="border-l-2 border-blue-500/50 pl-3 my-2 italic text-muted-foreground bg-blue-500/5 py-1 rounded-r">{children}</blockquote>,
-                                                        code: ({ children }) => <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-orange-500 border border-border">{children}</code>
-                                                    }}
-                                                >
-                                                    {cleanContent(msg.content)}
-                                                </ReactMarkdown>
-                                                {msg.type === 'campaign' && msg.campaignData && (
-                                                    <div className="mt-4">
-                                                        <CampaignCard
-                                                            campaign={msg.campaignData.campaign}
-                                                            products={msg.campaignData.products}
-                                                        />
+                                    >
+                                        <div className={cn(
+                                            "w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden",
+                                            isAssistant ? "bg-blue-500/20 text-blue-400" : "bg-accent text-foreground"
+                                        )}>
+                                            {isAssistant ? (
+                                                <Bot size={18} />
+                                            ) : (
+                                                userAvatar ? (
+                                                    <img src={userAvatar} alt="User" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <User size={18} />
+                                                )
+                                            )}
+                                        </div>
+
+                                        <div className={cn(
+                                            "rounded-2xl p-4 text-sm shadow-sm",
+                                            isAssistant
+                                                ? "bg-card border border-border text-foreground rounded-tl-none"
+                                                : "bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100 rounded-tr-none"
+                                        )}>
+                                            {/* Messages Content */}
+                                            {type === 'campaign_plan' ? (
+                                                <StrategicPlanCard
+                                                    plan={planData}
+                                                    onApprove={(products) => handleApproveAndGenerate(products)}
+                                                />
+                                            ) : type === 'campaign' ? (
+                                                <CampaignCard
+                                                    campaign={campaignData?.campaign}
+                                                    products={campaignData?.products}
+                                                />
+                                            ) : (
+                                                isAssistant ? (
+                                                    <MarkdownRenderer content={content || msg.content} />
+                                                ) : (
+                                                    <p className="whitespace-pre-wrap">{content || msg.content}</p>
+                                                )
+                                            )}
+
+                                            {/* Tool Invocations - Handle both legacy toolInvocations and new parts */}
+                                            {'parts' in msg && Array.isArray((msg as any).parts) ? (
+                                                <div className="mt-3 space-y-2">
+                                                    {(msg as any).parts.map((part: any, idx: number) => {
+                                                        if (part.type === 'tool-invocation') {
+                                                            const tool = part.toolInvocation;
+                                                            return (
+                                                                <div key={tool.toolCallId || idx} className="flex flex-col gap-2 p-2.5 rounded-lg bg-accent/50 text-xs text-muted-foreground border border-border/50">
+                                                                    <div className="flex items-center gap-2">
+                                                                        {tool.state === 'result' ? (
+                                                                            <Check size={14} className="text-emerald-500 shrink-0" />
+                                                                        ) : (
+                                                                            <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />
+                                                                        )}
+                                                                        <span className="font-medium text-foreground text-[10px] uppercase tracking-wider">
+                                                                            {tool.toolName}
+                                                                        </span>
+                                                                    </div>
+                                                                    {tool.state === 'result' && (
+                                                                        <div className="mt-1">
+                                                                            {formatToolResult(tool.result, tool.toolCallId)}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                // Legacy fallback
+                                                (msg as any).toolInvocations && (msg as any).toolInvocations.length > 0 && (
+                                                    <div className="mb-3 space-y-2">
+                                                        {(msg as any).toolInvocations.map((tool: any) => (
+                                                            <div key={tool.toolCallId} className="flex flex-col gap-2 p-2.5 rounded-lg bg-accent/50 text-xs text-muted-foreground border border-border/50">
+                                                                <div className="flex items-center gap-2">
+                                                                    {tool.state === 'result' ? (
+                                                                        <Check size={14} className="text-emerald-500 shrink-0" />
+                                                                    ) : (
+                                                                        <Loader2 size={14} className="animate-spin text-blue-500 shrink-0" />
+                                                                    )}
+                                                                    <span className="font-medium text-foreground text-[10px] uppercase tracking-wider">
+                                                                        {tool.toolName}
+                                                                    </span>
+                                                                </div>
+                                                                {tool.state === 'result' && (
+                                                                    <div className="mt-1">
+                                                                        {formatToolResult(tool.result, tool.toolCallId)}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                )}
-                                                {msg.type === 'campaign_plan' && msg.planData && (
-                                                    <div className="mt-4">
-                                                        <StrategicPlanCard
-                                                            plan={msg.planData}
-                                                            onApprove={handleApproveAndGenerate}
-                                                            isLoading={isGeneratingAssets}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            msg.content
-                                        )}
+                                                )
+                                            )}
+
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
+
                             {isLoading && (
                                 <div className="flex gap-3 max-w-[80%]">
-                                    <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-blue-500/20 text-blue-400">
                                         <Bot size={18} />
                                     </div>
-                                    <div className="bg-card border border-border rounded-2xl rounded-tl-none px-4 py-2 flex items-center gap-1">
-                                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
-                                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                                    <div className="bg-card border border-border text-foreground rounded-2xl p-4 rounded-tl-none flex items-center gap-2">
+                                        <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                                        <span className="text-xs text-muted-foreground">Gerando resposta...</span>
                                     </div>
                                 </div>
                             )}
+
                         </>
                     )}
                 </div>
             </div>
 
-            {/* Input Area */}
             <div className="shrink-0 px-3 sm:px-4 md:px-8 lg:px-16 py-3 sm:py-4 border-t border-border/50 bg-background/80 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto">
-                    {/* Quick Actions */}
                     {messages.length <= 1 && !isLoading && (
                         <div className="flex flex-wrap gap-2 mb-3 justify-center">
                             {[
                                 { emoji: "📦", text: "Qual o estoque de cimento?" },
                                 { emoji: "💰", text: "Qual o valor da argamassa?" },
                                 { emoji: "🎯", text: "Como criar uma campanha?" },
-                                { emoji: "🛒", text: "Ajuda com pedido de compras" },
-                                { emoji: "🔥", text: "Como fazer queima de estoque?" },
                             ].map((action, idx) => (
                                 <button
                                     key={idx}
-                                    onClick={() => handleSendMessage(`${action.text}`)}
+                                    onClick={() => handleSendMessage(action.text)}
                                     className="px-3 py-1.5 text-xs rounded-full border border-border bg-accent hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
                                 >
                                     <span>{action.emoji}</span>
@@ -1205,6 +650,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         </div>
                     )}
                     <PromptInputBox
+                        // value={input} // Uncontrolled
+                        // onChange={(e) => setInput(e.target.value)}
                         onSend={(message) => {
                             if (message.trim() && !isLoading && !isLoadingHistory) {
                                 handleSendMessage(message);
@@ -1215,6 +662,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     />
                 </div>
             </div>
+
         </div>
     );
 }

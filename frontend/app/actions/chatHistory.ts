@@ -47,16 +47,18 @@ export async function getChatHistory(userId: string, limit = 100): Promise<ChatS
             return [];
         }
 
+        console.log(`[getChatHistory] Found ${data?.length} rows for user ${userId}`);
+
         if (!data || data.length === 0) {
             return [];
         }
 
         // Agrupa mensagens por sessão
         const sessionsMap: Record<string, ChatSession> = {};
-        
+
         (data as ChatHistoryRow[]).forEach(row => {
             const sid = row.session_id || 'default';
-            
+
             if (!sessionsMap[sid]) {
                 sessionsMap[sid] = {
                     session_id: sid,
@@ -64,7 +66,7 @@ export async function getChatHistory(userId: string, limit = 100): Promise<ChatS
                     last_activity: row.created_at
                 };
             }
-            
+
             // Só adiciona mensagens de user e assistant (ignora system)
             if (row.role === 'user' || row.role === 'assistant') {
                 sessionsMap[sid].messages.push({
@@ -79,13 +81,13 @@ export async function getChatHistory(userId: string, limit = 100): Promise<ChatS
 
         // Ordena mensagens dentro de cada sessão (cronológico)
         Object.values(sessionsMap).forEach(session => {
-            session.messages.sort((a, b) => 
+            session.messages.sort((a, b) =>
                 new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
             );
         });
 
         // Retorna sessões ordenadas por última atividade
-        return Object.values(sessionsMap).sort((a, b) => 
+        return Object.values(sessionsMap).sort((a, b) =>
             new Date(b.last_activity).getTime() - new Date(a.last_activity).getTime()
         );
 

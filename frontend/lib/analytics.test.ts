@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { calculateDashboardMetrics, generateSuggestions } from './analytics';
-import { EstoqueDetalhe } from '@/types/estoque';
+import { DadosEstoque } from '@/types/estoque';
 
 // Helper para criar item de estoque fake
-const createFakeItem = (overrides: Partial<EstoqueDetalhe> = {}): EstoqueDetalhe => ({
+const createFakeItem = (overrides: any = {}): any => ({
     id: 1,
     tipo_registro: 'DETALHE',
     id_produto: 'SKU001',

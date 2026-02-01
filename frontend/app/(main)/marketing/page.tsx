@@ -1,19 +1,20 @@
 "use client";
 
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { History, Calendar, Package, Trash2, Eye, X, Instagram, MessageCircle, Printer, Copy, Check, Loader2, Plus } from "lucide-react";
+import { History, Calendar, Package, Trash2, Eye, X, Loader2, Plus, TrendingUp } from "lucide-react";
 import { getAllCampaigns, deleteCampaign, SavedCampaign } from "@/app/actions/marketing";
 import { cn } from "@/lib/utils";
+import { CampaignViewer } from "@/components/marketing/CampaignViewer";
 
 export default function CampaignHistoryPage() {
     const router = useRouter();
     const [campaigns, setCampaigns] = useState<SavedCampaign[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedCampaign, setSelectedCampaign] = useState<SavedCampaign | null>(null);
-    const [activeTab, setActiveTab] = useState<'instagram' | 'whatsapp' | 'physical'>('instagram');
-    const [copied, setCopied] = useState<string | null>(null);
+
 
     // Carregar campanhas
     useEffect(() => {
@@ -41,12 +42,6 @@ export default function CampaignHistoryPage() {
                 setSelectedCampaign(null);
             }
         }
-    };
-
-    const handleCopy = (text: string, type: string) => {
-        navigator.clipboard.writeText(text || '');
-        setCopied(type);
-        setTimeout(() => setCopied(null), 2000);
     };
 
     const formatDate = (dateString: string) => {
@@ -178,18 +173,30 @@ export default function CampaignHistoryPage() {
                         </div>
 
                         {/* Detalhes da Campanha */}
-                        <div className="lg:col-span-7">
+                        <div className="lg:col-span-7 h-full flex flex-col">
                             {selectedCampaign ? (
-                                <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                                <motion.div
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col h-full max-h-[calc(100vh-10rem)] shadow-sm"
+                                >
                                     {/* Header */}
-                                    <div className="p-4 border-b border-border bg-gradient-to-r from-purple-500/10 to-pink-500/10">
+                                    <div className="p-4 border-b border-border bg-gradient-to-r from-purple-500/5 to-pink-500/5 flex-shrink-0">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h3 className="font-bold text-foreground">Detalhes da Campanha</h3>
+                                                <h3 className="font-bold text-foreground text-lg flex items-center gap-2">
+                                                    {selectedCampaign.campaign_data?.report.title || 'Detalhes da Campanha'}
+                                                </h3>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    <p className="text-xs text-muted-foreground">
+                                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                                        <Calendar size={12} />
                                                         {formatDate(selectedCampaign.created_at)}
                                                     </p>
+                                                    {selectedCampaign.campaign_data && (
+                                                        <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium border border-purple-200">
+                                                            IA V2
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                             <button
@@ -201,127 +208,26 @@ export default function CampaignHistoryPage() {
                                         </div>
                                     </div>
 
-                                    {/* Tabs */}
-                                    <div className="flex border-b border-border">
-                                        {[
-                                            { id: 'instagram' as const, label: 'Instagram', icon: Instagram, color: 'text-pink-500', border: 'border-pink-500' },
-                                            { id: 'whatsapp' as const, label: 'WhatsApp', icon: MessageCircle, color: 'text-green-500', border: 'border-green-500' },
-                                            { id: 'physical' as const, label: 'PDV', icon: Printer, color: 'text-orange-500', border: 'border-orange-500' },
-                                        ].map((tab) => (
-                                            <button
-                                                key={tab.id}
-                                                onClick={() => setActiveTab(tab.id)}
-                                                className={cn(
-                                                    "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors",
-                                                    activeTab === tab.id
-                                                        ? `text-foreground border-b-2 ${tab.border}`
-                                                        : "text-muted-foreground hover:text-foreground"
-                                                )}
-                                            >
-                                                <tab.icon size={16} className={activeTab === tab.id ? tab.color : ''} />
-                                                {tab.label}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="p-4">
-                                        {activeTab === 'instagram' && (
-                                            <div className="space-y-4">
-                                                <div className="bg-accent rounded-xl p-4 relative">
-                                                    <button
-                                                        onClick={() => handleCopy(selectedCampaign.instagram_copy || '', 'instagram')}
-                                                        className="absolute top-3 right-3 p-1.5 rounded-lg bg-pink-500/20 hover:bg-pink-500/30 text-pink-400 transition-colors"
-                                                    >
-                                                        {copied === 'instagram' ? <Check size={14} /> : <Copy size={14} />}
-                                                    </button>
-                                                    <h4 className="text-xs font-medium text-pink-400 mb-2 flex items-center gap-1">
-                                                        <Instagram size={12} /> Legenda
-                                                    </h4>
-                                                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
-                                                        {selectedCampaign.instagram_copy || 'Sem conteúdo'}
-                                                    </p>
-                                                </div>
-                                                {selectedCampaign.instagram_image_prompt && (
-                                                    <div className="bg-pink-500/5 rounded-xl p-3 border border-pink-500/10">
-                                                        <h5 className="text-xs font-bold text-pink-400 uppercase mb-1">Prompt da Imagem</h5>
-                                                        <p className="text-xs text-muted-foreground">{selectedCampaign.instagram_image_prompt}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {activeTab === 'whatsapp' && (
-                                            <div className="space-y-4">
-                                                <div className="bg-[#0b141a] rounded-xl overflow-hidden">
-                                                    <div className="bg-[#202c33] p-3 flex items-center gap-2">
-                                                        <div className="w-8 h-8 rounded-full bg-neutral-600 flex items-center justify-center">
-                                                            <MessageCircle size={14} className="text-white" />
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="text-white font-medium text-sm">Cliente</h4>
-                                                            <span className="text-[#8696a0] text-[10px]">online</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-3">
-                                                        <div className="bg-[#005c4b] rounded-lg rounded-tr-none p-3 relative group max-w-[90%] ml-auto">
-                                                            <button
-                                                                onClick={() => handleCopy(selectedCampaign.whatsapp_script || '', 'whatsapp')}
-                                                                className="absolute -top-2 -right-2 p-1.5 rounded-full bg-[#202c33] text-white/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            >
-                                                                {copied === 'whatsapp' ? <Check size={12} /> : <Copy size={12} />}
-                                                            </button>
-                                                            <p className="text-sm text-[#e9edef] whitespace-pre-wrap">
-                                                                {selectedCampaign.whatsapp_script || 'Sem conteúdo'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {selectedCampaign.whatsapp_trigger && (
-                                                    <div className="text-xs text-muted-foreground">
-                                                        Gatilho: <span className="text-green-400">{selectedCampaign.whatsapp_trigger}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {activeTab === 'physical' && (
-                                            <div className="space-y-4">
-                                                <div className="bg-white text-black p-6 rounded-xl border-4 border-yellow-400 text-center">
-                                                    <h2 className="text-2xl font-black uppercase text-red-600 mb-2">
-                                                        {selectedCampaign.physical_headline || 'PROMOÇÃO'}
-                                                    </h2>
-                                                    <p className="text-lg font-bold border-b-2 border-black pb-2 mb-4">
-                                                        {selectedCampaign.physical_subheadline || 'Aproveite!'}
-                                                    </p>
-                                                    <div className="bg-yellow-400 p-4 rounded-lg border-2 border-dashed border-black">
-                                                        <p className="text-xl font-black">
-                                                            {selectedCampaign.physical_offer || 'Oferta Especial'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleCopy(
-                                                        `${selectedCampaign.physical_headline}\n${selectedCampaign.physical_subheadline}\n${selectedCampaign.physical_offer}`,
-                                                        'physical'
-                                                    )}
-                                                    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors text-sm"
-                                                >
-                                                    {copied === 'physical' ? <Check size={14} /> : <Copy size={14} />}
-                                                    {copied === 'physical' ? 'Copiado!' : 'Copiar textos'}
-                                                </button>
+                                    {/* Content Scrollable Area */}
+                                    <div className="p-4 md:p-6 overflow-y-auto flex-1 bg-muted/5 scrollbar-thin">
+                                        {selectedCampaign.campaign_data ? (
+                                            <CampaignViewer strategy={selectedCampaign.campaign_data} />
+                                        ) : (
+                                            <div className="text-center py-20 text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
+                                                <p className="font-medium mb-1">Visualização detalhada indisponível</p>
+                                                <p className="text-sm opacity-70">Esta campanha foi criada em uma versão anterior do sistema.</p>
                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                </motion.div>
                             ) : (
-                                <div className="rounded-2xl border border-border bg-card/50 p-12 text-center h-full flex flex-col items-center justify-center min-h-[400px]">
-                                    <div className="mx-auto w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mb-4">
-                                        <Eye size={32} className="text-purple-400" />
+                                <div className="rounded-2xl border border-border bg-card/30 p-12 text-center h-full flex flex-col items-center justify-center min-h-[400px] border-dashed">
+                                    <div className="mx-auto w-20 h-20 rounded-full bg-purple-500/5 flex items-center justify-center mb-6 ring-1 ring-purple-500/20">
+                                        <Eye size={36} className="text-purple-400" />
                                     </div>
                                     <h3 className="text-lg font-medium text-foreground mb-2">Selecione uma campanha</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                        Clique em uma campanha à esquerda para ver os detalhes.
+                                    <p className="text-sm text-muted-foreground max-w-[250px] mx-auto">
+                                        Clique em uma campanha na lista à esquerda para ver os detalhes completos, estratégias e criativos.
                                     </p>
                                 </div>
                             )}
@@ -329,7 +235,6 @@ export default function CampaignHistoryPage() {
                     </div>
                 </motion.div>
             </div>
-
         </div>
     );
 }

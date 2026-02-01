@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Bot, Sparkles, ArrowLeft, Package, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ChatInterface } from "@/components/chat/chat-interface";
+import { fetchAuthenticatedUserId } from "@/lib/chat-session";
 
 // Lazy load ProductSidebar para evitar erros de hidratação
 const ProductSidebar = dynamic(
@@ -23,9 +24,37 @@ export default function ChatPage() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [mounted, setMounted] = useState(false);
 
+    // State for Session Management
+    const [userId, setUserId] = useState<string>("");
+    const [sessionId, setSessionId] = useState<string>("");
+
     useEffect(() => {
         setMounted(true);
+
+        // Load User
+        fetchAuthenticatedUserId().then(uid => {
+            if (uid) setUserId(uid);
+        });
+
+        // Load Session from LocalStorage or leave empty (let ChatInterface handle default)
+        // But better to control it here if we want to sync with Sidebar
+        const storedSession = localStorage.getItem('chat_session_id');
+        if (storedSession) {
+            setSessionId(storedSession);
+        }
     }, []);
+
+    const handleNewChat = () => {
+        const newId = crypto.randomUUID();
+        setSessionId(newId);
+        localStorage.setItem('chat_session_id', newId);
+        // Dispatch event if needed, but prop change should trigger ChatInterface reload
+    };
+
+    const handleSelectSession = (sid: string) => {
+        setSessionId(sid);
+        localStorage.setItem('chat_session_id', sid);
+    };
 
     return (
         <div className="h-[calc(100dvh-4rem)] md:h-[100dvh] relative overflow-hidden flex bg-background">
@@ -36,11 +65,15 @@ export default function ChatPage() {
                 <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px]" />
             </div>
 
-            {/* Product Sidebar */}
+            {/* Product Sidebar (now includes History) */}
             {mounted && (
                 <ProductSidebar
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
+                    userId={userId}
+                    sessionId={sessionId}
+                    onSelectSession={handleSelectSession}
+                    onNewChat={handleNewChat}
                 />
             )}
 
@@ -54,7 +87,7 @@ export default function ChatPage() {
                             <button
                                 onClick={() => setSidebarOpen(!sidebarOpen)}
                                 className="p-2 rounded-xl bg-accent hover:bg-accent/80 text-muted-foreground hover:text-foreground transition-colors"
-                                title={sidebarOpen ? "Fechar produtos" : "Abrir produtos"}
+                                title={sidebarOpen ? "Fechar barra lateral" : "Abrir barra lateral"}
                             >
                                 <Package size={18} />
                             </button>
@@ -84,25 +117,31 @@ export default function ChatPage() {
                             </div>
                         </div>
 
-                        {/* Botão de limpar histórico */}
+                        {/* Botão de limpar histórico (Mantido, mas agora limpa apenas a sessão atual) */}
                         <button
                             onClick={() => {
-                                if (window.confirm("Tem certeza que deseja limpar o histórico de conversa?")) {
+                                if (window.confirm("Tem certeza que deseja limpar o histórico desta conversa?")) {
                                     window.dispatchEvent(new CustomEvent('chat:clear-history'));
                                 }
                             }}
                             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 hover:text-red-400 transition-colors border border-red-500/20"
-                            title="Limpar histórico de conversa"
+                            title="Limpar mensagens desta conversa"
                         >
                             <Trash2 size={16} />
-                            <span className="text-sm font-medium hidden md:inline">Limpar histórico</span>
+                            <span className="text-sm font-medium hidden md:inline">Limpar</span>
                         </button>
                     </div>
                 </header>
 
                 {/* Chat Container - ocupa todo o espaço */}
                 <div className="flex-1 min-h-0 relative">
-                    <ChatInterface fullPage={true} />
+                    <ChatInterface
+                        fullPage={true}
+                        hideHeader={true} // Ocultar o header interno pois já temos um externo
+                        userId={userId}
+                        sessionId={sessionId}
+                        key={userId} // FORCE REMOUNT when userId is loaded so useChat gets the correct body
+                    />
                 </div>
             </div>
         </div>

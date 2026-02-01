@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, Send, Package, X, Loader2, Flame, Check, Sparkles, Filter, ChevronDown, ChevronUp, ShoppingCart } from "lucide-react";
+import { Search, Send, Package, X, Loader2, Sparkles, Filter, ChevronDown, ChevronUp, ShoppingCart, MessageSquare, Plus, Trash2, Calendar, Check } from "lucide-react";
 import { getStockData } from "@/app/actions/inventory";
-import { generateCampaign } from "@/app/actions/marketing";
+import { getChatHistory, clearChatSession, ChatSession } from "@/app/actions/chatHistory";
+
 import { cn } from "@/lib/utils";
-import { MixValidationPanel, validateAbcMix } from "./MixValidationPanel";
 import { normalizeStatus, parseNumber } from "@/lib/formatters";
 import {
     STATUS_COLORS_COMPACT,
@@ -20,6 +20,10 @@ import {
 interface ProductSidebarProps {
     isOpen: boolean;
     onClose: () => void;
+    userId?: string;
+    sessionId?: string;
+    onSelectSession?: (sessionId: string) => void;
+    onNewChat?: () => void;
 }
 
 interface SimpleProduct {
@@ -34,29 +38,25 @@ interface SimpleProduct {
     rawData: any;
 }
 
-export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
+export function ProductSidebar({ isOpen, onClose, userId, sessionId, onSelectSession, onNewChat }: ProductSidebarProps) {
+    const [activeTab, setActiveTab] = useState<'products' | 'history'>('history');
+
+    // Estado da Aba de Produtos
     const [products, setProducts] = useState<SimpleProduct[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [search, setSearch] = useState("");
-
-    // Nova: aba ativa
-    const [activeTab, setActiveTab] = useState<'products' | 'campaigns'>('products');
-
-    // Nova: seleção múltipla para campanhas
+    const [loadingProducts, setLoadingProducts] = useState(true);
+    const [errorProducts, setErrorProducts] = useState<string | null>(null);
+    const [productSearch, setProductSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [generating, setGenerating] = useState(false);
-    const [showMixPanel, setShowMixPanel] = useState(false);
-
-    // Filtros
     const [showFilters, setShowFilters] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string[]>([]);
     const [abcFilter, setAbcFilter] = useState<string[]>([]);
     const [coberturaFilter, setCoberturaFilter] = useState<string[]>([]);
     const [alertFilter, setAlertFilter] = useState<string[]>([]);
-
-    // Ordenação
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+
+    // Estado da Aba de Histórico
+    const [sessions, setSessions] = useState<ChatSession[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
     // Toggle Ordenação Estoque
     const toggleSort = () => {
@@ -97,16 +97,14 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
     };
     const hasActiveFilters = statusFilter.length > 0 || abcFilter.length > 0 || coberturaFilter.length > 0 || alertFilter.length > 0 || sortOrder !== null;
 
-
-
     // Carregar produtos
     useEffect(() => {
         let mounted = true;
 
         async function loadProducts() {
             try {
-                setLoading(true);
-                setError(null);
+                setLoadingProducts(true);
+                setErrorProducts(null);
 
                 const result = await getStockData();
 
@@ -120,14 +118,12 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                 const simpleProducts: SimpleProduct[] = result.produtos
                     .filter((p: any) => p?.id_produto)
                     .map((p: any) => {
-                        // Normalizar alerta do banco (ex: '💀 MORTO' -> 'MORTO')
                         const alertaEstoque = String(p.alerta_estoque || '').toUpperCase();
                         const statusRuptura = normalizeStatus(p.status_ruptura);
 
                         let alerta = '';
                         if (alertaEstoque.includes('MORTO')) alerta = 'MORTO';
                         else if (alertaEstoque.includes('LIQUIDAR')) alerta = 'LIQUIDAR';
-                        // Ruptura/Crítico vem do status, não do alerta_estoque
                         else if (statusRuptura === 'RUPTURA' || statusRuptura === 'CRÍTICO') alerta = 'RUPTURA';
 
                         return {
@@ -136,51 +132,68 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                             estoque: parseNumber(p.estoque_atual),
                             abc: String(p.classe_abc || 'C').toUpperCase().trim(),
                             status: statusRuptura,
-                            cobertura: parseNumber(p.dias_de_cobertura),
+                            cobertura: p.dias_de_cobertura === Infinity ? 999 : parseNumber(p.dias_de_cobertura), // Fix Infinity
                             preco: parseNumber(p.preco),
                             alerta,
                             rawData: p,
                         };
                     });
 
-                // Deduplicar produtos por ID para evitar chaves duplicadas e bugs de seleção
                 const uniqueProducts = Array.from(
                     new Map(simpleProducts.map(p => [p.id, p])).values()
                 );
 
-                // Exibir todos os produtos (sem limite)
                 setProducts(uniqueProducts);
             } catch (err: any) {
                 console.error("Erro ProductSidebar:", err);
                 if (mounted) {
-                    setError("Erro ao carregar produtos");
+                    setErrorProducts("Erro ao carregar produtos");
                     setProducts([]);
                 }
             } finally {
-                if (mounted) setLoading(false);
+                if (mounted) setLoadingProducts(false);
             }
         }
 
-        loadProducts();
+        if (isOpen && activeTab === 'products' && products.length === 0) {
+            loadProducts();
+        }
 
         return () => { mounted = false; };
-    }, []);
+    }, [isOpen, activeTab]); // Remove products.length check or handle smartly
 
-    // Filtrar produtos conforme aba, busca e filtros
+    // Carregar histórico
+    useEffect(() => {
+        async function loadHistory() {
+            if (!userId) {
+                console.log("[ProductSidebar] loadHistory: Sem userId");
+                return;
+            }
+            console.log("[ProductSidebar] loadHistory: Iniciando fetch para userId:", userId);
+            try {
+                setLoadingHistory(true);
+                console.log("[ProductSidebar] loadHistory: Buscando histórico...");
+                const history = await getChatHistory(userId, 50);
+                console.log("[ProductSidebar] loadHistory: Recuperado:", history.length, "sessões");
+                setSessions(history);
+            } catch (e) {
+                console.error("Erro ao carregar histórico", e);
+            } finally {
+                setLoadingHistory(false);
+            }
+        }
+
+        if (isOpen && activeTab === 'history' && userId) {
+            loadHistory();
+        }
+    }, [isOpen, activeTab, userId, sessionId]); // Reload if sessionId changes (new message sent)
+
+    // Filtrar produtos
     const filteredProducts = useMemo(() => {
         let filtered = products;
 
-        // Filtro por status
-        if (statusFilter.length > 0) {
-            filtered = filtered.filter(p => statusFilter.includes(p.status));
-        }
-
-        // Filtro por curva ABC
-        if (abcFilter.length > 0) {
-            filtered = filtered.filter(p => abcFilter.includes(p.abc));
-        }
-
-        // Filtro por cobertura
+        if (statusFilter.length > 0) filtered = filtered.filter(p => statusFilter.includes(p.status));
+        if (abcFilter.length > 0) filtered = filtered.filter(p => abcFilter.includes(p.abc));
         if (coberturaFilter.length > 0) {
             filtered = filtered.filter(p => {
                 return coberturaFilter.some(filterValue => {
@@ -190,33 +203,26 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                 });
             });
         }
+        if (alertFilter.length > 0) filtered = filtered.filter(p => alertFilter.includes(p.alerta));
 
-        // Filtro por alerta (Mortos, Liquidar, Ruptura)
-        if (alertFilter.length > 0) {
-            filtered = filtered.filter(p => alertFilter.includes(p.alerta));
-        }
-
-        // Busca
-        if (search.trim()) {
-            const term = search.toLowerCase();
+        if (productSearch.trim()) {
+            const term = productSearch.toLowerCase();
             filtered = filtered.filter(p =>
                 p.nome.toLowerCase().includes(term) ||
                 p.id.toLowerCase().includes(term)
             );
         }
 
-        // Ordenação por estoque
         if (sortOrder) {
-            filtered = [...filtered].sort((a, b) => { // Create a copy to avoid mutating state
+            filtered = [...filtered].sort((a, b) => {
                 if (sortOrder === 'asc') return a.estoque - b.estoque;
                 return b.estoque - a.estoque;
             });
         }
 
         return filtered;
-    }, [products, search, statusFilter, abcFilter, coberturaFilter, alertFilter, sortOrder]);
+    }, [products, productSearch, statusFilter, abcFilter, coberturaFilter, alertFilter, sortOrder]);
 
-    // Toggle seleção para campanhas
     const toggleSelection = (id: string) => {
         if (selectedIds.includes(id)) {
             setSelectedIds(selectedIds.filter(i => i !== id));
@@ -225,492 +231,334 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         }
     };
 
-    // Enviar para análise individual - envia todos os dados da row
-    const handleAnalyze = (product: SimpleProduct) => {
-        try {
-            window.dispatchEvent(new CustomEvent('chat:send-product', {
-                detail: {
-                    // Dados da visualização
-                    codigo_produto: product.id,
-                    nome_produto: product.nome,
-                    estoque_atual: product.estoque,
-                    classe_abc: product.abc,
-                    status: product.status,
-                    cobertura: product.cobertura,
-                    preco: product.preco,
-                    // Dados originais completos da row do banco
-                    ...product.rawData
-                }
-            }));
-            if (window.innerWidth < 1024) onClose();
-        } catch (err) {
-            console.error("Erro ao enviar produto:", err);
-        }
-    };
-
-    // Validar mix ABC dos produtos selecionados
-    const mixValidation = useMemo(() => {
-        const selected = products.filter(p => selectedIds.includes(p.id));
-        return validateAbcMix(selected);
-    }, [selectedIds, products]);
-
-    // Gerar campanha (com validação)
-    const handleGenerateCampaign = async () => {
-        if (selectedIds.length === 0 || generating) return;
-
-        // Verificar se mix está bloqueado
-        if (!mixValidation.canGenerate) {
-            setShowMixPanel(true);
-            return;
-        }
-        // Fechar painel se estava aberto
-        setShowMixPanel(false);
-
-        setGenerating(true);
-        try {
-            const result = await generateCampaign(selectedIds);
-
-            // Enviar resultado para o chat
-            window.dispatchEvent(new CustomEvent('chat:campaign-generated', {
-                detail: {
-                    type: 'campaign',
-                    campaign: result,
-                    products: products.filter(p => selectedIds.includes(p.id)),
-                }
-            }));
-
-            setSelectedIds([]);
-            if (window.innerWidth < 1024) onClose();
-        } catch (err) {
-            console.error("Erro ao gerar campanha:", err);
-        } finally {
-            setGenerating(false);
-        }
-    };
-
-
-
-    // Ação em lote para produtos (Analisar ou Comprar)
     const handleBatchAction = (action: 'analyze' | 'buy') => {
         const selectedProducts = products.filter(p => selectedIds.includes(p.id));
-
         window.dispatchEvent(new CustomEvent('chat:analyze-batch', {
             detail: {
                 mode: action === 'analyze' ? 'analysis' : 'purchase',
                 products: selectedProducts.map(p => ({
+                    ...p.rawData,
                     codigo_produto: p.id,
                     nome_produto: p.nome,
+                    nome: p.nome,
                     estoque_atual: p.estoque,
                     preco: p.preco,
                     abc: p.abc,
-                    status: p.status,
-                    ...p.rawData
+                    status: p.status
                 }))
             }
         }));
-
         if (window.innerWidth < 1024) onClose();
+    };
+
+    const handleDeleteSession = async (e: React.MouseEvent, sid: string) => {
+        e.stopPropagation();
+        if (!userId) return;
+        if (confirm("Tem certeza que deseja apagar esta conversa?")) {
+            await clearChatSession(userId, sid);
+            setSessions(prev => prev.filter(s => s.session_id !== sid));
+            if (sid === sessionId && onNewChat) {
+                onNewChat();
+            }
+        }
     };
 
     if (!isOpen) return null;
 
     return (
         <>
-            {/* Overlay mobile */}
-            <div
-                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-                onClick={onClose}
-            />
+            <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />
 
-            {/* Sidebar */}
-            <aside className="fixed lg:relative left-0 top-0 h-full w-[85vw] max-w-80 sm:w-80 bg-card border-r border-border z-50 flex flex-col">
-                {/* Tabs */}
-                <div className="flex border-b border-border">
+            <aside className="fixed lg:relative left-0 top-0 h-full w-[85vw] max-w-80 sm:w-80 bg-card border-r border-border z-50 flex flex-col transition-all duration-300">
+                {/* Header Superior com Tabs */}
+                <div className="flex border-b border-border bg-background">
                     <button
-                        onClick={() => { setActiveTab('products'); setSelectedIds([]); }}
+                        onClick={() => setActiveTab('history')}
                         className={cn(
-                            "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors",
+                            "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors border-b-2",
+                            activeTab === 'history'
+                                ? "text-purple-400 border-purple-400 bg-purple-500/5"
+                                : "text-muted-foreground border-transparent hover:text-foreground hover:bg-accent"
+                        )}
+                    >
+                        <MessageSquare size={16} />
+                        Conversas
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('products')}
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors border-b-2",
                             activeTab === 'products'
-                                ? "text-foreground bg-accent border-b-2 border-blue-500"
-                                : "text-muted-foreground hover:text-foreground"
+                                ? "text-blue-400 border-blue-400 bg-blue-500/5"
+                                : "text-muted-foreground border-transparent hover:text-foreground hover:bg-accent"
                         )}
                     >
                         <Package size={16} />
-                        Produtos
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('campaigns')}
-                        className={cn(
-                            "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors",
-                            activeTab === 'campaigns'
-                                ? "text-foreground bg-accent border-b-2 border-pink-500"
-                                : "text-muted-foreground hover:text-foreground"
-                        )}
-                    >
-                        <Flame size={16} />
-                        Campanhas
-                    </button>
-                    <button
-                        onClick={onClose}
-                        className="p-3 text-muted-foreground hover:text-foreground lg:hidden"
-                    >
-                        <X size={18} />
+                        Meus Itens
                     </button>
                 </div>
 
-                {/* Header da aba */}
-                <div className="p-4 border-b border-border relative z-20 bg-background">
-                    {activeTab === 'products' ? (
-                        <div className="text-xs text-muted-foreground mb-3">
-                            Selecione um produto para análise individual
-                        </div>
-                    ) : (
-                        <div className="text-xs text-muted-foreground mb-3">
-                            Selecione até 10 produtos para gerar campanha
-                            <span className="ml-1 text-pink-400">({selectedIds.length}/10)</span>
-                        </div>
-                    )}
-
-                    {/* Search + Filter Toggle */}
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Buscar por nome ou SKU..."
-                                className="w-full pl-9 pr-3 py-2 text-sm bg-accent border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                            />
-                        </div>
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={cn(
-                                "p-2 rounded-lg border transition-colors relative",
-                                showFilters || hasActiveFilters
-                                    ? "bg-blue-500/10 border-blue-500 text-blue-400"
-                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
-                            )}
-                            title="Filtros"
-                        >
-                            <Filter size={16} />
-                            {hasActiveFilters && (
-                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
-                            )}
-                        </button>
-                    </div>
-
-                    {/* Filtros colapsáveis */}
-                    {showFilters && (
-                        <div className="mt-3 pt-3 border-t border-border space-y-3">
-                            {/* Alertas */}
-                            <div>
-                                <span className="text-xs font-medium text-muted-foreground block mb-2">Alertas</span>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {ALERT_OPTIONS.map(option => (
-                                        <button
-                                            key={option.value}
-                                            onClick={() => toggleAlertFilter(option.value)}
-                                            className={cn(
-                                                "text-[10px] px-2 py-1 rounded-full border transition-colors",
-                                                alertFilter.includes(option.value)
-                                                    ? ALERT_COLORS[option.value]
-                                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
+                {/* Conteúdo da Aba Produtos */}
+                {activeTab === 'products' ? (
+                    <>
+                        <div className="p-4 border-b border-border relative z-20 bg-background">
+                            {/* ... (Search + Filters - Mantidos) ... */}
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                    <input
+                                        type="text"
+                                        value={productSearch}
+                                        onChange={(e) => setProductSearch(e.target.value)}
+                                        placeholder="Buscar produto..."
+                                        className="w-full pl-9 pr-3 py-2 text-sm bg-accent border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                    />
                                 </div>
-                            </div>
-
-                            {/* Status */}
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-medium text-muted-foreground">Status</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {STATUS_OPTIONS.map(status => (
-                                        <button
-                                            key={status}
-                                            onClick={() => toggleStatusFilter(status)}
-                                            className={cn(
-                                                "text-[10px] px-2 py-1 rounded-full border transition-colors",
-                                                statusFilter.includes(status)
-                                                    ? STATUS_COLORS_COMPACT[status] + " border-current"
-                                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            {status}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Curva ABC */}
-                            <div>
-                                <span className="text-xs font-medium text-muted-foreground block mb-2">Curva ABC</span>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {ABC_OPTIONS.map(abc => (
-                                        <button
-                                            key={abc}
-                                            onClick={() => toggleAbcFilter(abc)}
-                                            className={cn(
-                                                "text-[10px] px-3 py-1 rounded-full border transition-colors font-bold",
-                                                abcFilter.includes(abc)
-                                                    ? ABC_COLORS_COMPACT[abc] + " border-current"
-                                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            {abc}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Cobertura */}
-                            <div>
-                                <span className="text-xs font-medium text-muted-foreground block mb-2">Cobertura</span>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {COVERAGE_RANGES.map(option => (
-                                        <button
-                                            key={option.value}
-                                            onClick={() => toggleCoberturaFilter(option.value)}
-                                            className={cn(
-                                                "text-[10px] px-2 py-1 rounded-full border transition-colors",
-                                                coberturaFilter.includes(option.value)
-                                                    ? "bg-blue-500/20 text-blue-400 border-blue-500"
-                                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Ordenação */}
-                            <div>
-                                <span className="text-xs font-medium text-muted-foreground block mb-2">Ordenação</span>
                                 <button
-                                    onClick={toggleSort}
+                                    onClick={() => setShowFilters(!showFilters)}
                                     className={cn(
-                                        "flex items-center gap-2 text-[10px] px-3 py-1 rounded-full border transition-colors",
-                                        sortOrder
-                                            ? "bg-blue-500/20 text-blue-400 border-blue-500"
+                                        "p-2 rounded-lg border transition-colors relative",
+                                        showFilters || hasActiveFilters
+                                            ? "bg-blue-500/10 border-blue-500 text-blue-400"
                                             : "bg-accent border-border text-muted-foreground hover:text-foreground"
                                     )}
                                 >
-                                    <Package size={12} />
-                                    Estoque
-                                    {sortOrder === 'asc' && <ChevronUp size={12} />}
-                                    {sortOrder === 'desc' && <ChevronDown size={12} />}
+                                    <Filter size={16} />
+                                    {hasActiveFilters && <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />}
                                 </button>
                             </div>
 
-                            {/* Limpar filtros */}
-                            {hasActiveFilters && (
-                                <button
-                                    onClick={clearFilters}
-                                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors w-full text-left pt-2 border-t border-border mt-2"
-                                >
-                                    Limpar filtros
-                                </button>
-                            )}
-                        </div>
-                    )}
+                            {/* Filtros Dropdown (Simplificado para o diff) */}
+                            {showFilters && (
+                                <div className="mt-3 pt-3 border-t border-border space-y-4 max-h-[60vh] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
 
-                    {/* Contador de resultados */}
-                    {(hasActiveFilters || search.trim()) && !loading && (
-                        <div className="mt-2 text-xs text-muted-foreground">
-                            {filteredProducts.length} produto(s) encontrado(s)
-                        </div>
-                    )}
-                </div>
-
-                {/* Product List */}
-                <div className="flex-1 overflow-y-auto relative z-10">
-                    {loading ? (
-                        <div className="flex flex-col items-center justify-center h-48 gap-3">
-                            <Loader2 size={24} className="animate-spin text-blue-400" />
-                            <span className="text-sm text-muted-foreground">Carregando...</span>
-                        </div>
-                    ) : error ? (
-                        <div className="p-4 text-center text-red-400 text-sm">
-                            {error}
-                        </div>
-                    ) : filteredProducts.length === 0 ? (
-                        <div className="p-4 text-center text-muted-foreground text-sm">
-                            {activeTab === 'campaigns'
-                                ? "Nenhum produto com excesso encontrado"
-                                : "Nenhum produto encontrado"
-                            }
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-border">
-                            {filteredProducts.map((product) => {
-                                const isSelected = selectedIds.includes(product.id);
-
-                                return (
-                                    <div
-                                        key={product.id}
-                                        onClick={() => toggleSelection(product.id)}
-                                        className={cn(
-                                            "p-3 transition-colors cursor-pointer hover:bg-accent/50 border-l-4",
-                                            isSelected
-                                                ? activeTab === 'campaigns'
-                                                    ? "bg-pink-500/10 border-pink-500"
-                                                    : "bg-blue-500/10 border-blue-500"
-                                                : "border-transparent"
-                                        )}
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            {/* Checkbox Visual Unificado */}
-                                            <div className="flex items-center h-full pt-1">
-                                                <div className={cn(
-                                                    "w-5 h-5 rounded flex items-center justify-center border-2 transition-all duration-150",
-                                                    isSelected
-                                                        ? activeTab === 'campaigns'
-                                                            ? "bg-pink-500 border-pink-500"
-                                                            : "bg-blue-500 border-blue-500"
-                                                        : "border-gray-400 bg-transparent"
-                                                )}>
-                                                    {isSelected && (
-                                                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                        </svg>
+                                    {/* Status Filter */}
+                                    <div className="space-y-1.5">
+                                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Status</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {STATUS_OPTIONS.map(status => (
+                                                <button
+                                                    key={status}
+                                                    onClick={() => toggleStatusFilter(status)}
+                                                    className={cn(
+                                                        "text-[10px] px-2.5 py-1 rounded-lg border transition-all",
+                                                        statusFilter.includes(status)
+                                                            ? "bg-blue-500/10 border-blue-500 text-blue-400"
+                                                            : "bg-accent/50 border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                                                     )}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex-1 min-w-0 ml-2">
-                                                <p className="font-medium text-foreground text-sm truncate" title={product.nome}>
-                                                    {product.nome}
-                                                </p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-xs text-muted-foreground font-mono">
-                                                        {product.id}
-                                                    </span>
-                                                    <span className={cn(
-                                                        "text-[10px] px-1.5 py-0.5 rounded font-bold",
-                                                        ABC_COLORS_COMPACT[product.abc] || ABC_COLORS_COMPACT['C']
-                                                    )}>
-                                                        {product.abc}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className={cn(
-                                                        "text-[10px] px-1.5 py-0.5 rounded",
-                                                        STATUS_COLORS_COMPACT[product.status] || STATUS_COLORS_COMPACT['SAUDÁVEL']
-                                                    )}>
-                                                        {product.status}
-                                                    </span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {product.estoque.toLocaleString('pt-BR')} un
-                                                    </span>
-                                                    {activeTab === 'campaigns' && (
-                                                        <span className="text-xs text-blue-400">
-                                                            {product.cobertura.toFixed(0)}d
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
+                                                >
+                                                    {status}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
-                                );
-                            })}
+
+                                    {/* ABC Filter */}
+                                    <div className="space-y-1.5">
+                                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Curva ABC</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {ABC_OPTIONS.map(abc => (
+                                                <button
+                                                    key={abc}
+                                                    onClick={() => toggleAbcFilter(abc)}
+                                                    className={cn(
+                                                        "text-[10px] px-2.5 py-1 rounded-lg border transition-all",
+                                                        abcFilter.includes(abc)
+                                                            ? "bg-blue-500/10 border-blue-500 text-blue-400"
+                                                            : "bg-accent/50 border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                                                    )}
+                                                >
+                                                    {abc}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Coverage Filter */}
+                                    <div className="space-y-1.5">
+                                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Cobertura</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {COVERAGE_RANGES.map(range => (
+                                                <button
+                                                    key={range.value}
+                                                    onClick={() => toggleCoberturaFilter(range.value)}
+                                                    className={cn(
+                                                        "text-[10px] px-2.5 py-1 rounded-lg border transition-all",
+                                                        coberturaFilter.includes(range.value)
+                                                            ? "bg-blue-500/10 border-blue-500 text-blue-400"
+                                                            : "bg-accent/50 border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                                                    )}
+                                                >
+                                                    {range.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Alert Filter */}
+                                    <div className="space-y-1.5">
+                                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Alertas</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {ALERT_OPTIONS.map(alert => (
+                                                <button
+                                                    key={alert.value}
+                                                    onClick={() => toggleAlertFilter(alert.value)}
+                                                    className={cn(
+                                                        "text-[10px] px-2.5 py-1 rounded-lg border transition-all",
+                                                        alertFilter.includes(alert.value)
+                                                            ? "bg-blue-500/10 border-blue-500 text-blue-400"
+                                                            : "bg-accent/50 border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                                                    )}
+                                                >
+                                                    {alert.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border">
+                                        <button onClick={toggleSort} className={cn("flex items-center gap-2 text-[10px] px-3 py-1.5 rounded-lg border transition-colors", sortOrder ? "bg-blue-500/20 text-blue-400 border-blue-500" : "bg-accent border-border text-muted-foreground hover:text-foreground")}>
+                                            Estoque {sortOrder === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                        </button>
+                                        <button onClick={clearFilters} className="text-[10px] text-blue-400 ml-auto hover:text-blue-300 transition-colors font-medium">
+                                            Limpar Filtros
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
 
-                {/* Footer: botão gerar campanha */}
-                {activeTab === 'campaigns' && (
-                    <div className="relative p-4 border-t border-border bg-muted/50">
-                        {showMixPanel && (
-                            <MixValidationPanel
-                                validation={mixValidation}
-                                onClose={() => setShowMixPanel(false)}
-                            />
-                        )}
+                        <div className="flex-1 overflow-y-auto p-0">
+                            {loadingProducts ? (
+                                <div className="flex flex-col items-center justify-center h-48 gap-3">
+                                    <Loader2 size={24} className="animate-spin text-blue-400" />
+                                    <span className="text-sm text-muted-foreground">Carregando produtos...</span>
+                                </div>
+                            ) : errorProducts ? (
+                                <div className="p-4 text-center text-red-400 text-sm">{errorProducts}</div>
+                            ) : filteredProducts.length === 0 ? (
+                                <div className="p-4 text-center text-muted-foreground text-sm">Nenhum produto encontrado</div>
+                            ) : (
+                                <div className="divide-y divide-border">
+                                    {filteredProducts.map((p) => (
+                                        <div key={p.id} onClick={() => toggleSelection(p.id)} className={cn("p-3 cursor-pointer hover:bg-accent/50 border-l-4 transition-colors", selectedIds.includes(p.id) ? "bg-blue-500/10 border-blue-500" : "border-transparent")}>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-medium text-sm text-foreground truncate">{p.nome}</p>
+                                                    <div className="flex flex-wrap gap-2 mt-1 items-center">
+                                                        <span className={cn("text-[10px] px-1.5 rounded font-bold", ABC_COLORS_COMPACT[p.abc])}>{p.abc}</span>
+                                                        {p.status && (
+                                                            <span className={cn("text-[10px] px-1.5 rounded font-bold uppercase", STATUS_COLORS_COMPACT[p.status])}>
+                                                                {p.status}
+                                                            </span>
+                                                        )}
+                                                        <span className="text-xs text-muted-foreground">{p.estoque} un</span>
+                                                    </div>
+                                                </div>
+                                                {selectedIds.includes(p.id) && <Check size={16} className="text-blue-500" />}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
-                        {/* Mix Status Indicator */}
+                        {/* Footer Ações */}
                         {selectedIds.length > 0 && (
-                            <div className="mb-3">
-                                <div className="flex items-center justify-between text-xs mb-1">
-                                    <span className="text-muted-foreground">Mix ABC</span>
-                                    <span className={cn(
-                                        "font-medium",
-                                        mixValidation.status === 'ideal' && "text-green-400",
-                                        mixValidation.status === 'warning' && "text-yellow-400",
-                                        mixValidation.status === 'blocked' && "text-red-400"
-                                    )}>
-                                        {mixValidation.status === 'ideal' && '✓ Ideal'}
-                                        {mixValidation.status === 'warning' && '⚠ Atenção'}
-                                        {mixValidation.status === 'blocked' && '✗ Bloqueado'}
-                                    </span>
-                                </div>
-                                <div className="flex h-2 rounded-full overflow-hidden bg-muted/50">
-                                    {mixValidation.mixPercent.A > 0 && (
-                                        <div className="bg-blue-500" style={{ width: `${mixValidation.mixPercent.A}%` }} />
-                                    )}
-                                    {mixValidation.mixPercent.B > 0 && (
-                                        <div className="bg-purple-500" style={{ width: `${mixValidation.mixPercent.B}%` }} />
-                                    )}
-                                    {mixValidation.mixPercent.C > 0 && (
-                                        <div className="bg-orange-500" style={{ width: `${mixValidation.mixPercent.C}%` }} />
-                                    )}
-                                </div>
+                            <div className="p-4 border-t border-border bg-muted/50 grid grid-cols-2 gap-3">
+                                <button onClick={() => handleBatchAction('analyze')} className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600">
+                                    <Sparkles size={16} /> Analisar ({selectedIds.length})
+                                </button>
+                                <button onClick={() => handleBatchAction('buy')} className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600">
+                                    <ShoppingCart size={16} /> Comprar
+                                </button>
                             </div>
                         )}
+                    </>
+                ) : (
+                    /* Conteúdo da Aba Histórico */
+                    <div className="flex flex-col h-full">
+                        {/* Botão Nova Conversa */}
+                        <div className="p-4 border-b border-border">
+                            <button
+                                onClick={() => {
+                                    if (onNewChat) {
+                                        onNewChat();
+                                        if (window.innerWidth < 1024) onClose();
+                                    }
+                                }}
+                                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
+                            >
+                                <Plus size={18} />
+                                Nova Conversa
+                            </button>
+                        </div>
 
-                        <button
-                            onClick={handleGenerateCampaign}
-                            disabled={selectedIds.length === 0 || generating}
-                            className={cn(
-                                "w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all",
-                                selectedIds.length > 0
-                                    ? mixValidation.canGenerate
-                                        ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:opacity-90"
-                                        : "bg-gradient-to-r from-red-600 to-red-700 text-white hover:opacity-90"
-                                    : "bg-accent text-muted-foreground cursor-not-allowed"
-                            )}
-                        >
-                            {generating ? (
-                                <>
-                                    <Loader2 size={18} className="animate-spin" />
-                                    Gerando...
-                                </>
-                            ) : !mixValidation.canGenerate && selectedIds.length > 0 ? (
-                                <>
-                                    <Sparkles size={18} />
-                                    Ajustar Mix ({selectedIds.length})
-                                </>
+                        {/* Lista de Sessões */}
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                            {loadingHistory ? (
+                                <div className="flex flex-col items-center justify-center h-32 gap-3">
+                                    <Loader2 size={24} className="animate-spin text-purple-400" />
+                                    <span className="text-sm text-muted-foreground">Carregando conversas...</span>
+                                </div>
+                            ) : sessions.length === 0 ? (
+                                <div className="text-center p-8 text-muted-foreground text-sm">
+                                    <MessageSquare size={32} className="mx-auto mb-3 opacity-20" />
+                                    Nenhuma conversa anterior
+                                </div>
                             ) : (
-                                <>
-                                    <Sparkles size={18} />
-                                    Gerar Campanha ({selectedIds.length})
-                                </>
+                                sessions.map((session) => {
+                                    const isActive = session.session_id === sessionId;
+                                    const lastMsg = session.messages[session.messages.length - 1]?.content || "Nova conversa";
+                                    const preview = lastMsg.length > 50 ? lastMsg.substring(0, 50) + "..." : lastMsg;
+                                    const date = new Date(session.last_activity).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+
+                                    return (
+                                        <div
+                                            key={session.session_id}
+                                            onClick={() => {
+                                                if (onSelectSession) {
+                                                    onSelectSession(session.session_id);
+                                                    if (window.innerWidth < 1024) onClose();
+                                                }
+                                            }}
+                                            className={cn(
+                                                "group flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all border border-transparent",
+                                                isActive
+                                                    ? "bg-purple-500/10 border-purple-500/20 shadow-sm"
+                                                    : "hover:bg-accent hover:border-border"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "mt-0.5 h-8 w-8 min-w-[2rem] rounded-full flex items-center justify-center text-xs font-bold",
+                                                isActive ? "bg-purple-500 text-white" : "bg-accent-foreground/5 text-muted-foreground group-hover:bg-accent-foreground/10"
+                                            )}>
+                                                {isActive ? <MessageSquare size={14} /> : <Calendar size={14} />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={cn(
+                                                    "text-sm font-medium truncate",
+                                                    isActive ? "text-purple-400" : "text-foreground"
+                                                )}>
+                                                    {preview || "Sem título"}
+                                                </p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">
+                                                    {date} • {session.messages.length} msgs
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={(e) => handleDeleteSession(e, session.session_id)}
+                                                className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                title="Apagar conversa"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    );
+                                })
                             )}
-                        </button>
-                    </div>
-                )}
-                {/* Footer: acoes em lote para produtos */}
-                {activeTab === 'products' && selectedIds.length > 0 && (
-                    <div className="p-4 border-t border-border bg-muted/50 grid grid-cols-2 gap-3">
-                        <button
-                            onClick={() => handleBatchAction('analyze')}
-                            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                        >
-                            <Sparkles size={18} />
-                            Analisar ({selectedIds.length})
-                        </button>
-                        <button
-                            onClick={() => handleBatchAction('buy')}
-                            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-                        >
-                            <ShoppingCart size={18} />
-                            Comprar ({selectedIds.length})
-                        </button>
+                        </div>
                     </div>
                 )}
             </aside>

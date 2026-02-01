@@ -1,0 +1,206 @@
+Walkthrough: Atualização da Arquitetura Gemini 3
+Atualizei a arquitetura do chatbot para suportar o fluxo de trabalho “Filtro → Sistema → Dados” solicitado, preparando-o para as capacidades do Gemini 2.5 Pro (Gemini 1.5 Pro).
+
+Alterações
+
+1. Ferramentas Aprimoradas (analyzeStock)
+Refatorei a ferramenta analyzeStock em tools.ts para suportar deep grounding com lógica de filtragem específica.
+
+Funcionalidade: Suporta filtragem explícita de “baixo estoque” para análise de compras.
+
+Lógica: Agora consulta especificamente dados_estoque para itens com status “Ruptura” ou “Crítico” quando uma análise de compra é solicitada.
+
+Verificação: Verificado usando um script independente que recuperou com sucesso itens críticos como “CIMENTO CAUE” e “MADEIRA EUCALIPTO”.
+
+2. Prompt de Sistema e Modelo Atualizados (route.ts)
+Atualizei a rota da API para usar o modelo Gemini 1.5 Pro e um prompt de sistema estritamente definido que impõe a nova arquitetura.
+
+Modelo: Alterado para gemini-1.5-pro.
+
+Prompt do Sistema:
+
+Impõe a etapa de “Criação de Filtros” (Fase de Pensamento).
+
+Define como regra fixa o uso de dados_estoque e ignora tabelas legadas.
+
+Instrui a IA a atuar como “Especialista em Logística”.
+
+Resultados de Verificação
+
+Verificação de Lógica (Sucesso)
+Executei um script de verificação da ferramenta para comprovar que a interação com o banco de dados está correta:
+
+Consulta “Cimento”: Retornou 5 produtos específicos de cimento com seus respectivos status.
+
+Consulta “Análise de Compra”: Retornou 5 itens críticos que necessitam de reposição.
+
+Qualquer menção de Gemini 1.5 Pro aí coloca tudo 2.5 Pro.
+
+Perfeito. Segue o texto com todas as menções ajustadas para Gemini 2.5 Pro:
+
+Walkthrough: Atualização da Arquitetura Gemini 3
+Atualizei a arquitetura do chatbot para suportar o fluxo de trabalho “Filtro → Sistema → Dados” solicitado, preparando-o para as capacidades do Gemini 2.5 Pro.
+
+Alterações
+
+1. Ferramentas Aprimoradas (analyzeStock)
+Refatorei a ferramenta analyzeStock em tools.ts para suportar deep grounding com lógica de filtragem específica.
+
+Funcionalidade: Suporta filtragem explícita de “baixo estoque” para análise de compras.
+
+Lógica: Agora consulta especificamente dados_estoque para itens com status “Ruptura” ou “Crítico” quando uma análise de compra é solicitada.
+
+Verificação: Verificado usando um script independente que recuperou com sucesso itens críticos como “CIMENTO CAUE” e “MADEIRA EUCALIPTO”.
+
+2. Prompt de Sistema e Modelo Atualizados (route.ts)
+Atualizei a rota da API para usar o modelo Gemini 2.5 Pro e um prompt de sistema estritamente definido que impõe a nova arquitetura.
+
+Modelo: Alterado para gemini-2.5-pro.
+
+Prompt do Sistema:
+
+Impõe a etapa de “Criação de Filtros” (Fase de Pensamento).
+
+Define como regra fixa o uso de dados_estoque e ignora tabelas legadas.
+
+Instrui a IA a atuar como “Especialista em Logística”.
+
+Resultados de Verificação
+
+Verificação de Lógica (Sucesso)
+Executei um script de verificação da ferramenta para comprovar que a interação com o banco de dados está correta:
+
+Consulta “Cimento”: Retornou 5 produtos específicos de cimento com seus respectivos status.
+
+Consulta “Análise de Compra”: Retornou 5 itens críticos que necessitam de reposição.
+
+Instruções de uso — Implementação de requisições para o Gemini
+
+Esta seção descreve como realizar chamadas ao Gemini 3 Pro (Preview) utilizando REST, JavaScript e Python, seguindo o padrão oficial da API Generative Language.
+
+Pré-requisitos
+
+Antes de começar, certifique-se de que você possui:
+
+Uma API Key válida do Google AI Studio
+
+A variável de ambiente configurada:
+
+export GEMINI_API_KEY="SUA_API_KEY_AQUI"
+
+
+Acesso à API:
+
+Endpoint base: https://generativelanguage.googleapis.com
+
+Versão: v1beta
+
+1. Implementação via REST (cURL)
+
+Utilize este método para integrações diretas, testes rápidos ou ambientes sem SDK.
+
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d '{
+    "contents": [
+      {
+        "parts": [
+          {
+            "text": "Find the race condition in this multi-threaded C++ snippet: [code here]"
+          }
+        ]
+      }
+    ]
+  }'
+
+Quando usar REST
+
+Backends customizados
+
+Ambientes serverless
+
+Integrações sem dependências externas
+
+2. Implementação em JavaScript (Node.js)
+
+Ideal para aplicações web, APIs Node e serviços backend modernos.
+
+Instalação
+npm install @google/genai
+
+Exemplo de uso
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
+async function run() {
+  const response = await ai.models.generateContent({
+    model: "gemini-3-pro-preview",
+    contents: "Find the race condition in this multi-threaded C++ snippet: [code here]",
+  });
+
+  console.log(response.text);
+}
+
+run();
+
+Boas práticas
+
+Centralize a criação do client
+
+Trate exceções de timeout e rate limit
+
+Evite expor a API Key no frontend
+
+3. Implementação em Python
+
+Recomendado para automações, scripts, IA operacional e pipelines de dados.
+
+Instalação
+pip install google-genai
+
+Exemplo de uso
+from google import genai
+
+client = genai.Client(api_key="SUA_API_KEY_AQUI")
+
+response = client.models.generate_content(
+    model="gemini-3-pro-preview",
+    contents="Find the race condition in this multi-threaded C++ snippet: [code here]",
+)
+
+print(response.text)
+
+Casos de uso comuns
+
+Agentes autônomos
+
+Análise de código
+
+Orquestração com pipelines de IA
+
+Integração com sistemas internos
+
+Observações importantes
+
+O modelo gemini-3-pro-preview é voltado para:
+
+Raciocínio avançado
+
+Programação complexa
+
+Análise multimodal
+
+Para produção crítica, monitore:
+
+Latência
+
+Custos por token
+
+Limites de requisição
+
+Estruture prompts de forma clara e objetiva para melhores resultados.

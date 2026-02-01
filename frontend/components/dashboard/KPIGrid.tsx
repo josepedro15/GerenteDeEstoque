@@ -62,7 +62,7 @@ export function KPIGrid({ metrics }: KPIGridProps) {
                     <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-muted-foreground truncate">{card.label}</p>
-                            <p className="mt-2 text-2xl font-bold text-foreground truncate">{card.value}</p>
+                            <p className={`mt-2 font-bold text-foreground truncate ${card.value.length > 15 ? "text-lg" : "text-2xl"}`} title={card.value}>{card.value}</p>
                             <p className="text-xs text-muted-foreground mt-1 truncate">{card.sub}</p>
                         </div>
                         <div className={`rounded-xl p-3 ${card.bg} shrink-0`}>

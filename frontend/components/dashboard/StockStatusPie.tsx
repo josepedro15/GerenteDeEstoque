@@ -37,7 +37,7 @@ export function StockStatusPie({ data }: { data: DashboardMetrics['charts']['sta
                                 ))}
                             </Pie>
                             <Tooltip
-                                formatter={(value: number) => [value.toLocaleString('pt-BR'), 'SKUs']}
+                                formatter={(value: any) => [value?.toLocaleString('pt-BR') || '0', 'SKUs']}
                                 contentStyle={{
                                     backgroundColor: 'hsl(var(--card))',
                                     border: '1px solid hsl(var(--border))',

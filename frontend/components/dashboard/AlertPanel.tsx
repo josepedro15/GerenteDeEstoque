@@ -107,7 +107,7 @@ export function AlertPanel({ alerts, risk, onCardClick }: AlertPanelProps) {
                             </div>
 
                             {/* Count */}
-                            <h3 className="text-3xl font-bold text-foreground mb-1">
+                            <h3 className={`font-bold text-foreground mb-1 ${card.count.toString().length > 6 ? "text-2xl" : "text-3xl"}`}>
                                 {card.count.toLocaleString('pt-BR')}
                                 <span className="text-lg font-normal text-muted-foreground ml-2">itens</span>
                             </h3>

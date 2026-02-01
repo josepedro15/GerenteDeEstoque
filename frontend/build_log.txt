@@ -1,0 +1,120 @@
+
+> frontend@0.1.0 build
+> next build
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/josepedrodasilvafernandes/Documents/GerenteDeEstoque/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/josepedrodasilvafernandes/Documents/GerenteDeEstoque/frontend/package-lock.json
+
+   ▲ Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local
+
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+
+> Build error occurred
+Error: Turbopack build failed with 3 errors:
+./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/parsers/array.js:1:1
+Module not found: Can't resolve 'zod/v3'
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { [33mZodFirstPartyTypeKind[39m } [36mfrom[39m [32m"zod/v3"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 2 |[39m [36mimport[39m { setResponseValueAndErrors } [36mfrom[39m [32m"../errorMessages.js"[39m[33m;[39m
+ [90m 3 |[39m [36mimport[39m { parseDef } [36mfrom[39m [32m"../parseDef.js"[39m[33m;[39m
+ [90m 4 |[39m [36mexport[39m [36mfunction[39m parseArrayDef(def[33m,[39m refs) {[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/parsers/array.js [Client Component Browser]
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/index.js [Client Component Browser]
+    ./frontend/node_modules/@ai-sdk/ui-utils/dist/index.mjs [Client Component Browser]
+    ./frontend/node_modules/@ai-sdk/react/dist/index.mjs [Client Component Browser]
+    ./frontend/components/chat/chat-interface.tsx [Client Component Browser]
+    ./frontend/app/(main)/chat/page.tsx [Client Component Browser]
+    ./frontend/app/(main)/chat/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/parsers/array.js [Client Component SSR]
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/index.js [Client Component SSR]
+    ./frontend/node_modules/@ai-sdk/ui-utils/dist/index.mjs [Client Component SSR]
+    ./frontend/node_modules/@ai-sdk/react/dist/index.mjs [Client Component SSR]
+    ./frontend/components/chat/chat-interface.tsx [Client Component SSR]
+    ./frontend/app/(main)/chat/page.tsx [Client Component SSR]
+    ./frontend/app/(main)/chat/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/parsers/record.js:1:1
+Module not found: Can't resolve 'zod/v3'
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { [33mZodFirstPartyTypeKind[39m[33m,[39m } [36mfrom[39m [32m"zod/v3"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 2 |[39m [36mimport[39m { parseDef } [36mfrom[39m [32m"../parseDef.js"[39m[33m;[39m
+ [90m 3 |[39m [36mimport[39m { parseStringDef } [36mfrom[39m [32m"./string.js"[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m { parseBrandedDef } [36mfrom[39m [32m"./branded.js"[39m[33m;[39m[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/parsers/record.js [Client Component Browser]
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/index.js [Client Component Browser]
+    ./frontend/node_modules/@ai-sdk/ui-utils/dist/index.mjs [Client Component Browser]
+    ./frontend/node_modules/@ai-sdk/react/dist/index.mjs [Client Component Browser]
+    ./frontend/components/chat/chat-interface.tsx [Client Component Browser]
+    ./frontend/app/(main)/chat/page.tsx [Client Component Browser]
+    ./frontend/app/(main)/chat/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/parsers/record.js [Client Component SSR]
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/index.js [Client Component SSR]
+    ./frontend/node_modules/@ai-sdk/ui-utils/dist/index.mjs [Client Component SSR]
+    ./frontend/node_modules/@ai-sdk/react/dist/index.mjs [Client Component SSR]
+    ./frontend/components/chat/chat-interface.tsx [Client Component SSR]
+    ./frontend/app/(main)/chat/page.tsx [Client Component SSR]
+    ./frontend/app/(main)/chat/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/selectParser.js:1:1
+Module not found: Can't resolve 'zod/v3'
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { [33mZodFirstPartyTypeKind[39m } [36mfrom[39m [32m"zod/v3"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 2 |[39m [36mimport[39m { parseAnyDef } [36mfrom[39m [32m"./parsers/any.js"[39m[33m;[39m
+ [90m 3 |[39m [36mimport[39m { parseArrayDef } [36mfrom[39m [32m"./parsers/array.js"[39m[33m;[39m
+ [90m 4 |[39m [36mimport[39m { parseBigintDef } [36mfrom[39m [32m"./parsers/bigint.js"[39m[33m;[39m[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/selectParser.js [Client Component Browser]
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/index.js [Client Component Browser]
+    ./frontend/node_modules/@ai-sdk/ui-utils/dist/index.mjs [Client Component Browser]
+    ./frontend/node_modules/@ai-sdk/react/dist/index.mjs [Client Component Browser]
+    ./frontend/components/chat/chat-interface.tsx [Client Component Browser]
+    ./frontend/app/(main)/chat/page.tsx [Client Component Browser]
+    ./frontend/app/(main)/chat/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/selectParser.js [Client Component SSR]
+    ./frontend/node_modules/@ai-sdk/ui-utils/node_modules/zod-to-json-schema/dist/esm/index.js [Client Component SSR]
+    ./frontend/node_modules/@ai-sdk/ui-utils/dist/index.mjs [Client Component SSR]
+    ./frontend/node_modules/@ai-sdk/react/dist/index.mjs [Client Component SSR]
+    ./frontend/components/chat/chat-interface.tsx [Client Component SSR]
+    ./frontend/app/(main)/chat/page.tsx [Client Component SSR]
+    ./frontend/app/(main)/chat/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)

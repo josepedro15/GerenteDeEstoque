@@ -1,11 +1,20 @@
+"use client";
+
 import { Sidebar, MobileNav } from "@/components/layout/sidebar";
 import { GlobalChatWidget } from "@/components/chat/GlobalChatWidget";
+import { useSidebar } from "@/contexts/SidebarContext";
+import { cn } from "@/lib/utils";
 
 export default function MainLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const { isCollapsed, isHovered } = useSidebar();
+
+    // Effective state matches Sidebar logic: expanded if hovering
+    const effectiveCollapsed = isCollapsed && !isHovered;
+
     return (
         <div className="flex min-h-[100dvh] bg-background text-foreground">
             {/* Sidebar Desktop (Fixed) */}
@@ -15,7 +24,12 @@ export default function MainLayout({
             <MobileNav />
 
             {/* Content Area - Adjusted padding for mobile (top) and desktop (left) */}
-            <main className="flex-1 transition-all duration-300 pt-16 md:pt-0 md:pl-64 overflow-hidden">
+            <main
+                className={cn(
+                    "flex-1 transition-all duration-300 pt-16 md:pt-0 overflow-hidden",
+                    effectiveCollapsed ? "md:pl-20" : "md:pl-64"
+                )}
+            >
                 {children}
             </main>
             <GlobalChatWidget />
