@@ -190,6 +190,9 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         // Remove markdown code fences
         cleaned = cleaned.replace(/^```markdown\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
 
+        // Remove HTML comments (used for hidden AI context)
+        cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
+
         // Detectar e remover JSON de roteamento no início (formato: "json {...}" ou "{...}")
         const trimmed = cleaned.trim();
 
@@ -246,7 +249,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         try {
             // Enviar comando de reset para o webhook
             try {
-                await sendMessage('/reset');
+                await sendMessage('/reset', []);
             } catch (err) {
                 console.error("Erro ao enviar /reset para webhook:", err);
             }
@@ -316,7 +319,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             }
 
             try {
-                const response = await sendMessage(prompt, data);
+                const response = await sendMessage(prompt, [], data);
                 const aiMsg: Message = {
                     id: (Date.now() + 1).toString(),
                     role: "assistant",
@@ -376,7 +379,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 
             try {
                 // Enviar para API
-                const response = await sendMessage(prompt, {
+                const response = await sendMessage(prompt, [], {
                     products,
                     type: 'batch_analysis'
                 });
@@ -739,7 +742,13 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         }
 
         try {
-            const response = await sendMessage(userContent.trim());
+            // Constrói histórico para memória (mensagens anteriores)
+            const conversationHistory = messages.map(m => ({
+                role: m.role as 'user' | 'assistant',
+                content: typeof m.content === 'string' ? m.content : ''
+            }));
+
+            const response = await sendMessage(userContent.trim(), conversationHistory);
 
             // Tenta detectar se é uma resposta de plano estratégico ou campanha (JSON)
             try {
@@ -1122,12 +1131,12 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                                         ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1 text-foreground">{children}</ul>,
                                                         ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1 text-foreground">{children}</ol>,
                                                         li: ({ children }) => <li>{children}</li>,
-                                                        table: ({ children }) => <div className="overflow-x-auto my-4 border rounded-lg"><table className="min-w-full divide-y divide-border">{children}</table></div>,
+                                                        table: ({ children }) => <div className="overflow-x-auto my-2 border rounded-lg"><table className="min-w-full divide-y divide-border">{children}</table></div>,
                                                         thead: ({ children }) => <thead className="bg-muted/50">{children}</thead>,
                                                         tbody: ({ children }) => <tbody className="divide-y divide-border bg-card">{children}</tbody>,
                                                         tr: ({ children }) => <tr className="hover:bg-muted/30 transition-colors">{children}</tr>,
-                                                        th: ({ children }) => <th className="px-4 py-3 text-left font-medium text-muted-foreground text-sm">{children}</th>,
-                                                        td: ({ children }) => <td className="px-4 py-3 text-sm text-foreground">{children}</td>,
+                                                        th: ({ children }) => <th className="px-3 py-1.5 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">{children}</th>,
+                                                        td: ({ children }) => <td className="px-3 py-1.5 text-xs text-foreground align-middle">{children}</td>,
                                                         h1: ({ children }) => <h1 className="text-xl font-bold mb-3 text-foreground mt-4 first:mt-0 max-w-full break-words">{children}</h1>,
                                                         h2: ({ children }) => <h2 className="text-lg font-bold mb-2 text-foreground mt-3 first:mt-0 max-w-full break-words">{children}</h2>,
                                                         h3: ({ children }) => <h3 className="text-base font-semibold mb-2 text-blue-500 mt-2 max-w-full break-words">{children}</h3>,
