@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, Send, Package, X, Loader2, Flame, Check, Sparkles, Filter, ChevronDown, ChevronUp, ShoppingCart } from "lucide-react";
+import { Search, Send, Package, X, Loader2, Sparkles, Filter, ChevronDown, ChevronUp, ShoppingCart, MessageSquarePlus, MessageSquare, Clock, Trash2 } from "lucide-react";
 import { getStockData } from "@/app/actions/inventory";
-import { generateCampaign } from "@/app/actions/marketing";
 import { cn } from "@/lib/utils";
-import { MixValidationPanel, validateAbcMix } from "./MixValidationPanel";
 import { normalizeStatus, parseNumber } from "@/lib/formatters";
 import {
     STATUS_COLORS_COMPACT,
@@ -41,12 +39,14 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
     const [search, setSearch] = useState("");
 
     // Nova: aba ativa
-    const [activeTab, setActiveTab] = useState<'products' | 'campaigns'>('products');
+    const [activeTab, setActiveTab] = useState<'history' | 'products'>('products');
 
-    // Nova: seleção múltipla para campanhas
+    // Histórico
+    const [history, setHistory] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
+    // Nova: seleção múltipla
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [generating, setGenerating] = useState(false);
-    const [showMixPanel, setShowMixPanel] = useState(false);
 
     // Filtros
     const [showFilters, setShowFilters] = useState(false);
@@ -166,8 +166,54 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         return () => { mounted = false; };
     }, []);
 
+    // Trigger para forçar refresh do histórico
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    // Listener para atualizar histórico quando mensagens são salvas
+    useEffect(() => {
+        const handleRefresh = () => {
+            setRefreshTrigger(prev => prev + 1);
+        };
+        window.addEventListener('chat:history-refresh', handleRefresh);
+        return () => window.removeEventListener('chat:history-refresh', handleRefresh);
+    }, []);
+
+    // Carregar Histórico
+    useEffect(() => {
+        if (activeTab !== 'history') return;
+
+        async function loadHistory() {
+            setLoadingHistory(true);
+            try {
+                const { getChatHistory } = await import("@/app/actions/chatHistory");
+                const { createBrowserClient } = await import("@supabase/ssr");
+
+                const supabase = createBrowserClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+                );
+                const { data: { user } } = await supabase.auth.getUser();
+
+                if (user?.id) {
+                    const sessions = await getChatHistory(user.id);
+                    console.log(`[Sidebar] Histórico carregado: ${sessions.length} sessões`, sessions.map(s => s.session_id.slice(0, 8)));
+                    setHistory(sessions);
+                }
+            } catch (err) {
+                console.error("Erro ao carregar histórico:", err);
+            } finally {
+                setLoadingHistory(false);
+            }
+        }
+
+        loadHistory();
+    }, [activeTab, refreshTrigger]);
+
     // Filtrar produtos conforme aba, busca e filtros
     const filteredProducts = useMemo(() => {
+        // Se estiver na aba History, não filtra produtos (retorna vazio ou irrelevante)
+        if (activeTab === 'history') return [];
+
         let filtered = products;
 
         // Filtro por status
@@ -214,7 +260,7 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         }
 
         return filtered;
-    }, [products, search, statusFilter, abcFilter, coberturaFilter, alertFilter, sortOrder]);
+    }, [products, search, statusFilter, abcFilter, coberturaFilter, alertFilter, sortOrder, activeTab]);
 
     // Toggle seleção para campanhas
     const toggleSelection = (id: string) => {
@@ -248,45 +294,14 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
         }
     };
 
-    // Validar mix ABC dos produtos selecionados
-    const mixValidation = useMemo(() => {
-        const selected = products.filter(p => selectedIds.includes(p.id));
-        return validateAbcMix(selected);
-    }, [selectedIds, products]);
-
-    // Gerar campanha (com validação)
-    const handleGenerateCampaign = async () => {
-        if (selectedIds.length === 0 || generating) return;
-
-        // Verificar se mix está bloqueado
-        if (!mixValidation.canGenerate) {
-            setShowMixPanel(true);
-            return;
-        }
-        // Fechar painel se estava aberto
-        setShowMixPanel(false);
-
-        setGenerating(true);
-        try {
-            const result = await generateCampaign(selectedIds);
-
-            // Enviar resultado para o chat
-            window.dispatchEvent(new CustomEvent('chat:campaign-generated', {
-                detail: {
-                    type: 'campaign',
-                    campaign: result,
-                    products: products.filter(p => selectedIds.includes(p.id)),
-                }
-            }));
-
-            setSelectedIds([]);
-            if (window.innerWidth < 1024) onClose();
-        } catch (err) {
-            console.error("Erro ao gerar campanha:", err);
-        } finally {
-            setGenerating(false);
-        }
+    const handleLoadSession = (sessionId: string) => {
+        window.dispatchEvent(new CustomEvent('chat:load-session', {
+            detail: { sessionId }
+        }));
+        if (window.innerWidth < 1024) onClose();
     };
+
+
 
 
 
@@ -324,31 +339,31 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
 
             {/* Sidebar */}
             <aside className="fixed lg:relative left-0 top-0 h-full w-[85vw] max-w-80 sm:w-80 bg-card border-r border-border z-50 flex flex-col">
-                {/* Tabs */}
+                {/* Tabs - Histórico desabilitado temporariamente */}
                 <div className="flex border-b border-border">
+                    {/* Aba Histórico removida temporariamente
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors",
+                            activeTab === 'history'
+                                ? "text-foreground bg-accent border-b-2 border-purple-500"
+                                : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                        Histórico
+                    </button>
+                    */}
                     <button
                         onClick={() => { setActiveTab('products'); setSelectedIds([]); }}
                         className={cn(
                             "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors",
-                            activeTab === 'products'
-                                ? "text-foreground bg-accent border-b-2 border-blue-500"
-                                : "text-muted-foreground hover:text-foreground"
+                            "text-foreground bg-accent border-b-2 border-blue-500"
                         )}
                     >
                         <Package size={16} />
                         Produtos
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('campaigns')}
-                        className={cn(
-                            "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors",
-                            activeTab === 'campaigns'
-                                ? "text-foreground bg-accent border-b-2 border-pink-500"
-                                : "text-muted-foreground hover:text-foreground"
-                        )}
-                    >
-                        <Flame size={16} />
-                        Campanhas
                     </button>
                     <button
                         onClick={onClose}
@@ -360,48 +375,49 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
 
                 {/* Header da aba */}
                 <div className="p-4 border-b border-border relative z-20 bg-background">
-                    {activeTab === 'products' ? (
+                    {activeTab === 'history' ? (
                         <div className="text-xs text-muted-foreground mb-3">
-                            Selecione um produto para análise individual
+                            Suas conversas recentes
                         </div>
                     ) : (
                         <div className="text-xs text-muted-foreground mb-3">
-                            Selecione até 10 produtos para gerar campanha
-                            <span className="ml-1 text-pink-400">({selectedIds.length}/10)</span>
+                            Selecione um produto para análise individual
                         </div>
                     )}
 
-                    {/* Search + Filter Toggle */}
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Buscar por nome ou SKU..."
-                                className="w-full pl-9 pr-3 py-2 text-sm bg-accent border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                            />
+                    {/* Search + Filter Toggle (Only for Products/Campaigns) */}
+                    {activeTab !== 'history' && (
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Buscar por nome ou SKU..."
+                                    className="w-full pl-9 pr-3 py-2 text-sm bg-accent border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                />
+                            </div>
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                className={cn(
+                                    "p-2 rounded-lg border transition-colors relative",
+                                    showFilters || hasActiveFilters
+                                        ? "bg-blue-500/10 border-blue-500 text-blue-400"
+                                        : "bg-accent border-border text-muted-foreground hover:text-foreground"
+                                )}
+                                title="Filtros"
+                            >
+                                <Filter size={16} />
+                                {hasActiveFilters && (
+                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
+                                )}
+                            </button>
                         </div>
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={cn(
-                                "p-2 rounded-lg border transition-colors relative",
-                                showFilters || hasActiveFilters
-                                    ? "bg-blue-500/10 border-blue-500 text-blue-400"
-                                    : "bg-accent border-border text-muted-foreground hover:text-foreground"
-                            )}
-                            title="Filtros"
-                        >
-                            <Filter size={16} />
-                            {hasActiveFilters && (
-                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
-                            )}
-                        </button>
-                    </div>
+                    )}
 
-                    {/* Filtros colapsáveis */}
-                    {showFilters && (
+                    {/* Filtros colapsáveis (Somente Produtos/Campanhas) */}
+                    {activeTab !== 'history' && showFilters && (
                         <div className="mt-3 pt-3 border-t border-border space-y-3">
                             {/* Alertas */}
                             <div>
@@ -521,179 +537,167 @@ export function ProductSidebar({ isOpen, onClose }: ProductSidebarProps) {
                     )}
 
                     {/* Contador de resultados */}
-                    {(hasActiveFilters || search.trim()) && !loading && (
+                    {activeTab !== 'history' && (hasActiveFilters || search.trim()) && !loading && (
                         <div className="mt-2 text-xs text-muted-foreground">
                             {filteredProducts.length} produto(s) encontrado(s)
                         </div>
                     )}
                 </div>
 
-                {/* Product List */}
+                {/* Content Area */}
                 <div className="flex-1 overflow-y-auto relative z-10">
-                    {loading ? (
-                        <div className="flex flex-col items-center justify-center h-48 gap-3">
-                            <Loader2 size={24} className="animate-spin text-blue-400" />
-                            <span className="text-sm text-muted-foreground">Carregando...</span>
-                        </div>
-                    ) : error ? (
-                        <div className="p-4 text-center text-red-400 text-sm">
-                            {error}
-                        </div>
-                    ) : filteredProducts.length === 0 ? (
-                        <div className="p-4 text-center text-muted-foreground text-sm">
-                            {activeTab === 'campaigns'
-                                ? "Nenhum produto com excesso encontrado"
-                                : "Nenhum produto encontrado"
-                            }
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-border">
-                            {filteredProducts.map((product) => {
-                                const isSelected = selectedIds.includes(product.id);
+                    {/* HISTORY LIST */}
+                    {activeTab === 'history' && (
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="p-4 pt-2">
+                                <button
+                                    onClick={() => {
+                                        window.dispatchEvent(new Event('chat:clear-history'));
+                                        if (window.innerWidth < 1024) onClose();
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 py-3 mb-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md group"
+                                >
+                                    <MessageSquarePlus size={18} className="group-hover:scale-110 transition-transform" />
+                                    Nova Conversa
+                                </button>
 
-                                return (
-                                    <div
-                                        key={product.id}
-                                        onClick={() => toggleSelection(product.id)}
-                                        className={cn(
-                                            "p-3 transition-colors cursor-pointer hover:bg-accent/50 border-l-4",
-                                            isSelected
-                                                ? activeTab === 'campaigns'
-                                                    ? "bg-pink-500/10 border-pink-500"
-                                                    : "bg-blue-500/10 border-blue-500"
-                                                : "border-transparent"
-                                        )}
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            {/* Checkbox Visual Unificado */}
-                                            <div className="flex items-center h-full pt-1">
-                                                <div className={cn(
-                                                    "w-5 h-5 rounded flex items-center justify-center border-2 transition-all duration-150",
-                                                    isSelected
-                                                        ? activeTab === 'campaigns'
-                                                            ? "bg-pink-500 border-pink-500"
-                                                            : "bg-blue-500 border-blue-500"
-                                                        : "border-gray-400 bg-transparent"
-                                                )}>
-                                                    {isSelected && (
-                                                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex-1 min-w-0 ml-2">
-                                                <p className="font-medium text-foreground text-sm truncate" title={product.nome}>
-                                                    {product.nome}
-                                                </p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-xs text-muted-foreground font-mono">
-                                                        {product.id}
-                                                    </span>
-                                                    <span className={cn(
-                                                        "text-[10px] px-1.5 py-0.5 rounded font-bold",
-                                                        ABC_COLORS_COMPACT[product.abc] || ABC_COLORS_COMPACT['C']
-                                                    )}>
-                                                        {product.abc}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className={cn(
-                                                        "text-[10px] px-1.5 py-0.5 rounded",
-                                                        STATUS_COLORS_COMPACT[product.status] || STATUS_COLORS_COMPACT['SAUDÁVEL']
-                                                    )}>
-                                                        {product.status}
-                                                    </span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {product.estoque.toLocaleString('pt-BR')} un
-                                                    </span>
-                                                    {activeTab === 'campaigns' && (
-                                                        <span className="text-xs text-blue-400">
-                                                            {product.cobertura.toFixed(0)}d
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
+                                {loadingHistory ? (
+                                    <div className="flex flex-col items-center justify-center h-48 gap-3">
+                                        <Loader2 size={24} className="animate-spin text-purple-400" />
+                                        <span className="text-sm text-muted-foreground">Carregando histórico...</span>
                                     </div>
-                                );
-                            })}
+                                ) : history.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <div className="bg-muted/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <MessageSquare size={20} className="text-muted-foreground" />
+                                        </div>
+                                        <p className="text-sm text-muted-foreground font-medium">Nenhuma conversa encontrada.</p>
+                                        <p className="text-xs text-muted-foreground/60 mt-1">Inicie um novo chat para começar.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {history.map(session => (
+                                            <div
+                                                key={session.session_id}
+                                                onClick={() => handleLoadSession(session.session_id)}
+                                                className="group p-3 rounded-lg border border-transparent hover:border-border hover:bg-accent/50 cursor-pointer transition-all flex flex-col gap-1"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className="mt-1 min-w-[16px]">
+                                                        <MessageSquare size={16} className="text-purple-500/70 group-hover:text-purple-500 transition-colors" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-medium text-sm text-foreground line-clamp-2 leading-relaxed">
+                                                            {session.messages.find((m: any) => m.role === 'user')?.content || 'Nova Conversa'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 pl-[28px]">
+                                                    <Clock size={12} className="text-muted-foreground/60" />
+                                                    <p className="text-[10px] text-muted-foreground/60">
+                                                        {new Date(session.last_activity).toLocaleDateString('pt-BR', {
+                                                            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                                                        }).replace('.', '')}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
+                    )}
+
+                    {/* PRODUCT LIST */}
+                    {activeTab !== 'history' && (
+                        <>
+                            {loading ? (
+                                <div className="flex flex-col items-center justify-center h-48 gap-3">
+                                    <Loader2 size={24} className="animate-spin text-blue-400" />
+                                    <span className="text-sm text-muted-foreground">Carregando...</span>
+                                </div>
+                            ) : error ? (
+                                <div className="p-4 text-center text-red-400 text-sm">
+                                    {error}
+                                </div>
+                            ) : filteredProducts.length === 0 ? (
+                                <div className="p-4 text-center text-muted-foreground text-sm">
+                                    Nenhum produto encontrado
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-border">
+                                    {filteredProducts.map((product) => {
+                                        const isSelected = selectedIds.includes(product.id);
+
+                                        return (
+                                            <div
+                                                key={product.id}
+                                                onClick={() => toggleSelection(product.id)}
+                                                className={cn(
+                                                    "p-3 transition-colors cursor-pointer hover:bg-accent/50 border-l-4",
+                                                    isSelected
+                                                        ? "bg-blue-500/10 border-blue-500"
+                                                        : "border-transparent"
+                                                )}
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    {/* Checkbox Visual Unificado */}
+                                                    <div className="flex items-center h-full pt-1">
+                                                        <div className={cn(
+                                                            "w-5 h-5 rounded flex items-center justify-center border-2 transition-all duration-150",
+                                                            isSelected
+                                                                ? "bg-blue-500 border-blue-500"
+                                                                : "border-gray-400 bg-transparent"
+                                                        )}>
+                                                            {isSelected && (
+                                                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex-1 min-w-0 ml-2">
+                                                        <p className="font-medium text-foreground text-sm truncate" title={product.nome}>
+                                                            {product.nome}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs text-muted-foreground font-mono">
+                                                                {product.id}
+                                                            </span>
+                                                            <span className={cn(
+                                                                "text-[10px] px-1.5 py-0.5 rounded font-bold",
+                                                                ABC_COLORS_COMPACT[product.abc] || ABC_COLORS_COMPACT['C']
+                                                            )}>
+                                                                {product.abc}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className={cn(
+                                                                "text-[10px] px-1.5 py-0.5 rounded",
+                                                                STATUS_COLORS_COMPACT[product.status] || STATUS_COLORS_COMPACT['SAUDÁVEL']
+                                                            )}>
+                                                                {product.status}
+                                                            </span>
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {product.estoque.toLocaleString('pt-BR')} un
+                                                            </span>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 
+
                 {/* Footer: botão gerar campanha */}
-                {activeTab === 'campaigns' && (
-                    <div className="relative p-4 border-t border-border bg-muted/50">
-                        {showMixPanel && (
-                            <MixValidationPanel
-                                validation={mixValidation}
-                                onClose={() => setShowMixPanel(false)}
-                            />
-                        )}
 
-                        {/* Mix Status Indicator */}
-                        {selectedIds.length > 0 && (
-                            <div className="mb-3">
-                                <div className="flex items-center justify-between text-xs mb-1">
-                                    <span className="text-muted-foreground">Mix ABC</span>
-                                    <span className={cn(
-                                        "font-medium",
-                                        mixValidation.status === 'ideal' && "text-green-400",
-                                        mixValidation.status === 'warning' && "text-yellow-400",
-                                        mixValidation.status === 'blocked' && "text-red-400"
-                                    )}>
-                                        {mixValidation.status === 'ideal' && '✓ Ideal'}
-                                        {mixValidation.status === 'warning' && '⚠ Atenção'}
-                                        {mixValidation.status === 'blocked' && '✗ Bloqueado'}
-                                    </span>
-                                </div>
-                                <div className="flex h-2 rounded-full overflow-hidden bg-muted/50">
-                                    {mixValidation.mixPercent.A > 0 && (
-                                        <div className="bg-blue-500" style={{ width: `${mixValidation.mixPercent.A}%` }} />
-                                    )}
-                                    {mixValidation.mixPercent.B > 0 && (
-                                        <div className="bg-purple-500" style={{ width: `${mixValidation.mixPercent.B}%` }} />
-                                    )}
-                                    {mixValidation.mixPercent.C > 0 && (
-                                        <div className="bg-orange-500" style={{ width: `${mixValidation.mixPercent.C}%` }} />
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        <button
-                            onClick={handleGenerateCampaign}
-                            disabled={selectedIds.length === 0 || generating}
-                            className={cn(
-                                "w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all",
-                                selectedIds.length > 0
-                                    ? mixValidation.canGenerate
-                                        ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:opacity-90"
-                                        : "bg-gradient-to-r from-red-600 to-red-700 text-white hover:opacity-90"
-                                    : "bg-accent text-muted-foreground cursor-not-allowed"
-                            )}
-                        >
-                            {generating ? (
-                                <>
-                                    <Loader2 size={18} className="animate-spin" />
-                                    Gerando...
-                                </>
-                            ) : !mixValidation.canGenerate && selectedIds.length > 0 ? (
-                                <>
-                                    <Sparkles size={18} />
-                                    Ajustar Mix ({selectedIds.length})
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles size={18} />
-                                    Gerar Campanha ({selectedIds.length})
-                                </>
-                            )}
-                        </button>
-                    </div>
-                )}
                 {/* Footer: acoes em lote para produtos */}
                 {activeTab === 'products' && selectedIds.length > 0 && (
                     <div className="p-4 border-t border-border bg-muted/50 grid grid-cols-2 gap-3">

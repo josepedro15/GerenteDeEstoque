@@ -125,7 +125,7 @@ NÃO USE:
                 return { error: `Erro ao criar campanha: ${err.message}` };
             }
         }
-    }),
+    } as any),
 
     calculatePurchaseNeeds: tool({
         description: `CALCULA SUGESTÃO DE COMPRA TÉCNICA.
@@ -159,5 +159,5 @@ USE QUANDO:
                 urgency: currentStock === 0 ? 'CRÍTICA' : (currentStock < consumptionDuringLeadTime ? 'ALTA' : 'NORMAL')
             };
         }
-    })
+    } as any)
 };
