@@ -23,7 +23,7 @@ export interface DashboardAnalysisPayload {
         rupturas_criticas: Array<{ sku: string; nome: string; perda_diaria: number }>;
         excessos_travados: Array<{ sku: string; nome: string; capital_parado: number }>;
     };
-    distribuicao_status?: Record<string, unknown> | string;
+    distribuicao_status?: Record<string, unknown> | string | Array<{ name?: string; value?: number; color?: string }>;
 }
 
 function buildDashboardPrompt(data: DashboardAnalysisPayload): string {
@@ -48,16 +48,18 @@ function buildDashboardPrompt(data: DashboardAnalysisPayload): string {
         .join("\n");
     const dist = data.distribuicao_status;
     const distText =
-        typeof dist === "object" && dist !== null && !Array.isArray(dist)
-            ? Object.entries(dist)
-                  .map(
-                      ([k, v]) =>
-                          `${k}: ${typeof v === "object" && v !== null ? JSON.stringify(v) : v}`
-                  )
-                  .join(", ")
-            : dist != null
-              ? String(dist)
-              : "-";
+        Array.isArray(dist)
+            ? dist.map((i) => `${i.name ?? ""}: ${i.value ?? 0}`).join(", ")
+            : typeof dist === "object" && dist !== null
+              ? Object.entries(dist)
+                    .map(
+                        ([k, v]) =>
+                            `${k}: ${typeof v === "object" && v !== null ? JSON.stringify(v) : v}`
+                    )
+                    .join(", ")
+              : dist != null
+                ? String(dist)
+                : "-";
 
     return `Analise os dados do DASHBOARD abaixo e dê uma análise executiva (prioridades e ações). Responda SOMENTE com base nestes dados.
 

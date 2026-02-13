@@ -55,7 +55,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                     p: ({ node, ...props }) => (
                         <p className="leading-normal mb-2 text-sm" {...props} />
                     ),
-                    code: ({ node, className: codeClassName, children, ...props }: React.HTMLAttributes<HTMLElement> & { children?: React.ReactNode }) => {
+                    code: ({ node: _node, className: codeClassName, children, ...props }: React.HTMLAttributes<HTMLElement> & { children?: React.ReactNode; node?: unknown }) => {
                         const match = /language-(\w+)/.exec(codeClassName || '');
                         return !match ? (
                             <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono text-foreground border border-border" {...props}>
