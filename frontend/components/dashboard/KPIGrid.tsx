@@ -59,10 +59,10 @@ export function KPIGrid({ metrics }: KPIGridProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {cards.map((card, idx) => (
                 <div key={idx} className="relative overflow-hidden rounded-2xl border border-border bg-accent p-6 backdrop-blur-md">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1 overflow-visible">
                             <p className="text-sm font-medium text-muted-foreground truncate">{card.label}</p>
-                            <p className="mt-2 text-2xl font-bold text-foreground truncate">{card.value}</p>
+                            <p className="mt-2 text-base font-bold text-foreground leading-tight sm:text-lg xl:text-xl">{card.value}</p>
                             <p className="text-xs text-muted-foreground mt-1 truncate">{card.sub}</p>
                         </div>
                         <div className={`rounded-xl p-3 ${card.bg} shrink-0`}>

@@ -34,7 +34,66 @@ export async function sendMessage(
 
         const { systemPrompt } = await import('@/app/actions/systemPrompt');
 
-        // const systemPrompt = ... (removed inline prompt)
+        const msg = message.trim().toLowerCase();
+
+        // Confirmação "usar os 3 primeiros": extrair link da última resposta do assistente e devolver o link de campanha
+        const intentConfirmarTres = /pode\s+ser\s+os\s+3|usar\s+os\s+3\s+sugeridos|sim,?\s+os\s+3|os\s+3\s+primeiros|quero\s+os\s+3\s+primeiros|pode\s+ser\s+os\s+três|os\s+três\s+primeiros/i.test(msg);
+        if (intentConfirmarTres && conversationHistory.length > 0) {
+            const lastAssistant = [...conversationHistory].reverse().find(m => m.role === 'assistant');
+            const content = lastAssistant?.content || '';
+            const match = content.match(/\/marketing\/new\?productIds=([^)\s"'\]]+)/);
+            if (match && match[1]) {
+                const productIdsParam = decodeURIComponent(match[1].replace(/&.*$/, ''));
+                const campaignUrl = `/marketing/new?productIds=${encodeURIComponent(productIdsParam)}`;
+                return `Beleza! **[Clique aqui para abrir a campanha com os 3 produtos](${campaignUrl})** — você será redirecionado à página de campanhas e a produção já começará com eles.`;
+            }
+        }
+
+        // Intenção clara: servidor escolhe o filtro e chama a ferramenta direto (sem depender do modelo)
+        const intentPromo = /indique|indica|me d[eê]|quero\s+(ver\s+)?(os\s+)?(3\s+)?(produtos?|itens?)|(3\s+)?produtos?\s+para\s+(fazer\s+)?(uma\s+)?promoção|produtos?\s+para\s+promoção|itens?\s+para\s+liquidação|liquidação|colocar\s+em\s+promo/i.test(msg);
+        const intentFalta = /o\s+que\s+est[aá]\s+em\s+falta|o\s+que\s+(preciso\s+)?repor|o\s+que\s+comprar|itens?\s+em\s+falta|estoque\s+em\s+falta|o\s+que\s+falta|reporem|em\s+ruptura/i.test(msg);
+
+        if (intentPromo || intentFalta) {
+            const filterType = intentPromo ? 'excess_promo' : 'low_stock';
+            try {
+                const toolResult = await (tools as any).analyzeStock.execute({ filterType });
+                if (toolResult?.error) {
+                    return `Erro ao consultar estoque: ${toolResult.error}`;
+                }
+                if (!toolResult?.items?.length) {
+                    if (intentPromo) {
+                        return 'Nenhum item em **excesso** de estoque encontrado no momento para promoção. Os itens disponíveis estão em nível crítico ou normal. Quer que eu consulte o estoque geral ou itens em falta?';
+                    }
+                    return toolResult?.message || 'Nenhum item encontrado com os critérios fornecidos.';
+                }
+                const statusStr = (s: unknown) => (s != null ? String(s) : '');
+                let displayItems = intentPromo
+                    ? toolResult.items.filter((item: any) => {
+                        const s = statusStr(item.status).toLowerCase();
+                        return !s.includes('crítico') && !s.includes('ruptura');
+                    })
+                    : toolResult.items;
+                if (intentPromo && displayItems.length === 0) {
+                    return 'Nenhum item em **excesso** de estoque encontrado no momento para promoção. Quer que eu consulte o estoque geral?';
+                }
+                const tableHeader = `| SKU | Produto | Estoque | Preço |\n|:---:|:---|:---|---:|`;
+                const tableRows = displayItems.slice(0, 10).map((item: any) =>
+                    `| **${item.id}** | ${item.produto} | ${item.quantidade} un ${item.status} | R$ ${item.preco} |`
+                ).join('\n');
+                const hiddenContext = toolResult.items.map((item: any) =>
+                    `[DADOS INTERNOS - NÃO EXIBIR]\n PRODUTO: ${item.produto} (ID: ${item.id})\n Custo: R$ ${item.custo ?? '?'} | Margem: ${item.margem ?? '?'}% | Cobertura: ${item.dias_cobertura ?? '?'} dias`
+                ).join('\n\n');
+                if (intentPromo) {
+                    const topIds = displayItems.slice(0, 3).map((i: any) => i.id).join(',');
+                    const campaignUrl = `/marketing/new?productIds=${encodeURIComponent(topIds)}`;
+                    return `Estes produtos estão em **excesso de estoque**, ideais para promoção (liberam capital parado):\n\n${tableHeader}\n${tableRows}\n\nPosso usar os **3 primeiros** da lista para a campanha, ou você prefere escolher outros?\n\n• **[Usar os 3 sugeridos](${campaignUrl})** — redireciona à página de campanhas e inicia com eles.\n• **Outros da lista acima** — diga os SKUs ou nomes (ex.: "quero o 4721 e o 15231").\n• **Montar sua lista** — peça para eu listar mais opções do estoque ou indique produtos específicos.\n\nComo prefere?\n\n<!--\n${hiddenContext}\n-->`;
+                }
+                return `Estes itens estão em falta ou com estoque crítico:\n\n${tableHeader}\n${tableRows}\n\n<!--\n${hiddenContext}\n-->`;
+            } catch (e: any) {
+                logger.error("Chat intent direct tool call:", e);
+            }
+            // Se a chamada direta falhar, segue para o modelo
+        }
 
         let lastError;
         let finalResult;
@@ -101,10 +160,50 @@ export async function sendMessage(
                             if (toolOutput) {
                                 // Tentar formatar melhor se for o formato conhecido count/items
                                 if (toolOutput.items && Array.isArray(toolOutput.items)) {
+                                    const filterType = toolOutput.filterType as string | undefined;
+                                    const userAskedForPromo = /promoção|liquidação|fazer uma promo|produtos para promo|itens para promo|colocar em promo/i.test(message);
+                                    const treatAsPromo = filterType === 'excess_promo' || userAskedForPromo;
+
+                                    const statusStr = (s: unknown) => (s != null ? String(s) : '');
+                                    let displayItems = toolOutput.items;
+                                    if (treatAsPromo) {
+                                        displayItems = toolOutput.items.filter((item: any) => {
+                                            const s = statusStr(item.status).toLowerCase();
+                                            return !s.includes('crítico') && !s.includes('ruptura');
+                                        });
+                                        if (displayItems.length === 0 && userAskedForPromo) {
+                                            try {
+                                                const excessResult = await (tools as any).analyzeStock.execute({ filterType: 'excess_promo' });
+                                                if (excessResult?.items?.length > 0) {
+                                                    displayItems = excessResult.items;
+                                                } else {
+                                                    finalResult = 'Nenhum item em **excesso** de estoque encontrado no momento para promoção. Os itens disponíveis estão em nível crítico ou normal. Quer que eu consulte o estoque geral ou itens em falta?';
+                                                    break;
+                                                }
+                                            } catch (_) {
+                                                finalResult = 'Nenhum item em **excesso** de estoque encontrado no momento para promoção. Quer que eu consulte o estoque geral?';
+                                                break;
+                                            }
+                                        } else if (displayItems.length === 0) {
+                                            finalResult = 'Nenhum item em **excesso** de estoque encontrado no momento para promoção.';
+                                            break;
+                                        }
+                                    }
                                     const tableHeader = `| SKU | Produto | Estoque | Preço |\n|:---:|:---|:---|---:|`;
-                                    const tableRows = toolOutput.items.map((item: any) =>
+                                    const tableRows = displayItems.slice(0, 10).map((item: any) =>
                                         `| **${item.id}** | ${item.produto} | ${item.quantidade} un ${item.status} | R$ ${item.preco} |`
                                     ).join('\n');
+
+                                    let prefix = 'Dados encontrados:\n\n';
+                                    let suffix = '';
+                                    if (treatAsPromo) {
+                                        prefix = 'Estes produtos estão em **excesso de estoque**, ideais para promoção (liberam capital parado):\n\n';
+                                        const topIds = displayItems.slice(0, 3).map((i: any) => i.id).join(',');
+                                        const campaignUrl = `/marketing/new?productIds=${encodeURIComponent(topIds)}`;
+                                        suffix = `\n\nPosso usar os **3 primeiros** da lista para a campanha, ou você prefere escolher outros?\n\n• **Usar os 3 sugeridos** — [clique aqui](${campaignUrl}) para ir à página de campanhas com eles.\n• **Outros da lista** — diga os SKUs ou nomes.\n• **Montar sua lista** — peça mais opções do estoque ou indique produtos específicos.\n\nComo prefere?`;
+                                    } else if (filterType === 'low_stock') {
+                                        prefix = 'Estes itens estão em falta ou com estoque crítico:\n\n';
+                                    }
 
                                     // Contexto Oculto Rico para a IA (Dados Financeiros e Logísticos)
                                     const hiddenContext = toolOutput.items.map((item: any) =>
@@ -116,7 +215,7 @@ export async function sendMessage(
                                          - Última Venda: ${item.ultimo_venda ?? '?'} | Valor Estoque Total: R$ ${item.valor_estoque ?? '?'}`
                                     ).join('\n\n');
 
-                                    finalResult = `Encontrei os seguintes dados:\n\n${tableHeader}\n${tableRows}\n\n<!--\n>>> CONTEXTO ESTRATÉGICO PARA O AGENTE <<<\n${hiddenContext}\n-->`;
+                                    finalResult = `${prefix}${tableHeader}\n${tableRows}${suffix}\n\n<!--\n>>> CONTEXTO ESTRATÉGICO PARA O AGENTE <<<\n${hiddenContext}\n-->`;
                                 } else if (toolOutput.message) {
                                     finalResult = toolOutput.message;
                                 } else {

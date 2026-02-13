@@ -28,6 +28,12 @@ interface Message {
     planData?: any;
 }
 
+function formatMessageTime(iso?: string): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
 // Gera ou recupera sessionId do localStorage
 function getOrCreateSessionId(): string {
     if (typeof window === 'undefined') return crypto.randomUUID();
@@ -297,10 +303,42 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             let prompt = "";
 
             if (data.is_dashboard_analysis) {
-                const capital = data.financeiro?.total_estoque || 0;
-                const nivelServico = data.risco?.share_audavel || 0;
+                const f = data.financeiro || {};
+                const r = data.risco || {};
+                const top = data.top_oportunidades || {};
+                const fmt = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
+                const rupturas = (top.rupturas_criticas || []).slice(0, 5).map((i: any) => `  - ${i.nome} (SKU ${i.sku}): perda diária ${typeof i.perda_diaria === 'number' ? fmt(i.perda_diaria) : i.perda_diaria}`).join('\n');
+                const excessos = (top.excessos_travados || []).slice(0, 5).map((i: any) => `  - ${i.nome} (SKU ${i.sku}): capital parado ${typeof i.capital_parado === 'number' ? fmt(i.capital_parado) : i.capital_parado}`).join('\n');
+                const dist = data.distribuicao_status || {};
+                const distText = typeof dist === 'object' && !Array.isArray(dist)
+                    ? Object.entries(dist).map(([k, v]) => `${k}: ${v}`).join(', ')
+                    : String(dist);
 
-                prompt = `Analise o estado geral do meu estoque atual. Tenho ${data.risco?.itens_ruptura || 0} itens em ruptura, ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(capital)} em capital investido e nível de serviço de ${nivelServico.toFixed(1)}%. O que devo priorizar?`;
+                prompt = `Analise os dados do DASHBOARD que estou vendo na tela e dê uma análise executiva (prioridades e ações). Use APENAS estes dados — não chame ferramentas de estoque.
+
+**Financeiro**
+- Valor em estoque (custo): ${fmt(Number(f.total_estoque) || 0)}
+- Receita potencial: ${fmt(Number(f.receita_potencial) || 0)}
+- Lucro projetado: ${fmt(Number(f.lucro_projetado) || 0)}
+- Margem média: ${Number(f.margem_media) || 0}%
+- Total de SKUs: ${f.total_skus ?? '-'}
+
+**Risco**
+- Itens em ruptura: ${r.itens_ruptura ?? 0}
+- Itens em excesso: ${r.itens_excesso ?? 0}
+- Share de ruptura: ${Number(r.share_ruptura) || 0}%
+- Nível de serviço (audável): ${Number(r.share_audavel) || 0}%
+
+**Top rupturas críticas (perda diária)**
+${rupturas || '  (nenhum)'}
+
+**Top excessos (capital parado)**
+${excessos || '  (nenhum)'}
+
+**Distribuição por status**
+${distText || '-'}
+
+Com base nesses números do dashboard, responda: (1) onde estou perdendo dinheiro, (2) onde tenho capital parado, (3) as 2–3 ações que devo priorizar agora. Seja direto e use os dados acima.`;
             } else {
                 prompt = `Explique por que o sistema sugeriu comprar ${data.quantidade_sugerida || data.sugestao || 0} un do produto "${data.nome_produto || data.nome}" (SKU: ${data.codigo_produto || data.sku}).`;
             }
@@ -308,7 +346,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             const userMsg: Message = {
                 id: Date.now().toString(),
                 role: "user",
-                content: prompt
+                content: prompt,
+                timestamp: new Date().toISOString()
             };
             setMessages(prev => [...prev, userMsg]);
             setIsLoading(true);
@@ -323,7 +362,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 const aiMsg: Message = {
                     id: (Date.now() + 1).toString(),
                     role: "assistant",
-                    content: response
+                    content: response,
+                    timestamp: new Date().toISOString()
                 };
                 setMessages(prev => [...prev, aiMsg]);
 
@@ -333,7 +373,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 }
             } catch (error) {
                 console.error(error);
-                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao analisar dados.' }]);
+                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao analisar dados.', timestamp: new Date().toISOString() }]);
             } finally {
                 setIsLoading(false);
             }
@@ -367,7 +407,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             const userMsg: Message = {
                 id: Date.now().toString(),
                 role: "user",
-                content: prompt
+                content: prompt,
+                timestamp: new Date().toISOString()
             };
             setMessages(prev => [...prev, userMsg]);
             setIsLoading(true);
@@ -387,7 +428,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 const aiMsg: Message = {
                     id: (Date.now() + 1).toString(),
                     role: "assistant",
-                    content: response
+                    content: response,
+                    timestamp: new Date().toISOString()
                 };
                 setMessages(prev => [...prev, aiMsg]);
 
@@ -396,7 +438,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 }
             } catch (error) {
                 console.error(error);
-                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao processar análise em lote.' }]);
+                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao processar análise em lote.', timestamp: new Date().toISOString() }]);
             } finally {
                 setIsLoading(false);
             }
@@ -414,12 +456,13 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             if (!data) return;
 
             // Adiciona mensagem do usuário
-            const userMsg: Message = {
-                id: Date.now().toString(),
-                role: "user",
-                content: data.message
-            };
-            setMessages(prev => [...prev, userMsg]);
+                const userMsg: Message = {
+                    id: Date.now().toString(),
+                    role: "user",
+                    content: data.message,
+                    timestamp: new Date().toISOString()
+                };
+                setMessages(prev => [...prev, userMsg]);
             setIsLoading(true);
 
             // Salvar no histórico
@@ -432,19 +475,20 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 const payloadWithUser = { ...data, user_id: userId };
                 const result = await sendActionPlanRequest(payloadWithUser);
 
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: result.message
-                };
-                setMessages(prev => [...prev, aiMsg]);
+                    const aiMsg: Message = {
+                        id: (Date.now() + 1).toString(),
+                        role: "assistant",
+                        content: result.message,
+                        timestamp: new Date().toISOString()
+                    };
+                    setMessages(prev => [...prev, aiMsg]);
 
-                if (userId && sessionId) {
-                    saveChatMessage(userId, sessionId, 'assistant', result.message).catch(console.error);
-                }
-            } catch (error) {
-                console.error(error);
-                setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao gerar plano de ação. Tente novamente.' }]);
+                    if (userId && sessionId) {
+                        saveChatMessage(userId, sessionId, 'assistant', result.message).catch(console.error);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    setMessages(prev => [...prev, { id: 'error', role: 'assistant', content: 'Erro ao gerar plano de ação. Tente novamente.', timestamp: new Date().toISOString() }]);
             } finally {
                 setIsLoading(false);
             }
@@ -463,7 +507,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             const userMsg: Message = {
                 id: Date.now().toString(),
                 role: "user",
-                content: `Gere uma campanha de marketing para ${products?.length || 0} produto(s) com excesso de estoque.`
+                content: `Gere uma campanha de marketing para ${products?.length || 0} produto(s) com excesso de estoque.`,
+                timestamp: new Date().toISOString()
             };
 
             // VERIFICAR TIPO DE RESPOSTA:
@@ -488,7 +533,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     id: (Date.now() + 1).toString(),
                     role: "assistant",
                     content: `💡 **Dica:**\n\n${helpMessage}`,
-                    type: 'text'
+                    type: 'text',
+                    timestamp: new Date().toISOString()
                 };
 
                 setMessages(prev => [...prev, userMsg, aiMsg]);
@@ -581,7 +627,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     role: "assistant",
                     content: planMessage,
                     type: 'campaign_plan',
-                    planData: formattedPlan
+                    planData: formattedPlan,
+                    timestamp: new Date().toISOString()
                 };
 
                 setMessages(prev => [...prev, userMsg, aiMsg]);
@@ -599,7 +646,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     role: "assistant",
                     content: "Campanha gerada com sucesso! Veja os materiais abaixo:",
                     type: 'campaign',
-                    campaignData: { campaign: actualCampaign, products }
+                    campaignData: { campaign: actualCampaign, products },
+                    timestamp: new Date().toISOString()
                 };
 
                 setMessages(prev => [...prev, userMsg, aiMsg]);
@@ -700,7 +748,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     id: (Date.now() + 1).toString(),
                     role: "assistant",
                     content: `Resposta recebida:\n\n${errorContent}`,
-                    type: 'text'
+                    type: 'text',
+                    timestamp: new Date().toISOString()
                 };
 
                 setMessages(prev => [...prev, userMsg, aiMsg]);
@@ -730,7 +779,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         const userMsg: Message = {
             id: Date.now().toString(),
             role: "user",
-            content: userContent.trim()
+            content: userContent.trim(),
+            timestamp: new Date().toISOString()
         };
 
         setMessages(prev => [...prev, userMsg]);
@@ -790,7 +840,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                 const aiMsg: Message = {
                                     id: (Date.now() + 1).toString(),
                                     role: "assistant",
-                                    content: textContent
+                                    content: textContent,
+                                    timestamp: new Date().toISOString()
                                 };
                                 setMessages(prev => [...prev, aiMsg]);
 
@@ -854,7 +905,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         const aiMsg: Message = {
                             id: (Date.now() + 1).toString(),
                             role: "assistant",
-                            content: textContent
+                            content: textContent,
+                            timestamp: new Date().toISOString()
                         };
                         setMessages(prev => [...prev, aiMsg]);
 
@@ -879,7 +931,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                     const aiMsg: Message = {
                         id: (Date.now() + 1).toString(),
                         role: "assistant",
-                        content: `💡 **Dica:**\n\n${helpMessage}`
+                        content: `💡 **Dica:**\n\n${helpMessage}`,
+                        timestamp: new Date().toISOString()
                     };
                     setMessages(prev => [...prev, aiMsg]);
 
@@ -903,7 +956,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         role: "assistant",
                         content: "Analisei os produtos e preparei um plano estratégico para sua campanha:",
                         type: 'campaign_plan',
-                        planData: parsed.plan
+                        planData: parsed.plan,
+                        timestamp: new Date().toISOString()
                     };
                     setMessages(prev => [...prev, aiMsg]);
 
@@ -921,7 +975,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                         role: "assistant",
                         content: "Campanha gerada com sucesso! Veja os materiais abaixo:",
                         type: 'campaign',
-                        campaignData: { campaign: parsed, products: [] }
+                        campaignData: { campaign: parsed, products: [] },
+                        timestamp: new Date().toISOString()
                     };
                     setMessages(prev => [...prev, aiMsg]);
 
@@ -953,7 +1008,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             const aiMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: finalContent
+                content: finalContent,
+                timestamp: new Date().toISOString()
             };
             setMessages(prev => [...prev, aiMsg]);
 
@@ -966,7 +1022,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             const errorMsg: Message = {
                 id: 'error-' + Date.now(),
                 role: 'assistant',
-                content: 'Desculpe, ocorreu um erro. Tente novamente.'
+                content: 'Desculpe, ocorreu um erro. Tente novamente.',
+                timestamp: new Date().toISOString()
             };
             setMessages(prev => [...prev, errorMsg]);
         } finally {
@@ -989,7 +1046,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
         const userMsg: Message = {
             id: Date.now().toString(),
             role: "user",
-            content: "✅ Plano aprovado! Gere os ativos da campanha."
+            content: "✅ Plano aprovado! Gere os ativos da campanha.",
+            timestamp: new Date().toISOString()
         };
         setMessages(prev => [...prev, userMsg]);
 
@@ -1022,7 +1080,8 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
             const errorMsg: Message = {
                 id: 'error-' + Date.now(),
                 role: 'assistant',
-                content: 'Desculpe, ocorreu um erro ao gerar os ativos da campanha. Tente novamente.'
+                content: 'Desculpe, ocorreu um erro ao gerar os ativos da campanha. Tente novamente.',
+                timestamp: new Date().toISOString()
             };
             setMessages(prev => [...prev, errorMsg]);
         } finally {
@@ -1121,6 +1180,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                             ? "bg-card border border-border text-foreground rounded-tl-none"
                                             : "bg-blue-600 text-foreground rounded-tr-none"
                                     )}>
+                                        <div className="flex flex-col gap-0">
                                         {msg.role === "assistant" ? (
                                             <>
                                                 <ReactMarkdown
@@ -1169,6 +1229,15 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                                         ) : (
                                             msg.content
                                         )}
+                                        {msg.timestamp && (
+                                            <span className={cn(
+                                                "text-[10px] text-muted-foreground mt-1",
+                                                msg.role === "user" ? "text-right" : "text-left"
+                                            )}>
+                                                {formatMessageTime(msg.timestamp)}
+                                            </span>
+                                        )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}

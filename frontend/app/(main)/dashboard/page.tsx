@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LayoutDashboard, Calendar, TrendingUp, AlertTriangle, DollarSign, Package, BarChart3, ArrowUpDown } from "lucide-react";
+import Link from "next/link";
+import { LayoutDashboard, Calendar, TrendingUp, AlertTriangle, DollarSign, Package, BarChart3, ArrowUpDown, Sparkles, History, Megaphone } from "lucide-react";
 import { getStockData } from "@/app/actions/inventory";
 import { calculateDashboardMetrics } from "@/lib/analytics";
 import { DashboardMetrics } from "@/types/analytics";
@@ -132,6 +133,36 @@ export default function DashboardPage() {
                                 <DashboardAnalysisButton data={metrics} />
                             </motion.div>
                         </div>
+
+                        {/* Ações rápidas - Novidades do sistema */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.45 }}
+                            className="mt-6 flex flex-wrap gap-3"
+                        >
+                            <Link
+                                href="/marketing/new"
+                                className="inline-flex items-center gap-2 rounded-xl border border-pink-500/30 bg-pink-500/10 px-4 py-2.5 text-sm font-medium text-pink-400 hover:bg-pink-500/20 transition-colors"
+                            >
+                                <Sparkles size={18} />
+                                Nova Campanha (Assistente IA)
+                            </Link>
+                            <Link
+                                href="/orders/history"
+                                className="inline-flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
+                            >
+                                <History size={18} />
+                                Histórico de Pedidos
+                            </Link>
+                            <Link
+                                href="/marketing"
+                                className="inline-flex items-center gap-2 rounded-xl border border-border bg-accent px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                            >
+                                <Megaphone size={18} />
+                                Campanhas salvas
+                            </Link>
+                        </motion.div>
 
                         {/* Divider with gradient */}
                         <div className="mt-8 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />

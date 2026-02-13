@@ -32,10 +32,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const sendProductMessage = (product: any) => {
         setIsOpen(true);
-        // Dispara evento para o ChatInterface processar
+        // Dispara evento após o chat estar montado (setState é assíncrono; o widget só renderiza ChatInterface quando isOpen === true)
         if (typeof window !== "undefined") {
-            const event = new CustomEvent("chat:send-product", { detail: product });
-            window.dispatchEvent(event);
+            setTimeout(() => {
+                const event = new CustomEvent("chat:send-product", { detail: product });
+                window.dispatchEvent(event);
+            }, 150);
         }
     };
 

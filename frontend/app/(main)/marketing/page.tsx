@@ -91,13 +91,21 @@ export default function CampaignHistoryPage() {
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => router.push('/chat')}
-                                className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium text-sm hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/25 w-full sm:w-auto"
-                            >
-                                <Plus size={18} />
-                                Gerar Nova Campanha
-                            </button>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => router.push('/marketing/new')}
+                                    className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium text-sm hover:opacity-90 transition-opacity shadow-lg w-full sm:w-auto"
+                                >
+                                    <Plus size={18} />
+                                    Nova Campanha (Assistente)
+                                </button>
+                                <button
+                                    onClick={() => router.push('/chat')}
+                                    className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl border border-border bg-card font-medium text-sm hover:bg-accent w-full sm:w-auto"
+                                >
+                                    Gerar no Bate-papo
+                                </button>
+                            </div>
                         </div>
                         <div className="mt-4 sm:mt-6 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     </header>

@@ -432,3 +432,270 @@ export async function deleteCampaign(campaignId: string): Promise<boolean> {
         return false;
     }
 }
+
+// --- Tipos e funções para página Nova Campanha (marketing/new) ---
+export interface CampaignStrategy {
+    report: {
+        title: string;
+        hook: string;
+        target_audience: string;
+        coherence_analysis: string;
+        mix_feedback: string;
+    };
+    pricing_strategy: {
+        product_name: string;
+        cost: number;
+        original_price?: number;
+        suggested_price: number;
+        discount_percent: number;
+        margin_percent: number;
+        tactic: string;
+    }[];
+    dissemination_strategy?: {
+        channels: string[];
+        tactics: string[];
+        budget_allocation?: { total_suggestion: number; allocations: { channel: string; percentage: number; rationale: string }[] };
+        timeline: { day: string; title: string; description: string }[];
+        estimated_reach?: string;
+    };
+    channels: {
+        whatsapp: { script: string; trigger: string; script_options?: string[] };
+        instagram: { copy: string; copy_options?: string[]; image_prompt: string; image_options?: { title: string; prompt: string }[] };
+        physical: { headline: string; subheadline: string; offer: string; layout?: string; image_prompt: string; image_options?: { title: string; prompt: string }[] };
+    };
+}
+
+export interface ProductCandidateMarketing {
+    id: string;
+    name: string;
+    stock: number;
+    price: number;
+    cost?: number;
+    coverage: number;
+    abc: string;
+    category?: string;
+    status?: string;
+    supplier?: string;
+}
+
+export async function getMarketingProducts(filters: { search?: string; curves?: string[]; categories?: string[]; minStock?: number; limit?: number; offset?: number; statuses?: string[]; trends?: string[] } = {}): Promise<ProductCandidateMarketing[]> {
+    const { createServerClient } = await import("@supabase/ssr");
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll: () => cookieStore.getAll(),
+                setAll: (c: { name: string; value: string; options?: object }[]) => {
+                    try { c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch { }
+                }
+            }
+        }
+    );
+    let query = supabase.from('dados_estoque').select('*');
+    if (filters.search) query = query.ilike('produto_descricao', `%${filters.search}%`);
+    if (filters.curves?.length) query = query.in('classe_abc', filters.curves);
+    if (filters.categories?.length) query = query.in('categoria', filters.categories);
+    if (filters.minStock !== undefined) query = query.gte('estoque_atual', filters.minStock);
+    if (filters.statuses?.length) query = query.in('status_ruptura', filters.statuses);
+    if (filters.trends?.length) query = query.in('tendencia', filters.trends);
+    const limit = filters.limit ?? 50;
+    const offset = filters.offset ?? 0;
+    query = query.range(offset, offset + limit - 1);
+    const { data, error } = await query;
+    if (error) { logger.error("getMarketingProducts:", error); return []; }
+    return (data || []).map((item: Record<string, unknown>) => ({
+        id: item.id_produto as string,
+        name: item.produto_descricao as string,
+        stock: Number(item.estoque_atual || 0),
+        price: Number(item.preco || 0),
+        cost: Number(item.custo || 0),
+        coverage: Number(item.dias_de_cobertura || 0),
+        abc: (item.classe_abc as string) || 'C',
+        category: (item.categoria as string) || 'Geral',
+        status: item.status_ruptura as string,
+        supplier: item.fornecedor as string
+    }));
+}
+
+/** Busca produtos por IDs (ex.: vindos do chat para criar campanha). */
+export async function getMarketingProductsByIds(ids: string[]): Promise<ProductCandidateMarketing[]> {
+    if (!ids?.length) return [];
+    const { createServerClient } = await import("@supabase/ssr");
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll: () => cookieStore.getAll(),
+                setAll: (c: { name: string; value: string; options?: object }[]) => {
+                    try { c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch { }
+                }
+            }
+        }
+    );
+    const { data, error } = await supabase
+        .from('dados_estoque')
+        .select('*')
+        .in('id_produto', ids);
+    if (error) {
+        logger.error("getMarketingProductsByIds:", error);
+        return [];
+    }
+    return (data || []).map((item: Record<string, unknown>) => ({
+        id: item.id_produto as string,
+        name: item.produto_descricao as string,
+        stock: Number(item.estoque_atual || 0),
+        price: Number(item.preco || 0),
+        cost: Number(item.custo || 0),
+        coverage: Number(item.dias_de_cobertura || 0),
+        abc: (item.classe_abc as string) || 'C',
+        category: (item.categoria as string) || 'Geral',
+        status: item.status_ruptura as string,
+        supplier: item.fornecedor as string
+    }));
+}
+
+export async function getCategories(): Promise<string[]> {
+    const { createServerClient } = await import("@supabase/ssr");
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll: () => cookieStore.getAll(),
+                setAll: (c: { name: string; value: string; options?: object }[]) => {
+                    try { c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch { }
+                }
+            }
+        }
+    );
+    const { data } = await supabase.from('dados_estoque').select('categoria').not('categoria', 'is', null);
+    const set = new Set((data || []).map((r: { categoria: string }) => r.categoria).filter(Boolean));
+    return Array.from(set).sort();
+}
+
+export async function getBestCampaignCandidates(strategy: 'clearance' | 'attraction'): Promise<ProductCandidateMarketing[]> {
+    const { createServerClient } = await import("@supabase/ssr");
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll: () => cookieStore.getAll(),
+                setAll: (c: { name: string; value: string; options?: object }[]) => {
+                    try { c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch { }
+                }
+            }
+        }
+    );
+    let query = supabase.from('dados_estoque').select('*');
+    if (strategy === 'clearance') query = query.eq('classe_abc', 'C').order('estoque_atual', { ascending: false }).limit(5);
+    else query = query.eq('classe_abc', 'A').gte('estoque_atual', 20).order('estoque_atual', { ascending: false }).limit(3);
+    const { data, error } = await query;
+    if (error) { logger.error("getBestCampaignCandidates:", error); return []; }
+    return (data || []).map((item: Record<string, unknown>) => ({
+        id: item.id_produto as string,
+        name: item.produto_descricao as string,
+        stock: Number(item.estoque_atual || 0),
+        price: Number(item.preco || 0),
+        cost: Number(item.custo || 0),
+        coverage: Number(item.dias_de_cobertura || 0),
+        abc: (item.classe_abc as string) || 'C',
+        category: (item.categoria as string) || 'Geral',
+        status: item.status_ruptura as string,
+        supplier: item.fornecedor as string
+    }));
+}
+
+export async function getFilterCounts(): Promise<Record<string, number>> {
+    const { createServerClient } = await import("@supabase/ssr");
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll: () => cookieStore.getAll(),
+                setAll: (c: { name: string; value: string; options?: object }[]) => {
+                    try { c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch { }
+                }
+            }
+        }
+    );
+    const count = (col: string, val: string) => supabase.from('dados_estoque').select('*', { count: 'exact', head: true }).eq(col, val);
+    const [rAll, rA, rB, rC, rEx, rSau, rAte, rCri, rCai, rSub, rEst] = await Promise.all([
+        supabase.from('dados_estoque').select('*', { count: 'exact', head: true }),
+        count('classe_abc', 'A'), count('classe_abc', 'B'), count('classe_abc', 'C'),
+        count('status_ruptura', '⚪ Excesso'), count('status_ruptura', '🟢 Saudável'), count('status_ruptura', '🟡 Atenção'), count('status_ruptura', '🟠 Crítico'),
+        count('tendencia', '📉 Caindo'), count('tendencia', '📈 Subindo'), count('tendencia', '➡️ Estável')
+    ]);
+    const getCount = (r: { count?: number | null }) => r?.count ?? 0;
+    return {
+        ALL: getCount(rAll as { count?: number | null }),
+        A: getCount(rA as { count?: number | null }), B: getCount(rB as { count?: number | null }), C: getCount(rC as { count?: number | null }),
+        EXCESSO: getCount(rEx as { count?: number | null }), SAUDAVEL: getCount(rSau as { count?: number | null }), ATENCAO: getCount(rAte as { count?: number | null }), CRITICO: getCount(rCri as { count?: number | null }),
+        CAINDO: getCount(rCai as { count?: number | null }), SUBINDO: getCount(rSub as { count?: number | null }), ESTAVEL: getCount(rEst as { count?: number | null })
+    };
+}
+
+export async function getCurrentUserId(): Promise<string | null> {
+    const { createServerClient } = await import("@supabase/ssr");
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll: () => cookieStore.getAll(),
+                setAll: (c: { name: string; value: string; options?: object }[]) => {
+                    try { c.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch { }
+                }
+            }
+        }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id ?? null;
+}
+
+export async function saveCampaignForCurrentUser(campaign: CampaignStrategy, products: { id: string; name: string; price?: number; stock?: number }[], instagramImageUrl?: string, physicalImageUrl?: string): Promise<{ success: boolean; id?: string; error?: string }> {
+    const userId = await getCurrentUserId();
+    if (!userId) return { success: false, error: "Usuário não autenticado." };
+    return saveCampaign(userId, campaign, products, undefined, undefined, instagramImageUrl, physicalImageUrl);
+}
+
+export async function generateCampaignWithGemini(products: ProductCandidateMarketing[], context: string): Promise<{ success: boolean; data?: CampaignStrategy; error?: string }> {
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const { getUpcomingSeasonality } = await import("@/lib/seasonality");
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return { success: false, error: "GEMINI_API_KEY não configurada." };
+    try {
+        const genAI = new GoogleGenerativeAI(key);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const events = getUpcomingSeasonality();
+        let seasonalityText = "";
+        if (events.length > 0) {
+            const next = events[0];
+            seasonalityText = `SEASONALITY: ${next.name} em ${next.daysUntil} dias. ${next.description}`;
+        }
+        const productList = products.map(p => `- ${p.name} (Curva ${p.abc}) | R$${p.price} | Estoque: ${p.stock}`).join('\n');
+        const prompt = `You are a Senior Retail Marketing Strategist. CONTEXT: "${context}" ${seasonalityText} PRODUCTS: ${productList} Return ONLY valid JSON (no markdown). Structure: report: { title, hook, target_audience, coherence_analysis, mix_feedback }, pricing_strategy: [ { product_name, cost, original_price, suggested_price, discount_percent, margin_percent, tactic } ], dissemination_strategy: { channels[], tactics[], budget_allocation: { total_suggestion, allocations: [ { channel, percentage, rationale } ] }, timeline: [ { day, title, description } ], estimated_reach }, channels: { whatsapp: { script, script_options[], trigger }, instagram: { copy, copy_options[], image_prompt, image_options: [ { title, prompt } ] }, physical: { headline, subheadline, offer, layout, image_prompt, image_options: [ { title, prompt } ] } } }`;
+        const result = await model.generateContent({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
+        let text = result.response.text().replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        const data = JSON.parse(text) as CampaignStrategy;
+        return { success: true, data };
+    } catch (e) {
+        logger.error("generateCampaignWithGemini:", e);
+        return { success: false, error: e instanceof Error ? e.message : "Erro ao gerar campanha." };
+    }
+}

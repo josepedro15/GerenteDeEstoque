@@ -4,8 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 import { tool } from 'ai';
 
 const analyzeStockParameters = z.object({
-    filterType: z.enum(['low_stock', 'category', 'specific_item', 'general']).describe(`
+    filterType: z.enum(['low_stock', 'category', 'specific_item', 'general', 'excess_promo']).describe(`
         Tipo de filtro a aplicar. ESCOLHA COM CUIDADO:
+        - "excess_promo": USE quando o usuário pedir "produtos para promoção", "indique itens para liquidação", "o que posso colocar em promoção", "3 produtos para campanha". Retorna itens com EXCESSO ou alto estoque/baixo giro (ideais para promoção). CHAME ESTE PRIMEIRO, sem pedir permissão.
         - "specific_item": USE SEMPRE que o usuário perguntar sobre um PRODUTO ESPECÍFICO (ex: "cimento", "argamassa", "tubo"). 
           ⚠️ Se a pergunta contém um nome de produto, USE specific_item!
         - "low_stock": USE SOMENTE para perguntas genéricas de ruptura/falta (ex: "o que falta na loja toda?"). ⛔️ NÃO USE se o usuário estiver falando de um produto específico (ex: "tem cimento? qual comprar?"). Mantenha o contexto!
@@ -34,9 +35,10 @@ function getAdminSupabase() {
 
 export const tools = {
     analyzeStock: tool({
-        description: `Buscar produtos no estoque. 
-IMPORTANTE: Para buscar um produto específico (cimento, argamassa, tubo, etc), use filterType="specific_item" e filterValue="nome do produto".
-Use low_stock SOMENTE se o usuário perguntar "o que está em falta" ou "preciso comprar o quê".`,
+        description: `Buscar produtos no estoque.
+PROMOÇÃO vs FALTA: Se o usuário pedir "produtos para promoção", "3 produtos para fazer uma promoção", "itens para liquidação" -> use SOMENTE filterType="excess_promo" (retorna itens em EXCESSO). NUNCA use "low_stock" para promoção — "low_stock" retorna itens em FALTA (Crítico/Ruptura).
+Para produto específico (cimento, argamassa, tubo), use filterType="specific_item" e filterValue="nome do produto".
+Use low_stock APENAS para "o que está em falta?", "o que repor?".`,
         parameters: analyzeStockParameters,
         execute: async ({ filterType, filterValue }: any) => {
             try {
@@ -52,6 +54,13 @@ Use low_stock SOMENTE se o usuário perguntar "o que está em falta" ou "preciso
                 if (filterType === 'low_stock') {
                     // Query for items with status containing 'Ruptura' or 'Crítico' (flexible matching)
                     query = query.or('status_ruptura.ilike.%Ruptura%,status_ruptura.ilike.%Crítico%');
+                } else if (filterType === 'excess_promo') {
+                    // Promoção = itens em EXCESSO ou alta cobertura. NUNCA incluir Crítico/Ruptura (são itens em falta).
+                    query = query
+                        .not('status_ruptura', 'ilike', '%Crítico%')
+                        .not('status_ruptura', 'ilike', '%Ruptura%')
+                        .or('status_ruptura.ilike.%Excesso%,status_ruptura.ilike.%excesso%,dias_de_cobertura.gte.60')
+                        .order('dias_de_cobertura', { ascending: false });
                 } else if (filterType === 'category' && filterValue) {
                     // 'categoria' column does not exist in dados_estoque, searching in description as fallback
                     query = query.ilike('produto_descricao', `%${filterValue}%`);
@@ -69,12 +78,11 @@ Use low_stock SOMENTE se o usuário perguntar "o que está em falta" ou "preciso
                 }
 
                 if (!data || data.length === 0) {
-                    return { message: "Nenhum item encontrado com os critérios fornecidos." };
+                    return { filterType, message: "Nenhum item encontrado com os critérios fornecidos." };
                 }
 
-                return {
-                    count: data.length,
-                    items: data.map(item => ({
+                // Para excess_promo: garantir que nenhum item Crítico/Ruptura vaze (segurança extra)
+                let items = data.map(item => ({
                         id: item.id_produto, // SKU
                         produto: item.produto_descricao || `Produto ${item.id_produto}`,
                         quantidade: item.estoque_atual,
@@ -92,7 +100,18 @@ Use low_stock SOMENTE se o usuário perguntar "o que está em falta" ou "preciso
                         tendencia: item.tendencia,
                         ultimo_venda: item.ultima_venda,
                         valor_estoque: item.valor_estoque_venda
-                    }))
+                    }));
+                if (filterType === 'excess_promo') {
+                    const statusStr = (s: unknown) => (s != null ? String(s) : '');
+                    items = items.filter((item: any) => {
+                        const s = statusStr(item.status).toLowerCase();
+                        return !s.includes('crítico') && !s.includes('ruptura');
+                    });
+                }
+                return {
+                    filterType,
+                    count: items.length,
+                    items
                 };
             } catch (err: any) {
                 console.error("[analyzeStock] CRITICAL EXCEPTION:", err);
@@ -112,13 +131,15 @@ NÃO USE:
             productIds: z.array(z.string()).describe('Lista de IDs (SKUs) dos produtos para a campanha.'),
             objective: z.enum(['conversion', 'awareness', 'clearance']).optional().describe('Objetivo da campanha (ex: queima de estoque).')
         }),
-        execute: async ({ productIds, objective }: { productIds: string[], objective?: string }) => {
+        execute: async ({ productIds, objective }: { productIds?: string[], objective?: string }) => {
             try {
-                console.log(`[generateMarketingCampaign] Criando campanha para: ${productIds.join(', ')}`);
+                const ids = Array.isArray(productIds) ? productIds : [];
+                if (ids.length === 0) {
+                    return { error: 'Nenhum produto selecionado. Indique os SKUs dos produtos (ex.: 3417, 4721, 15231) ou peça ao usuário para clicar em "Usar os 3 sugeridos" na mensagem anterior para ir à página de campanhas.' };
+                }
+                console.log(`[generateMarketingCampaign] Criando campanha para: ${ids.join(', ')}`);
                 const { generateCampaign } = await import('@/app/actions/marketing');
-                // Cast to any to avoid strict type checking on the imported function if needed, 
-                // or ensure generateCampaign accepts the string
-                const result = await generateCampaign(productIds, { context: objective || 'clearance' });
+                const result = await generateCampaign(ids, { context: objective || 'clearance' });
                 return result;
             } catch (err: any) {
                 console.error("[generateMarketingCampaign] Error:", err);
