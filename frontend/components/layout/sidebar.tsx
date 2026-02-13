@@ -18,7 +18,9 @@ import {
     Rocket,
     BookOpen,
     Truck,
-    ShoppingCart
+    ShoppingCart,
+    Sparkles,
+    History
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signout } from "@/app/login/actions";
@@ -26,13 +28,15 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { BranchSelector } from "@/components/layout/BranchSelector";
 
 const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
     { icon: Package, label: "Produtos", href: "/products", activeColor: "text-emerald-400" },
     { icon: Truck, label: "Fornecedores", href: "/suppliers", activeColor: "text-blue-400" },
     { icon: ShoppingCart, label: "Pedidos", href: "/orders", activeColor: "text-amber-400" },
+    { icon: History, label: "Histórico de Pedidos", href: "/orders/history", activeColor: "text-amber-400" },
     { icon: BookOpen, label: "Lógica", href: "/logic", activeColor: "text-purple-400" },
     { icon: MessageCircle, label: "Bate-papo", href: "/chat", activeColor: "text-indigo-400" },
     { icon: Megaphone, label: "Campanhas", href: "/marketing", activeColor: "text-pink-400" },
+    { icon: Sparkles, label: "Nova Campanha (Assistente)", href: "/marketing/new", activeColor: "text-pink-400" },
     { icon: Rocket, label: "Roadmap", href: "/roadmap", activeColor: "text-blue-400" },
     { icon: BookOpen, label: "Ajuda", href: "/help", activeColor: "text-cyan-400" },
 ];

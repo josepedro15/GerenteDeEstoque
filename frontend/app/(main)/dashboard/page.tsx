@@ -11,6 +11,8 @@ import { StockStatusPie } from "@/components/dashboard/StockStatusPie";
 import { CoverageBar } from "@/components/dashboard/CoverageBar";
 import { TopOpportunities } from "@/components/dashboard/TopOpportunities";
 import { DashboardAnalysisButton } from "@/components/dashboard/DashboardAnalysisButton";
+import { DashboardAnalysisModal } from "@/components/dashboard/DashboardAnalysisModal";
+import type { DashboardAnalysisPayload } from "@/app/actions/dashboardAnalysis";
 import { AlertPanel } from "@/components/dashboard/AlertPanel";
 import { AlertProductsModal, AlertType } from "@/components/dashboard/AlertProductsModal";
 import { ABCDistribution } from "@/components/dashboard/ABCDistribution";
@@ -24,6 +26,8 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [selectedAlert, setSelectedAlert] = useState<AlertType | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
+    const [analysisPayload, setAnalysisPayload] = useState<DashboardAnalysisPayload | null>(null);
 
     function handleAlertClick(alertType: AlertType) {
         setSelectedAlert(alertType);
@@ -130,7 +134,13 @@ export default function DashboardPage() {
                                 transition={{ delay: 0.5 }}
                                 className="flex flex-wrap gap-3"
                             >
-                                <DashboardAnalysisButton data={metrics} />
+                                <DashboardAnalysisButton
+                                    data={metrics}
+                                    onOpenAnalysisModal={(payload) => {
+                                        setAnalysisPayload(payload);
+                                        setAnalysisModalOpen(true);
+                                    }}
+                                />
                             </motion.div>
                         </div>
 
@@ -263,6 +273,12 @@ export default function DashboardPage() {
                     alertType={selectedAlert}
                 />
             )}
+
+            <DashboardAnalysisModal
+                open={analysisModalOpen}
+                onOpenChange={setAnalysisModalOpen}
+                payload={analysisPayload}
+            />
         </div>
     );
 }

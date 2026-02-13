@@ -128,12 +128,15 @@ export async function sendMessage(
 
                 console.log(`[Chat Action] Enviando ${messagesWithHistory.length} mensagens para o modelo`);
 
+                const isDashboardAnalysis = typeof message === 'string' && message.includes('Analise os dados do DASHBOARD') && message.includes('não chame ferramentas');
+                const toolsToUse = isDashboardAnalysis ? {} : (tools as any);
+
                 const result = await generateText({
                     model: getGeminiModel(modelName) as any,
                     system: systemPrompt,
                     messages: messagesWithHistory,
-                    tools: tools as any,
-                    maxSteps: 10,
+                    tools: toolsToUse,
+                    maxSteps: isDashboardAnalysis ? 1 : 10,
                 } as any);
 
                 if (result.text && result.text.length > 0) {

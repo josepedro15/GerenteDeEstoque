@@ -19,16 +19,26 @@ interface ChatContextType {
     closeChat: () => void;
     sendProductMessage: (product: any) => void;
     sendActionPlanMessage: (data: ActionPlanData) => void;
+    /** Abre o chat e sugere uma pergunta no campo de input (ex.: após ver a análise do dashboard). */
+    openChatWithQuestion: (suggestedMessage: string) => void;
+    suggestedQuestion: string | null;
+    clearSuggestedQuestion: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
+    const [suggestedQuestion, setSuggestedQuestion] = useState<string | null>(null);
 
     const toggleChat = () => setIsOpen(prev => !prev);
     const openChat = () => setIsOpen(true);
     const closeChat = () => setIsOpen(false);
+    const openChatWithQuestion = (suggestedMessage: string) => {
+        setSuggestedQuestion(suggestedMessage);
+        setIsOpen(true);
+    };
+    const clearSuggestedQuestion = () => setSuggestedQuestion(null);
 
     const sendProductMessage = (product: any) => {
         setIsOpen(true);
@@ -54,7 +64,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <ChatContext.Provider value={{ isOpen, toggleChat, openChat, closeChat, sendProductMessage, sendActionPlanMessage }}>
+        <ChatContext.Provider value={{ isOpen, toggleChat, openChat, closeChat, sendProductMessage, sendActionPlanMessage, openChatWithQuestion, suggestedQuestion, clearSuggestedQuestion }}>
             {children}
         </ChatContext.Provider>
     );

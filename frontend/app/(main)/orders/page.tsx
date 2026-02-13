@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
 import {
-    Search, Truck, Calendar, DollarSign, Package, AlertCircle
+    Search, Truck, Calendar, DollarSign, Package, AlertCircle, History
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,13 @@ export default function OrdersPage() {
                 <p className="text-sm text-muted-foreground">
                     Acompanhamento de entregas e pedidos pendentes
                 </p>
+                <div className="flex gap-2 mt-2">
+                    <Link href="/orders/history">
+                        <Button variant="outline" size="sm" className="gap-1.5">
+                            <History size={14} /> Histórico de pedidos
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Content */}

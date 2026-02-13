@@ -311,10 +311,21 @@ interface PromptInputBoxProps {
     isLoading?: boolean;
     placeholder?: string;
     className?: string;
+    /** Quando definido, preenche o campo com este texto (ex.: pergunta sugerida ao abrir o chat). */
+    suggestedValue?: string | null;
+    /** Chamado após o suggestedValue ser aplicado ao input, para o pai limpar a sugestão. */
+    onSuggestedValueUsed?: () => void;
 }
 export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxProps>((props, ref) => {
-    const { onSend = () => { }, isLoading = false, placeholder = "Digite sua pergunta...", className } = props;
+    const { onSend = () => { }, isLoading = false, placeholder = "Digite sua pergunta...", className, suggestedValue, onSuggestedValueUsed } = props;
     const [input, setInput] = React.useState("");
+
+    React.useEffect(() => {
+        if (suggestedValue && suggestedValue.trim()) {
+            setInput(suggestedValue.trim());
+            onSuggestedValueUsed?.();
+        }
+    }, [suggestedValue]);
     const [files, setFiles] = React.useState<File[]>([]);
     const [filePreviews, setFilePreviews] = React.useState<{ [key: string]: string }>({});
     const [isRecording, setIsRecording] = React.useState(false);

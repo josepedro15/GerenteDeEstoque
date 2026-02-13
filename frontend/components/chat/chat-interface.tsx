@@ -65,7 +65,7 @@ async function fetchAuthenticatedUserId(): Promise<string | null> {
 
 
 export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPage?: boolean; hideHeader?: boolean }) {
-    const { isOpen, closeChat } = useChat();
+    const { isOpen, closeChat, suggestedQuestion, clearSuggestedQuestion } = useChat();
     const [isExpanded, setIsExpanded] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
@@ -307,12 +307,13 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
                 const r = data.risco || {};
                 const top = data.top_oportunidades || {};
                 const fmt = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
-                const rupturas = (top.rupturas_criticas || []).slice(0, 5).map((i: any) => `  - ${i.nome} (SKU ${i.sku}): perda diária ${typeof i.perda_diaria === 'number' ? fmt(i.perda_diaria) : i.perda_diaria}`).join('\n');
-                const excessos = (top.excessos_travados || []).slice(0, 5).map((i: any) => `  - ${i.nome} (SKU ${i.sku}): capital parado ${typeof i.capital_parado === 'number' ? fmt(i.capital_parado) : i.capital_parado}`).join('\n');
-                const dist = data.distribuicao_status || {};
-                const distText = typeof dist === 'object' && !Array.isArray(dist)
-                    ? Object.entries(dist).map(([k, v]) => `${k}: ${v}`).join(', ')
-                    : String(dist);
+                const str = (x: unknown) => (x != null && typeof x === 'object' ? JSON.stringify(x) : String(x ?? ''));
+                const rupturas = (top.rupturas_criticas || []).slice(0, 5).map((i: any) => `  - ${str(i.nome)} (SKU ${str(i.sku)}): perda diária ${typeof i.perda_diaria === 'number' ? fmt(i.perda_diaria) : str(i.perda_diaria)}`).join('\n');
+                const excessos = (top.excessos_travados || []).slice(0, 5).map((i: any) => `  - ${str(i.nome)} (SKU ${str(i.sku)}): capital parado ${typeof i.capital_parado === 'number' ? fmt(i.capital_parado) : str(i.capital_parado)}`).join('\n');
+                const dist = data.distribuicao_status;
+                const distText = typeof dist === 'object' && dist !== null && !Array.isArray(dist)
+                    ? Object.entries(dist).map(([k, v]) => `${k}: ${typeof v === 'object' && v !== null ? JSON.stringify(v) : v}`).join(', ')
+                    : (dist != null ? String(dist) : '-');
 
                 prompt = `Analise os dados do DASHBOARD que estou vendo na tela e dê uma análise executiva (prioridades e ações). Use APENAS estes dados — não chame ferramentas de estoque.
 
@@ -321,7 +322,7 @@ export function ChatInterface({ fullPage = false, hideHeader = false }: { fullPa
 - Receita potencial: ${fmt(Number(f.receita_potencial) || 0)}
 - Lucro projetado: ${fmt(Number(f.lucro_projetado) || 0)}
 - Margem média: ${Number(f.margem_media) || 0}%
-- Total de SKUs: ${f.total_skus ?? '-'}
+- Total de SKUs: ${f.total_skus != null ? String(f.total_skus) : '-'}
 
 **Risco**
 - Itens em ruptura: ${r.itens_ruptura ?? 0}
@@ -1290,6 +1291,8 @@ Com base nesses números do dashboard, responda: (1) onde estou perdendo dinheir
                         }}
                         isLoading={isLoading}
                         placeholder="Digite sua pergunta sobre o estoque..."
+                        suggestedValue={suggestedQuestion}
+                        onSuggestedValueUsed={clearSuggestedQuestion}
                     />
                 </div>
             </div>
